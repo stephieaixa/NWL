@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MagicQ Simulator — SkillForge</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#181818;--p1:#212121;--p2:#272727;--p3:#2e2e2e;
+  --b1:#383838;--b2:#484848;
+  --text:#d0d8e0;--t2:#8898a8;--t3:#566070;
+  --cyan:#00ccee;--green:#44cc44;--yellow:#ddaa00;
+  --orange:#cc6622;--red:#cc3333;--blue:#3388cc;
+  --purple:#9966cc;--pink:#cc44aa;
+  --mono:'Share Tech Mono',monospace;
+  --ui:'Barlow Condensed',sans-serif;
+  --body:'Barlow',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--mono);font-size:11px;
+  display:flex;flex-direction:column;
+}
+/* ── TOP BAR ── */
+.topbar{
+  background:#111;border-bottom:1px solid #2a2a2a;
+  display:flex;align-items:center;gap:0;
+  padding:0 8px;height:26px;flex-shrink:0;
+}
+.tb-logo{
+  font-family:var(--ui);font-weight:800;font-size:12px;
+  color:#fff;margin-right:12px;letter-spacing:1px;
+  display:flex;align-items:center;gap:6px;
+}
+.tb-back{
+  font-size:10px;color:#555;padding:2px 8px;
+  border:1px solid #2a2a2a;border-radius:2px;
+  cursor:pointer;margin-right:8px;transition:all .15s;
+}
+.tb-back:hover{color:#aaa;border-color:#444;}
+.tb-menu{padding:2px 8px;color:#666;font-size:10px;cursor:pointer;transition:all .1s;}
+.tb-menu:hover{color:#aaa;background:#1a1a1a;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.tb-mode{
+  font-size:9px;color:#555;letter-spacing:1px;
+  border:1px solid #2a2a2a;padding:1px 6px;border-radius:2px;
+}
+/* ── PAGES BAR ── */
+.pagesbar{
+  background:#1e1e1e;border-bottom:1px solid #2a2a2a;
+  display:flex;align-items:center;gap:2px;
+  padding:2px 6px;flex-shrink:0;height:28px;
+}
+.pg{
+  padding:2px 10px;font-size:10px;
+  background:#2a2a2a;border:1px solid #353535;border-radius:2px;
+  cursor:pointer;color:#778;transition:all .1s;
+}
+.pg:hover{background:#333;color:#aaa;}
+.pg.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+.pg-sep{flex:1;}
+.pb-info{
+  font-size:9px;color:#445;border:1px solid #2a2a2a;padding:1px 8px;
+  border-radius:2px;background:#151515;
+}
+.pb-info.hot{background:var(--red);color:#fff;border-color:var(--red);}
+/* ── MAIN ── */
+.main{flex:1;display:flex;min-height:0;overflow:hidden;}
+/* ── WINDOWS AREA ── */
+.wins{flex:1;display:grid;grid-template-rows:1fr 1fr;gap:3px;padding:3px;min-width:0;overflow:hidden;}
+.wins-row{display:grid;gap:3px;min-height:0;overflow:hidden;}
+/* ── WINDOW ── */
+.mwin{
+  background:#1c2230;border:1px solid #2a3848;
+  border-radius:3px;display:flex;flex-direction:column;overflow:hidden;
+}
+.mwin-h{
+  background:#242e3e;border-bottom:1px solid #2a3848;
+  display:flex;align-items:center;gap:6px;
+  padding:2px 8px;height:22px;flex-shrink:0;
+}
+.mwin-t{font-family:var(--ui);font-weight:700;font-size:11px;color:#fff;flex:1;}
+.mwin-sub{font-size:9px;color:#556;}
+.wbtn{
+  width:13px;height:13px;border-radius:1px;
+  background:#2a3040;border:1px solid #3a4050;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;cursor:pointer;color:#556;transition:all .1s;
+}
+.wbtn:hover{background:#3a4050;color:#aaa;}
+.mwin-body{flex:1;overflow:auto;padding:3px;}
+.mwin-body::-webkit-scrollbar{width:3px;height:3px;}
+.mwin-body::-webkit-scrollbar-thumb{background:#2a3848;border-radius:2px;}
+/* ── PALETTE CELLS ── */
+.pgrid{display:grid;gap:2px;}
+.pcell{
+  background:#1e2838;border:1px solid #2a3848;
+  border-radius:2px;cursor:pointer;transition:all .1s;
+  display:flex;align-items:center;gap:4px;
+  min-height:26px;padding:2px 5px;position:relative;
+  font-size:9px;color:var(--text);
+}
+.pcell:hover{border-color:#3a4858;background:#222e3e;}
+.pcell.lit{border-color:var(--cyan);background:#0d1e2e;}
+.pcell.lit2{border-color:var(--green);background:#0d1e18;}
+.pcell.lit3{border-color:var(--yellow);background:#1e1800;}
+.pnum{position:absolute;top:1px;left:2px;font-size:7px;color:#334;}
+.pdot{width:11px;height:11px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.15);}
+.pname{font-size:9px;color:var(--text);line-height:1.1;overflow:hidden;}
+.picon{font-size:12px;flex-shrink:0;}
+/* ── CONSOLE RIGHT ── */
+.con{
+  width:200px;flex-shrink:0;background:#181818;
+  border-left:1px solid #282828;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+/* STAGE */
+.vis{
+  height:160px;flex-shrink:0;background:#06090e;
+  border-bottom:1px solid #222;position:relative;
+}
+.vis-topbar{
+  display:flex;align-items:center;gap:4px;
+  padding:2px 6px;border-bottom:1px solid #111;
+  background:#0a0f18;height:18px;
+}
+.vis-lbl{font-size:8px;color:#334;letter-spacing:1px;}
+/* ENCODERS */
+.encs{
+  display:grid;grid-template-columns:1fr 1fr;gap:4px;
+  padding:6px;border-bottom:1px solid #222;flex-shrink:0;
+}
+.enc{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.enc-lbl{font-size:8px;color:#556;letter-spacing:1px;text-align:center;}
+.enc-attr{font-size:8px;color:#667;text-align:center;min-height:10px;}
+.enc-val{font-size:9px;color:var(--cyan);font-family:var(--mono);min-width:28px;text-align:center;}
+/* ENCODER KNOB — clickable up/down */
+.enc-knob{
+  width:38px;height:38px;border-radius:50%;
+  background:#252525;border:2px solid #383838;
+  cursor:ns-resize;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .15s;touch-action:none;
+}
+.enc-knob:hover{border-color:#555;}
+.enc-knob.dragging{border-color:var(--cyan);}
+.enc-indicator{
+  position:absolute;width:3px;height:11px;
+  background:var(--cyan);border-radius:2px;
+  top:4px;left:50%;margin-left:-1.5px;
+  transform-origin:50% 100%;
+  transition:transform .05s;
+}
+/* ── CONSOLE BUTTONS ── */
+.cbtns{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:2px;padding:3px 5px;
+}
+.cbtn{
+  padding:3px 1px;font-size:8px;
+  background:#222;border:1px solid #333;border-radius:2px;
+  cursor:pointer;color:var(--text);text-align:center;
+  line-height:1.2;transition:all .1s;font-family:var(--mono);
+  -webkit-user-select:none;user-select:none;
+}
+.cbtn:hover{background:#2e2e2e;border-color:#444;}
+.cbtn:active{transform:scale(.96);}
+.cbtn.blue{background:#1a2a40;border-color:#2a4060;color:#88aacc;}
+.cbtn.green{background:#1a2a1a;border-color:#2a4a2a;color:#88cc88;}
+.cbtn.red{background:#2a1a1a;border-color:#4a2a2a;color:#cc8888;}
+.cbtn.active{background:#003300;border-color:var(--green);color:var(--green);}
+.cbtn.rec-armed{background:#004400;border-color:#00aa00;color:#00ff00;animation:recblink 0.8s ease infinite;}
+@keyframes recblink{0%,100%{opacity:1}50%{opacity:.5}}
+/* ── PLAYBACKS ── */
+.pbs{
+  height:105px;flex-shrink:0;background:#111;
+  border-top:1px solid #222;display:flex;overflow-x:auto;
+}
+.pbs::-webkit-scrollbar{height:3px;}
+.pbs::-webkit-scrollbar-thumb{background:#333;}
+.pb-gm{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;padding:4px 8px;
+  border-right:1px solid #222;min-width:52px;flex-shrink:0;
+}
+.pb-gm-lbl{font-size:7px;color:#333;letter-spacing:1px;text-align:center;}
+.pb-strip{
+  display:flex;flex-direction:column;align-items:center;
+  gap:2px;padding:3px 4px;min-width:50px;flex-shrink:0;
+  border-right:1px solid #1a1a1a;
+}
+.pb-btns{display:flex;gap:2px;}
+.pb-go{
+  padding:1px 4px;font-size:8px;
+  background:#1a2a1a;border:1px solid #2a3a2a;
+  border-radius:1px;cursor:pointer;color:#669966;
+  transition:all .1s;font-family:var(--mono);
+}
+.pb-go:hover{background:#2a3a2a;border-color:var(--green);color:var(--green);}
+.pb-go:active{transform:scale(.95);}
+.pb-stop{
+  padding:1px 4px;font-size:8px;
+  background:#2a1a1a;border:1px solid #3a2a2a;
+  border-radius:1px;cursor:pointer;color:#663333;
+  font-family:var(--mono);transition:all .1s;
+}
+.pb-stop:hover{background:#3a2a2a;color:#cc6666;}
+.pb-led{
+  width:5px;height:5px;border-radius:50%;
+  background:#222;border:1px solid #333;transition:all .2s;
+}
+.pb-led.on{background:var(--green);box-shadow:0 0 4px var(--green);border-color:var(--green);}
+/* VERTICAL FADER — proper styling */
+.pb-fader-wrap{position:relative;height:52px;width:24px;display:flex;align-items:center;justify-content:center;}
+.pb-fader{
+  -webkit-appearance:none;appearance:none;
+  writing-mode:vertical-lr;
+  width:20px;height:48px;
+  background:transparent;cursor:pointer;outline:none;
+  transform:rotate(180deg);
+  position:relative;z-index:2;
+}
+.pb-fader-track{
+  position:absolute;width:4px;height:44px;
+  background:#282828;border-radius:2px;pointer-events:none;
+}
+.pb-fader::-webkit-slider-runnable-track{
+  width:4px;background:#282828;border-radius:2px;
+}
+.pb-fader::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:22px;height:9px;border-radius:2px;
+  background:linear-gradient(180deg,#c0c0c0,#787878);
+  border:1px solid #505050;cursor:pointer;
+  box-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+.pb-fader::-moz-range-thumb{
+  width:22px;height:9px;border-radius:2px;
+  background:linear-gradient(180deg,#c0c0c0,#787878);
+  border:1px solid #505050;cursor:pointer;
+}
+.pb-num{font-size:7px;color:#333;font-family:var(--mono);}
+.pb-name{
+  font-size:8px;color:#556;max-width:50px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;
+}
+/* ── STATUS BAR ── */
+.statusbar{
+  background:#0a0a0a;border-top:1px solid #1e1e1e;
+  display:flex;align-items:center;gap:12px;padding:2px 8px;
+  flex-shrink:0;height:20px;
+}
+.status-prog{font-size:9px;color:var(--cyan);}
+.status-info{font-size:9px;color:#445;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.status-time{font-size:8px;color:#334;margin-left:auto;}
+
+/* ── MISSION PANEL ── */
+#mp{
+  position:fixed;top:56px;right:8px;
+  width:260px;background:#0c1520;
+  border:1px solid #1e3050;border-radius:6px;
+  box-shadow:0 6px 30px rgba(0,0,0,.6);
+  z-index:200;display:flex;flex-direction:column;
+  max-height:calc(100vh - 120px);overflow:hidden;
+}
+#mp.min{max-height:40px;}
+.mp-head{
+  background:#111d2e;padding:8px 12px;
+  border-bottom:1px solid #1e3050;
+  display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0;
+}
+.mp-ico{font-size:14px;}
+.mp-title{font-family:var(--ui);font-weight:700;font-size:13px;color:#fff;flex:1;}
+.mp-xp{font-family:var(--mono);font-size:9px;color:var(--yellow);}
+.mp-tog{font-size:10px;color:#445;transition:transform .2s;}
+#mp.min .mp-tog{transform:rotate(180deg);}
+.mp-body{overflow-y:auto;padding:10px 12px;flex:1;}
+.mp-body::-webkit-scrollbar{width:2px;}
+.mp-body::-webkit-scrollbar-thumb{background:#1e3050;}
+.mp-obj{
+  background:rgba(0,200,230,.07);border:1px solid rgba(0,200,230,.2);
+  border-left:3px solid var(--cyan);border-radius:0 4px 4px 0;
+  padding:8px 10px;margin-bottom:10px;
+  font-size:10px;color:#7a9ab0;line-height:1.55;
+}
+.mp-obj strong{color:#b0cce0;}
+.mp-steps{list-style:none;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.mp-step{
+  display:flex;gap:6px;padding:6px 8px;
+  border-radius:3px;background:#0d1724;border:1px solid #1a2a3a;
+  font-size:10px;color:#5a7a8a;line-height:1.4;
+}
+.mp-step.done{background:#0a1f14;border-color:#1a3a24;color:#4a8a5a;}
+.mp-step.cur{background:#0a1824;border-color:#1a3a54;color:#8aaabb;}
+.mp-step-ic{flex-shrink:0;font-size:10px;}
+.mp-tip{
+  background:rgba(220,170,50,.07);border-left:2px solid var(--yellow);
+  padding:7px 9px;margin-bottom:8px;
+  font-size:9px;color:#887744;line-height:1.5;border-radius:0 3px 3px 0;
+}
+.mp-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.mp-btn{
+  padding:5px 12px;border-radius:3px;cursor:pointer;
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;
+  border:1px solid;transition:all .15s;text-transform:uppercase;
+}
+.mp-btn.ok{border-color:var(--cyan);color:var(--cyan);background:rgba(0,200,230,.08);}
+.mp-btn.ok:hover{background:var(--cyan);color:#000;}
+.mp-btn.skip{border-color:#222;color:#334;background:transparent;}
+.mp-btn.skip:hover{color:#556;border-color:#334;}
+.mp-prog{
+  border-top:1px solid #1e3050;padding:6px 12px;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.mp-bar{flex:1;height:2px;background:#1e3050;border-radius:1px;}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:1px;transition:width .5s;}
+.mp-pt{font-size:8px;color:#334;white-space:nowrap;}
+
+/* ── TABS: MISSION / CRISIS / TIPS ── */
+.mp-tabs{
+  display:flex;border-bottom:1px solid #1e3050;flex-shrink:0;
+}
+.mp-tab{
+  flex:1;padding:5px;text-align:center;
+  font-size:9px;letter-spacing:1px;cursor:pointer;
+  color:#334;transition:all .15s;border-bottom:2px solid transparent;
+}
+.mp-tab:hover{color:#667;}
+.mp-tab.on{color:var(--cyan);border-bottom-color:var(--cyan);}
+
+/* CRISIS PANEL */
+.crisis-list{display:flex;flex-direction:column;gap:6px;}
+.crisis-item{
+  background:#1a0c0c;border:1px solid #3a1a1a;
+  border-radius:3px;padding:8px 10px;
+}
+.crisis-q{font-size:9px;color:#cc8888;font-weight:500;margin-bottom:4px;}
+.crisis-a{font-size:9px;color:#666;line-height:1.4;}
+.crisis-steps{list-style:none;margin-top:4px;}
+.crisis-steps li{font-size:9px;color:#557;display:flex;gap:4px;margin-bottom:2px;}
+.crisis-steps li::before{content:'→';color:#443;flex-shrink:0;}
+
+/* TIPS PANEL */
+.tips-list{display:flex;flex-direction:column;gap:6px;}
+.tip-item{
+  background:#0d1824;border:1px solid #1a2a3a;
+  border-left:2px solid var(--accent,var(--cyan));
+  border-radius:0 3px 3px 0;padding:7px 9px;
+}
+.tip-tag{font-size:8px;color:var(--accent,var(--cyan));letter-spacing:1px;margin-bottom:3px;}
+.tip-txt{font-size:9px;color:#6a8a9a;line-height:1.4;}
+
+/* ── XP POPUP ── */
+#xpp{
+  position:fixed;top:56px;left:50%;transform:translateX(-50%) translateY(-10px);
+  background:#111d2e;border:1px solid var(--yellow);border-radius:4px;
+  padding:6px 16px;font-family:var(--mono);font-size:11px;color:var(--yellow);
+  opacity:0;transition:all .35s;z-index:300;pointer-events:none;white-space:nowrap;
+}
+#xpp.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* ── FLASH ── */
+.flash{position:fixed;inset:0;pointer-events:none;z-index:400;opacity:0;transition:opacity .25s;background:rgba(50,200,80,.08);}
+.flash.on{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-logo">
+    <div style="width:16px;height:16px;background:#7c6cff;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700">SF</div>
+    MagicQ PC
+  </div>
+  <div class="tb-back" onclick="goHome()">← SkillForge</div>
+  <div class="tb-menu">File</div><div class="tb-menu">Setup</div>
+  <div class="tb-menu">View</div><div class="tb-menu">Tools</div>
+  <div class="tb-menu">Visualiser</div><div class="tb-menu">Help</div>
+  <div class="tb-right">
+    <div class="tb-mode">DEMO MODE</div>
+    <div id="clock" style="font-size:8px;color:#334;"></div>
+  </div>
+</div>
+
+<!-- PAGES BAR -->
+<div class="pagesbar">
+  <button class="pg on" onclick="pg(1,this)">PAGE 1</button>
+  <button class="pg" onclick="pg(2,this)">PAGE 2</button>
+  <button class="pg" onclick="pg(3,this)">PAGE 3</button>
+  <button class="pg" onclick="pg(4,this)">PAGE 4</button>
+  <button class="pg" onclick="pg(5,this)">PAGE 5</button>
+  <button class="pg" style="background:#1a2840;color:#88aacc;border-color:#2a3850">VIEW PALETTE</button>
+  <div class="pg-sep"></div>
+  <div class="pb-info">B2: Gobo 1-1 Rot</div>
+  <div class="pb-info hot">B4: Gobo 1-3 Rot ●</div>
+  <div class="pb-info">B5: Gobo 1-4 Rot</div>
+</div>
+
+<!-- XP popup -->
+<div id="xpp"></div>
+<div class="flash" id="fl"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- WINDOWS -->
+  <div class="wins" id="wins">
+    <div class="wins-row" style="grid-template-columns:280px 1fr">
+      <!-- GROUP -->
+      <div class="mwin">
+        <div class="mwin-h">
+          <div class="mwin-t">GROUP <span class="mwin-sub">(MavMK2Spot 104)</span></div>
+          <div class="wbtn">□</div><div class="wbtn">×</div>
+        </div>
+        <div class="mwin-body"><div class="pgrid" id="gg" style="grid-template-columns:repeat(3,1fr)"></div></div>
+      </div>
+      <!-- POSITION -->
+      <div class="mwin">
+        <div class="mwin-h">
+          <div class="mwin-t">POSITION</div>
+          <div class="wbtn">□</div><div class="wbtn">×</div>
+        </div>
+        <div class="mwin-body"><div class="pgrid" id="pg" style="grid-template-columns:repeat(5,1fr)"></div></div>
+      </div>
+    </div>
+    <div class="wins-row" style="grid-template-columns:320px 1fr">
+      <!-- COLOUR -->
+      <div class="mwin">
+        <div class="mwin-h">
+          <div class="mwin-t">COLOUR</div>
+          <div class="wbtn">□</div><div class="wbtn">×</div>
+        </div>
+        <div class="mwin-body"><div class="pgrid" id="cg" style="grid-template-columns:repeat(5,1fr)"></div></div>
+      </div>
+      <!-- BEAM -->
+      <div class="mwin">
+        <div class="mwin-h">
+          <div class="mwin-t">BEAM</div>
+          <div class="wbtn">□</div><div class="wbtn">×</div>
+        </div>
+        <div class="mwin-body"><div class="pgrid" id="bg" style="grid-template-columns:repeat(5,1fr)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSOLE -->
+  <div class="con">
+    <!-- VISUALIZER -->
+    <div class="vis">
+      <div class="vis-topbar">
+        <span class="vis-lbl">MAGICVIS</span>
+        <span style="margin-left:auto;font-size:8px;color:#334">3D · Per View</span>
+      </div>
+      <canvas id="vc" style="width:100%;height:140px;display:block"></canvas>
+    </div>
+
+    <!-- ENCODERS -->
+    <div class="encs">
+      <div class="enc">
+        <div class="enc-lbl">A</div>
+        <div class="enc-knob" id="ek-a" title="Arrastrá arriba/abajo">
+          <div class="enc-indicator" id="ei-a"></div>
+        </div>
+        <div class="enc-val" id="ev-a">0</div>
+        <div class="enc-attr" id="ea-a">Strobe</div>
+      </div>
+      <div class="enc">
+        <div class="enc-lbl">B</div>
+        <div class="enc-knob" id="ek-b" title="Arrastrá arriba/abajo — Iris">
+          <div class="enc-indicator" id="ei-b"></div>
+        </div>
+        <div class="enc-val" id="ev-b">0</div>
+        <div class="enc-attr" id="ea-b">Iris</div>
+      </div>
+      <div class="enc">
+        <div class="enc-lbl">C</div>
+        <div class="enc-knob" id="ek-c" title="Arrastrá arriba/abajo — Focus">
+          <div class="enc-indicator" id="ei-c"></div>
+        </div>
+        <div class="enc-val" id="ev-c">128</div>
+        <div class="enc-attr" id="ea-c">Focus</div>
+      </div>
+      <div class="enc">
+        <div class="enc-lbl">D</div>
+        <div class="enc-knob" id="ek-d" title="Arrastrá arriba/abajo — Zoom">
+          <div class="enc-indicator" id="ei-d"></div>
+        </div>
+        <div class="enc-val" id="ev-d">128</div>
+        <div class="enc-attr" id="ea-d">Zoom</div>
+      </div>
+    </div>
+
+    <!-- BUTTONS ROW 1 -->
+    <div class="cbtns">
+      <div class="cbtn blue" onclick="ca('PROG')">PROG</div>
+      <div class="cbtn blue" onclick="ca('OUT')">OUT</div>
+      <div class="cbtn blue" onclick="ca('SETUP')">SETUP</div>
+      <div class="cbtn blue" onclick="ca('PATCH')">PATCH</div>
+      <div class="cbtn" onclick="ca('PAGE')">PAGE</div>
+      <div class="cbtn blue" onclick="ca('CUESTK')">CUE STK</div>
+      <div class="cbtn blue" onclick="ca('CUE')">CUE</div>
+      <div class="cbtn" onclick="ca('PLAY')">PLAY</div>
+      <div class="cbtn" onclick="ca('VIS')">VIS</div>
+      <div class="cbtn" onclick="ca('PLOT')">PLOT</div>
+      <div class="cbtn" onclick="ca('TIME')">TIME</div>
+      <div class="cbtn blue" onclick="ca('MACRO')">MACR</div>
+      <div class="cbtn" onclick="doLocate()">LOC</div>
+      <div class="cbtn" onclick="doFan()">FAN</div>
+      <div class="cbtn green" onclick="doHL()">HIGH</div>
+      <div class="cbtn" onclick="doAll()">ALL</div>
+      <div class="cbtn" onclick="doNav(-1)">PREV</div>
+      <div class="cbtn" onclick="doNav(1)">NEXT</div>
+      <div class="cbtn" onclick="setTab('pos')">POS</div>
+      <div class="cbtn" onclick="setTab('col')">COL</div>
+      <div class="cbtn" onclick="setTab('beam')">BEAM</div>
+      <div class="cbtn" onclick="doFX()">FX</div>
+      <div class="cbtn" onclick="setTab('int')">INT</div>
+      <div class="cbtn" onclick="ca('THRU')">THRU</div>
+    </div>
+
+    <!-- BUTTONS ROW 2 -->
+    <div class="cbtns" style="border-bottom:1px solid #222">
+      <div class="cbtn red" id="rec-btn" onclick="doRec()">REC</div>
+      <div class="cbtn" onclick="doUpd()">UPD</div>
+      <div class="cbtn green" onclick="doClear()">CLR</div>
+      <div class="cbtn" onclick="doUndo()">UNDO</div>
+      <div class="cbtn" onclick="ca('SHIFT')">SHIFT</div>
+      <div class="cbtn" id="blind-btn" onclick="doBlind()" style="background:#2a1500;border-color:#443010;color:#664420">BLIND</div>
+      <div class="cbtn" onclick="ca('BACK')">←</div>
+      <div class="cbtn green" onclick="ca('SET')">SET</div>
+      <div class="cbtn" onclick="ca('INC')">INC</div>
+      <div class="cbtn green" onclick="doUpd()">UPD</div>
+      <div class="cbtn red" onclick="doRec()">REC</div>
+      <div class="cbtn green" onclick="doGo()">GO ▶</div>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYBACKS -->
+<div class="pbs" id="pbs"></div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="status-prog" id="sp">PROGRAMMER: 0 fixtures</div>
+  <div class="status-info" id="si">Seleccioná un grupo para empezar · Misión activa en el panel derecho →</div>
+  <div class="status-time" id="st"></div>
+</div>
+
+<!-- MISSION PANEL -->
+<div id="mp">
+  <div class="mp-head" onclick="toggleMP()">
+    <span class="mp-ico" id="mp-ico">🎯</span>
+    <span class="mp-title" id="mp-t">Cargando...</span>
+    <span class="mp-xp" id="mp-xp">0 XP</span>
+    <span class="mp-tog" id="mp-tog">▼</span>
+  </div>
+  <div class="mp-tabs">
+    <div class="mp-tab on" id="tab-mis" onclick="setMPTab('mis')">MISIÓN</div>
+    <div class="mp-tab" id="tab-cri" onclick="setMPTab('cri')">🚨 CRISIS</div>
+    <div class="mp-tab" id="tab-tip" onclick="setMPTab('tip')">💡 TIPS</div>
+  </div>
+  <div class="mp-body" id="mp-body"></div>
+  <div class="mp-prog">
+    <div class="mp-bar"><div class="mp-fill" id="mp-fill" style="width:0%"></div></div>
+    <div class="mp-pt" id="mp-pt">0/12</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+// DATA
+// ══════════════════════════════════
+const GROUPS=[
+  {id:'g_allfoh',n:'All FOH',s:'Dimmer x8'},
+  {id:'g_allred',n:'All Red',s:'Colour'},
+  {id:'g_allgrn',n:'All Green',s:'Colour'},
+  {id:'g_mav',n:'MavMK2Spot',s:'Spot x6'},
+  {id:'g_rogue',n:'RogueR2W',s:'Wash x4'},
+  {id:'g_aq5',n:'RogueAQ5',s:'Wash x5'},
+  {id:'g_nex',n:'NexusAQ',s:'LED x4'},
+  {id:'g_spotl',n:'SpotsL',s:'Spot Left'},
+  {id:'g_spotr',n:'SpotsR',s:'Spot Right'},
+  {id:'g_allw',n:'All Wash',s:'Wash x12'},
+  {id:'g_bit',n:'Bitmap',s:'LED Matrix'},
+  {id:'g_alld',n:'All Dimmer',s:'Dimmer'},
+  {id:'g_fohs',n:'FOH Spot',s:'Spot x4'},
+  {id:'g_rear',n:'Rear Wash',s:'Wash x6'},
+  {id:'g_allm',n:'All Moving',s:'MH x10'},
+];
+const POSITIONS=[
+  {n:'centre',ic:'⊕'},{n:'far left',ic:'◁◁'},{n:'far right',ic:'▷▷'},
+  {n:'far up',ic:'△△'},{n:'far down',ic:'▽▽'},
+  {n:'left',ic:'◀'},{n:'right',ic:'▶'},{n:'up',ic:'▲'},{n:'down',ic:'▼'},{n:'Perspective',ic:'◇'},
+  {n:'Fan Out',ic:'⟨⟩'},{n:'Fan In',ic:'⟩⟨'},{n:'Out Up',ic:'↗↗'},{n:'Cross X',ic:'✕'},{n:'Ortho Front',ic:'□'},
+  {n:'Audience',ic:'↓↓'},{n:'Stage',ic:'⬛'},{n:'High Ang',ic:'↙'},{n:'Low Ang',ic:'↗'},{n:'Diagonal',ic:'⟋'},
+];
+const COLOURS=[
+  {n:'White',c:'#ffffff'},{n:'Red',c:'#ee2222'},{n:'Purple',c:'#9922ee'},
+  {n:'Orange',c:'#ee6600'},{n:'Yellow',c:'#eebb00'},{n:'Green',c:'#22aa22'},
+  {n:'Cyan',c:'#00bbcc'},{n:'Blue',c:'#2255ee'},{n:'Pink',c:'#ee44aa'},
+  {n:'UV',c:'#6600cc'},{n:'Magenta',c:'#cc00cc'},{n:'Lt Blue',c:'#44aaee'},
+  {n:'Md Yellow',c:'#cc9900'},{n:'Md Red',c:'#aa2200'},{n:'Lt Amber',c:'#eeaa44'},
+  {n:'Dk Amber',c:'#cc6600'},{n:'Dk Orange',c:'#bb4400'},{n:'Nc Pink',c:'#dd5577'},
+  {n:'Rose',c:'#ee7799'},{n:'Lavender',c:'#9966cc'},
+  {n:'Vlt Blue',c:'#3366ff'},{n:'Dk Blue',c:'#112299'},{n:'Indigo',c:'#443399'},
+  {n:'Warm W',c:'#fff0cc'},{n:'Cold W',c:'#ccddff'},
+];
+const BEAMS=[
+  {n:'Open',ic:'○'},{n:'Gobo 1-1',ic:'✶'},{n:'Gobo 1-2',ic:'✷'},{n:'Gobo 1-3',ic:'✸'},{n:'Gobo 1-4',ic:'✹'},
+  {n:'Gobo 1-5',ic:'✺'},{n:'Gobo 2-1',ic:'△'},{n:'Gobo 2-2',ic:'▲'},{n:'Gobo 2-3',ic:'◈'},{n:'Gobo 2-4',ic:'◉'},
+  {n:'Narrow',ic:'·'},{n:'Mid',ic:'◦'},{n:'Wide',ic:'○'},{n:'S Strobe',ic:'⚡'},{n:'F Strobe',ic:'⚡⚡'},
+  {n:'Gobo 3',ic:'❋'},{n:'Gobo 4',ic:'✼'},{n:'Gobo 5',ic:'✦'},{n:'Gobo 6',ic:'✧'},{n:'Open Gobo',ic:'○'},
+];
+
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+const S={
+  selGroups:new Set(),
+  selColour:null,
+  selPos:null,
+  selBeam:null,
+  enc:{a:0,b:0,c:128,d:128},
+  blind:false,recArmed:false,fxOn:false,fxType:null,
+  hlOn:false,progDirty:false,
+  pbVals:Array(10).fill(0),
+  cuesRec:0,
+  gmVal:100,
+  t:0,
+};
+let mpCurrent=0,mpXP=0,mpTab='mis';
+const mpStepDone=new Set();
+
+// ══════════════════════════════════
+// MISSIONS
+// ══════════════════════════════════
+const MISSIONS=[
+  {ico:'🎛️',t:'Seleccioná un grupo',xp:80,
+   obj:'El panel <strong>GROUP</strong> (arriba izquierda) contiene conjuntos de fixtures. Tocá cualquier celda para seleccionar ese grupo.',
+   steps:[
+     {txt:'Tocá cualquier celda en el panel <strong>GROUP</strong>',chk:()=>S.selGroups.size>0},
+     {txt:'El status bar abajo debe mostrar fixtures activos',chk:()=>S.selGroups.size>0},
+   ],
+   tip:'Los grupos son tu herramienta de velocidad #1. "All Wash" selecciona 12 fixtures en un clic.'},
+  {ico:'🎨',t:'Aplicá un color',xp:90,
+   obj:'Con fixtures seleccionados, tocá cualquier color en el panel <strong>COLOUR</strong>. El color va al Programmer.',
+   steps:[
+     {txt:'Tener un grupo seleccionado',chk:()=>S.selGroups.size>0},
+     {txt:'Tocar un color en el panel <strong>COLOUR</strong>',chk:()=>S.selColour!==null},
+     {txt:'El visualizer muestra el color aplicado',chk:()=>S.selColour!==null},
+   ],
+   tip:'Siempre usá paletas de color. Si después necesitás cambiar "ese azul" en 50 cues, cambiás una sola paleta y todas se actualizan.'},
+  {ico:'📐',t:'Posicioná los moving heads',xp:90,
+   obj:'Seleccioná el grupo <strong>MavMK2Spot</strong> o <strong>All Moving</strong> y luego tocá una posición en el panel <strong>POSITION</strong>.',
+   steps:[
+     {txt:'Seleccionar <strong>MavMK2Spot</strong> o <strong>All Moving</strong>',chk:()=>S.selGroups.has('g_mav')||S.selGroups.has('g_allm')},
+     {txt:'Tocar una posición en el panel POSITION',chk:()=>S.selPos!==null},
+   ],
+   tip:'Grabá posiciones como paletas antes del show. Centro, Audience, FOH: con 5 paletas cubrís el 90% de los casos.'},
+  {ico:'🔆',t:'Usá los encoders de Beam',xp:110,
+   obj:'Los encoders <strong>D (Zoom)</strong> y <strong>B (Iris)</strong> controlan el tamaño del haz. <strong>Arrastrá verticalmente</strong> sobre el encoder para cambiar el valor.',
+   steps:[
+     {txt:'Arrastrá hacia arriba/abajo el encoder <strong>D — Zoom</strong>',chk:()=>S.enc.d!==128},
+     {txt:'Arrastrá el encoder <strong>B — Iris</strong> para recortar el haz',chk:()=>S.enc.b!==0},
+   ],
+   tip:'D=Zoom = tamaño del haz óptico. B=Iris = recorte mecánico. Para un seguidor ajustado: más Iris cierra el círculo de luz.'},
+  {ico:'💾',t:'Grabá tu primera cue',xp:130,
+   obj:'El Programmer tiene valores. Ahora presioná <strong>REC</strong> en la consola derecha y luego mové un fader en el panel de playbacks inferior.',
+   steps:[
+     {txt:'Tener color y/o posición en el Programmer',chk:()=>S.selColour!==null||S.selPos!==null},
+     {txt:'Presionar el botón <strong>REC</strong> (queda verde parpadeando)',chk:()=>S.recArmed},
+     {txt:'Mover cualquier fader hacia arriba para grabar',chk:()=>S.cuesRec>=1},
+   ],
+   tip:'Después de grabar SIEMPRE presioná CLR. El Programmer activo pisa el playback — si no lo limpiás, no verás bien los cambios de cues.'},
+  {ico:'✨',t:'FX Generator — Pan Sweep',xp:130,
+   obj:'Seleccioná moving heads y presioná el botón <strong>FX</strong> en la consola. Se activa un barrido automático visible en el visualizer.',
+   steps:[
+     {txt:'Seleccionar <strong>MavMK2Spot</strong> o <strong>All Moving</strong>',chk:()=>S.selGroups.has('g_mav')||S.selGroups.has('g_allm')},
+     {txt:'Presionar el botón <strong>FX</strong> en la consola',chk:()=>S.fxOn},
+     {txt:'El encoder A ahora controla Speed del FX',chk:()=>S.fxOn},
+   ],
+   tip:'FX sobre paleta de posición = el efecto oscila ALREDEDOR de tu posición grabada. Nunca desde cero del fixture.'},
+  {ico:'🌈',t:'Rainbow en wash LEDs',xp:130,
+   obj:'Seleccioná <strong>All Wash</strong> o <strong>RogueAQ5</strong>, elegí <strong>Open</strong> en BEAM y activá FX. El visualizer muestra colores girando.',
+   steps:[
+     {txt:'Seleccionar <strong>All Wash</strong> o <strong>RogueAQ5</strong>',chk:()=>S.selGroups.has('g_allw')||S.selGroups.has('g_aq5')||S.selGroups.has('g_rogue')},
+     {txt:'Tocar <strong>Open</strong> en el panel BEAM',chk:()=>S.selBeam==='Open'},
+     {txt:'Activar FX — rainbow en el visualizer',chk:()=>S.fxOn&&(S.selGroups.has('g_allw')||S.selGroups.has('g_aq5')||S.selGroups.has('g_rogue'))},
+   ],
+   tip:'Rainbow = FX en Hue con Spread entre fixtures. Cada fixture muestra un color distinto del espectro. Con Tap Tempo lo sincronizás al ritmo.'},
+  {ico:'⚡',t:'Strobe profesional',xp:110,
+   obj:'Seleccioná <strong>S Strobe</strong> en BEAM y luego ajustá el encoder <strong>A (Strobe)</strong>. El encoder A cambia de función según el contexto.',
+   steps:[
+     {txt:'Seleccionar cualquier grupo de spots',chk:()=>S.selGroups.size>0},
+     {txt:'Tocar <strong>S Strobe</strong> o <strong>F Strobe</strong> en BEAM',chk:()=>S.selBeam==='S Strobe'||S.selBeam==='F Strobe'},
+     {txt:'Ajustar encoder A para la velocidad del strobe',chk:()=>S.enc.a>0},
+   ],
+   tip:'⚠️ Strobe +3Hz puede causar ataques epilépticos. Avisá SIEMPRE al público. Usá S Strobe (slow) para momentos dramáticos, F Strobe para climax.'},
+  {ico:'🔧',t:'Diagnóstico: zoom no responde',xp:120,
+   obj:'Simulación de la situación más frecuente: grabaste el zoom pero la cue no lo toma. Seguí el diagnóstico paso a paso.',
+   steps:[
+     {txt:'Asegurate de tener fixtures seleccionados',chk:()=>S.selGroups.size>0},
+     {txt:'Presionar <strong>CLR</strong> para limpiar el Programmer completamente',chk:()=>!S.progDirty},
+     {txt:'Activar solo un fader de playback (no varios)',chk:()=>S.pbVals.filter(v=>v>5).length===1},
+   ],
+   tip:'Si el zoom aún no responde con Programmer limpio y un solo PB activo: View Cue → verificar que el atributo Beam aparece en la cue. Si no aparece, no se grabó.'},
+  {ico:'🎭',t:'Show de 3 cues',xp:200,
+   obj:'Armá 3 cues que cuenten una historia: <strong>Intro suave → Verso → Chorus</strong>. Usá colores, posiciones y FX distintos.',
+   steps:[
+     {txt:'Grabar cue 1: grupo wash + color azul + posición baja',chk:()=>S.cuesRec>=1},
+     {txt:'Grabar cue 2: color diferente + posición diferente',chk:()=>S.cuesRec>=2},
+     {txt:'Grabar cue 3: FX activado + color intenso (el climax)',chk:()=>S.cuesRec>=3},
+   ],
+   tip:'Regla de show: Intro = 40% intensidad + azul frío. Verso = 60% + color medio. Chorus = 100% + blanco/FX. Las paletas hacen que ajustar esto sea instantáneo.'},
+  {ico:'🎚️',t:'Busking en vivo',xp:180,
+   obj:'Subí <strong>2 o más faders</strong> simultáneamente y combiná colores y FX. Así se opera un show de música en vivo sin cuelists.',
+   steps:[
+     {txt:'Subir 2 faders de playback al mismo tiempo',chk:()=>S.pbVals.filter(v=>v>10).length>=2},
+     {txt:'Cambiar color con una paleta mientras los faders están activos',chk:()=>S.selColour!==null&&S.pbVals.filter(v=>v>10).length>=2},
+     {txt:'Activar FX con 2 faders activos',chk:()=>S.fxOn&&S.pbVals.filter(v=>v>10).length>=2},
+   ],
+   tip:'Busking pro: Columna 1 faders = colores. Columna 2 = efectos. Columna 3 = posiciones. Speed Master controla velocidad de todos los FX juntos.'},
+  {ico:'🏆',t:'Modo Maestro',xp:250,
+   obj:'Demostrá que dominás la consola. Grabá 5 cues distintas usando grupos, paletas, posiciones y FX. Operá el show con los faders.',
+   steps:[
+     {txt:'Tener 5 cues grabadas (cues acumuladas)',chk:()=>S.cuesRec>=5},
+     {txt:'Tener paletas de color y de beam usadas',chk:()=>S.selColour!==null&&S.selBeam!==null},
+     {txt:'Operar show con FX + 3 faders simultáneos',chk:()=>S.fxOn&&S.pbVals.filter(v=>v>10).length>=3},
+   ],
+   tip:'Un operador profesional trabaja con mínimo 3 capas: intensidad (HTP) + color (LTP) + efecto (LTP). Capas separadas = flexibilidad total en vivo.'},
+];
+
+const CRISIS=[
+  {q:'El zoom grabé el nuevo valor pero la cue no lo toma',
+   a:'Causa más frecuente: el Programmer tiene valores activos que pisan el playback.',
+   steps:['Presioná CLR para limpiar el Programmer','Bajá TODOS los faders a cero','Subí SOLO el fader de esa cue','¿Tomó el valor? → El problema era el Programmer activo','¿Sigue mal? → View Cue → verificar que el atributo Beam aparece listado']},
+  {q:'Dos playbacks activos, el color del segundo pisa al primero',
+   a:'Comportamiento correcto de LTP: el último activado gana. Solución: diseñar el orden de activación o usar prioridades.',
+   steps:['En Cue Stack → Options → Priority: asignar prioridad más alta al PB principal','O usar HTP para intensidades y LTP solo para color/posición','Activar siempre el PB de color DESPUÉS del de intensidad']},
+  {q:'Los fixtures no responden aunque DMX está activo',
+   a:'Verificar en orden: universo → dirección → Grand Master → Blind mode.',
+   steps:['¿Grand Master en cero? Subirlo a 100%','¿BLIND activo (botón amarillo)? Desactivarlo','Setup → DMX I/O → verificar universo asignado al universo correcto','Patch → verificar dirección y universo del fixture','Test DMX en Setup para enviar valores manuales']},
+  {q:'El FX sigue corriendo aunque bajé el fader',
+   a:'El FX puede estar en otro playback activo o en el Programmer.',
+   steps:['Verificar que el Programmer esté limpio (CLR)','Bajar TODOS los faders y confirmar que el FX para','Identificar qué PB tiene el FX grabado','Considerar separar FX en su propio submaster para control independiente']},
+  {q:'Actualicé MagicQ y el show se comporta diferente',
+   a:'Las actualizaciones mayores pueden cambiar comportamientos de HTP/LTP o tiempos default.',
+   steps:['Leer el changelog de la versión instalada (Help → Release Notes)','Verificar Cue Stack Options de las cuelists principales','Revisar Setup → Defaults → Fade times','Siempre mantener backup del show antes de actualizar']},
+  {q:'Perdí la conexión Art-Net en medio del show',
+   a:'Los fixtures mantienen su último valor recibido (Hold Last Look). No entres en pánico.',
+   steps:['Los fixtures NO se apagarán — quedan en el último estado','Verificar cable de red → switch → dirección IP del nodo','Setup → DMX I/O → confirmar universo y dirección IP del nodo','Reconectar el cable — MagicQ retoma control automáticamente']},
+];
+
+const TIPS=[
+  {tag:'BEST PRACTICE',txt:'Siempre hacé CLEAR después de grabar una cue. El Programmer activo pisa el playback y te hace creer que algo está mal cuando en realidad es que el Programmer tiene valores encima.',accent:'var(--cyan)'},
+  {tag:'ZOOM/IRIS PRO',txt:'Para un seguidor: grabá 3 paletas de Beam (Tight/Medium/Wide) antes del show. Así cambiás el tamaño del haz con un toque, sin tocar encoders en vivo.',accent:'var(--yellow)'},
+  {tag:'PALETAS',txt:'Nunca programes colores con valores directos (RGB numérico). Siempre como paletas. Cambiar un color en 80 cues = 1 click con paletas, 3 horas sin ellas.',accent:'var(--green)'},
+  {tag:'FX SOBRE PALETA',txt:'Aplicá el FX DESPUÉS de poner la paleta de posición. El FX oscila alrededor del valor base. Si no hay base, oscila desde el Home del fixture.',accent:'var(--purple)'},
+  {tag:'ACTUALIZAR',txt:'Nunca actualices MagicQ el día de un show. Actualizá en casa, probá el show completo, y recién después llevá esa versión a un evento.',accent:'var(--orange)'},
+  {tag:'BUSKING',txt:'Para busking: Columna 1=Colores, Columna 2=Efectos, Columna 3=Posiciones, Columna 4=Specials. Speed Master en el encoder principal controla todos los FX juntos.',accent:'var(--pink)'},
+  {tag:'GDTF',txt:'Si tu fixture no está en la librería: descargá el GDTF desde gdtf-share.com e importalo en Patch → Choose Fixture → Import GDTF. Funciona desde MagicQ v1.9+.',accent:'var(--cyan)'},
+  {tag:'EMERGENCIA LIVE',txt:'Si algo falla en show: CALMA. Los fixtures mantienen su último estado. Tenés tiempo para diagnosticar. El peor error es tocar algo al azar bajo presión.',accent:'var(--red)'},
+];
+
+// ══════════════════════════════════
+// RENDER PALETTES
+// ══════════════════════════════════
+function renderAll(){
+  // GROUPS
+  const g=document.getElementById('gg'); g.innerHTML='';
+  GROUPS.forEach((gr,i)=>{
+    const c=document.createElement('div'); c.className='pcell'; c.id='gc-'+gr.id;
+    c.innerHTML=`<span class="pnum">G${i+1}</span><div style="display:flex;flex-direction:column;gap:1px;"><div style="font-size:10px;color:#fff;font-weight:600">${gr.n}</div><div style="font-size:8px;color:#445">${gr.s}</div></div>`;
+    c.onclick=()=>selGrp(gr.id,gr.n); g.appendChild(c);
+  });
+  // POSITIONS
+  const pg=document.getElementById('pg'); pg.innerHTML='';
+  POSITIONS.forEach((p,i)=>{
+    const c=document.createElement('div'); c.className='pcell'; c.id='pc-'+i;
+    c.innerHTML=`<span class="pnum">P${i+1}</span><span class="picon">${p.ic}</span><span class="pname">${p.n}</span>`;
+    c.onclick=()=>selPos(i,p.n); pg.appendChild(c);
+  });
+  // COLOURS
+  const cg=document.getElementById('cg'); cg.innerHTML='';
+  COLOURS.forEach((col,i)=>{
+    const c=document.createElement('div'); c.className='pcell'; c.id='col-'+i;
+    const r=parseInt(col.c.slice(1,3),16),g2=parseInt(col.c.slice(3,5),16),b=parseInt(col.c.slice(5,7),16);
+    c.innerHTML=`<span class="pnum">C${i+1}</span><div class="pdot" style="background:${col.c};box-shadow:0 0 4px rgba(${r},${g2},${b},.5)"></div><span class="pname">${col.n}</span>`;
+    c.onclick=()=>selCol(i,col.n,col.c); cg.appendChild(c);
+  });
+  // BEAMS
+  const bg=document.getElementById('bg'); bg.innerHTML='';
+  BEAMS.forEach((bm,i)=>{
+    const c=document.createElement('div'); c.className='pcell'; c.id='bm-'+i;
+    c.innerHTML=`<span class="pnum">B${i+1}</span><span class="picon">${bm.ic}</span><span class="pname">${bm.n}</span>`;
+    c.onclick=()=>selBeam(i,bm.n); bg.appendChild(c);
+  });
+  renderPBs();
+}
+
+function renderPBs(){
+  const pbs=document.getElementById('pbs'); pbs.innerHTML='';
+  // Grand Master
+  const gm=document.createElement('div'); gm.className='pb-gm';
+  gm.innerHTML=`<div class="pb-gm-lbl">GRAND<br>MASTER</div>
+    <div class="pb-fader-wrap" style="height:60px">
+      <div class="pb-fader-track"></div>
+      <input type="range" class="pb-fader" id="gm-f" min="0" max="100" value="100" oninput="S.gmVal=+this.value;msg('Grand Master: '+this.value+'%');drawStage()">
+    </div>
+    <div style="font-size:8px;color:#445;font-family:var(--mono)" id="gm-v">100</div>`;
+  pbs.appendChild(gm);
+  // Strips
+  const NAMES=['FOH Wash','Pars Chase','Spot Static','Wash Static','Beam Static','Spot Circle','Wash Tilt','Beam Tilt','Test','Spot Cues'];
+  for(let i=0;i<10;i++){
+    const s=document.createElement('div'); s.className='pb-strip';
+    s.innerHTML=`
+      <div class="pb-btns">
+        <div class="pb-go" onclick="pbGo(${i})">GO</div>
+        <div class="pb-stop" onclick="pbStop(${i})">■</div>
+      </div>
+      <div class="pb-led" id="pl-${i}"></div>
+      <div class="pb-fader-wrap">
+        <div class="pb-fader-track"></div>
+        <input type="range" class="pb-fader" id="pf-${i}" min="0" max="100" value="0" step="1" oninput="pbFader(${i},+this.value)">
+      </div>
+      <div class="pb-num">PB${i+1}</div>
+      <div class="pb-name" title="${NAMES[i]}">${NAMES[i]}</div>`;
+    pbs.appendChild(s);
+  }
+}
+
+// ══════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════
+function selGrp(id,name){
+  if(S.selGroups.has(id)){S.selGroups.delete(id);document.getElementById('gc-'+id)?.classList.remove('lit');}
+  else{S.selGroups.add(id);document.getElementById('gc-'+id)?.classList.add('lit');}
+  updStatus(); checkM(); drawStage();
+  msg('Grupo: '+name+(S.selGroups.has(id)?' seleccionado':' deseleccionado'));
+}
+function selCol(i,name,hex){
+  document.querySelectorAll('.pcell.lit2').forEach(e=>e.classList.remove('lit2'));
+  document.getElementById('col-'+i)?.classList.add('lit2');
+  S.selColour={i,name,hex}; S.progDirty=true;
+  updStatus(); checkM(); drawStage(); msg('Colour: '+name+' → Programmer');
+}
+function selPos(i,name){
+  document.querySelectorAll('.pcell.lit').forEach(e=>e.classList.remove('lit'));
+  // re-highlight groups
+  S.selGroups.forEach(id=>document.getElementById('gc-'+id)?.classList.add('lit'));
+  document.getElementById('pc-'+i)?.classList.add('lit');
+  S.selPos={i,name}; S.progDirty=true;
+  updStatus(); checkM(); drawStage(); msg('Position: '+name+' → Programmer');
+}
+function selBeam(i,name){
+  document.querySelectorAll('.pcell.lit3').forEach(e=>e.classList.remove('lit3'));
+  document.getElementById('bm-'+i)?.classList.add('lit3');
+  S.selBeam=name; S.progDirty=true;
+  updStatus(); checkM(); drawStage(); msg('Beam: '+name+' → Programmer');
+}
+
+function doLocate(){
+  if(!S.selGroups.size){msg('⚠ Seleccioná un grupo primero');return;}
+  selCol(0,'White','#ffffff'); selPos(0,'centre');
+  msg('LOCATE → White · Full · Centre');
+}
+function doFan(){msg('FAN mode → distribuye valores escalonados. Ej: seleccioná posición → FAN para crear abanico automático.');}
+function doHL(){S.hlOn=!S.hlOn;msg(S.hlOn?'HIGHLIGHT ON — fixture activo al 100% aislado':'HIGHLIGHT OFF');}
+function doAll(){msg('ALL → selecciona todos los fixtures del mismo tipo que el fixture activo');}
+function doNav(d){msg(d>0?'NEXT HEAD → siguiente fixture en selección':'PREV HEAD → fixture anterior en selección');}
+function setTab(t){
+  const tabs={pos:'Pan/Tilt encoders activos',col:'CMY/RGB encoders activos',beam:'Zoom/Iris/Gobo encoders activos',int:'Dimmer encoder activo'};
+  msg(tabs[t]||t);
+  if(t==='beam'){
+    setEncAttr('a','Strobe');setEncAttr('b','Iris');setEncAttr('c','Focus');setEncAttr('d','Zoom');
+  } else if(t==='pos'){
+    setEncAttr('a','Pan');setEncAttr('b','Tilt');setEncAttr('c','Pan Fine');setEncAttr('d','Tilt Fine');
+  } else if(t==='col'){
+    setEncAttr('a','Hue');setEncAttr('b','Sat');setEncAttr('c','Red');setEncAttr('d','Blue');
+  } else if(t==='int'){
+    setEncAttr('a','Dimmer');setEncAttr('b','---');setEncAttr('c','---');setEncAttr('d','---');
+  }
+}
+function setEncAttr(id,name){document.getElementById('ea-'+id).textContent=name;}
+
+function doRec(){
+  if(S.recArmed){
+    S.recArmed=false;
+    const btn=document.getElementById('rec-btn');
+    btn.className='cbtn red'; btn.textContent='REC';
+    msg('Record: cancelado');
+  } else {
+    if(!S.progDirty&&!S.selColour&&!S.selPos){msg('⚠ Programmer vacío — ajustá algo antes de grabar');return;}
+    S.recArmed=true;
+    const btn=document.getElementById('rec-btn');
+    btn.className='cbtn rec-armed';
+    msg('REC ARMADO ★ → Mové un fader hacia arriba para grabar la cue');
+    checkM();
+  }
+}
+function doUpd(){
+  if(!S.progDirty){msg('⚠ Nada que actualizar — Programmer vacío');return;}
+  msg('UPDATE ✓ → Cue actualizada con los valores del Programmer');
+  flash();
+}
+function doClear(){
+  S.selGroups.clear();S.selColour=null;S.selPos=null;S.selBeam=null;
+  S.fxOn=false;S.recArmed=false;S.progDirty=false;
+  document.querySelectorAll('.pcell.lit,.pcell.lit2,.pcell.lit3').forEach(e=>{e.classList.remove('lit','lit2','lit3');});
+  document.getElementById('rec-btn').className='cbtn red';
+  document.getElementById('rec-btn').textContent='REC';
+  setEncAttr('a','Strobe');setEncAttr('b','Iris');setEncAttr('c','Focus');setEncAttr('d','Zoom');
+  updStatus(); drawStage(); checkM(); msg('CLR ✓ → Programmer limpio');
+}
+function doUndo(){msg('UNDO → última acción del Programmer deshecha');}
+function doFX(){
+  if(!S.selGroups.size){msg('⚠ Seleccioná un grupo primero');return;}
+  S.fxOn=!S.fxOn;
+  S.fxType=S.fxOn?'Pan Sine':null;
+  if(S.fxOn){
+    setEncAttr('a','FX Speed');setEncAttr('b','FX Size');setEncAttr('c','FX Offset');setEncAttr('d','FX Base');
+    msg('FX Generator: Pan Sine ON → Speed:60BPM Size:60% Spread:auto');
+    flash();
+  } else {
+    setEncAttr('a','Strobe');setEncAttr('b','Iris');setEncAttr('c','Focus');setEncAttr('d','Zoom');
+    msg('FX Generator: OFF');
+  }
+  updStatus(); checkM(); drawStage();
+}
+function doBlind(){
+  S.blind=!S.blind;
+  const btn=document.getElementById('blind-btn');
+  btn.style.background=S.blind?'#442a00':'#2a1500';
+  btn.style.borderColor=S.blind?'#886622':'#443010';
+  btn.style.color=S.blind?'#ffaa44':'#664420';
+  msg(S.blind?'BLIND MODE ON — los cambios NO van al output DMX':'BLIND MODE OFF — output en vivo');
+}
+function doGo(){msg('GO → Siguiente cue ejecutada en la cuelist activa');flash();}
+function pg(n,btn){
+  document.querySelectorAll('.pg').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); msg('PAGE '+n+' cargada — playbacks de página '+n);
+}
+
+function pbFader(i,v){
+  S.pbVals[i]=v;
+  document.getElementById('pl-'+i)?.classList.toggle('on',v>5);
+  if(S.recArmed&&v>5&&S.progDirty){
+    S.cuesRec++;S.recArmed=false;
+    document.getElementById('rec-btn').className='cbtn red';
+    document.getElementById('rec-btn').textContent='REC';
+    msg('✓ CUE '+S.cuesRec+' grabada en PB'+(i+1)+' → ahora presioná CLR');
+    xpPop(15,'Cue grabada');flash();
+  }
+  drawStage(); checkM();
+}
+function pbGo(i){
+  document.getElementById('pf-'+i).value=100; pbFader(i,100);
+  msg('GO → PB'+(i+1)+' ejecutado');
+}
+function pbStop(i){
+  document.getElementById('pf-'+i).value=0; S.pbVals[i]=0;
+  document.getElementById('pl-'+i)?.classList.remove('on');
+  msg('STOP → PB'+(i+1)+' detenido'); drawStage();
+}
+
+function ca(a){
+  const m={
+    PROG:'Programmer window — muestra todos los valores activos en el buffer',
+    OUT:'Output window — valores DMX saliendo en tiempo real a los fixtures',
+    SETUP:'Setup — configuración de red, DMX I/O, universos Art-Net/sACN',
+    PATCH:'Patch — define fixtures, dirección DMX, universo, modo',
+    VIS:'Visualiser — conecta MagicVis para preview 3D del stage',
+    MACRO:'Macros — automatización de secuencias de comandos',
+    TIME:'Timeline — sincronización con MIDI timecode o LTC',
+    CUESTK:'Cue Stack — lista de cues con tiempos de fade y opciones',
+    CUE:'Cue window — editar cue individual',
+    PLAY:'Playback window — gestión de todas las cuelists',
+    THRU:'THRU — seleccionar rango. Ej: tecleá 1 THRU 8',
+    SHIFT:'SHIFT — modifica función del siguiente botón presionado',
+    SET:'SET — activa edición de nombre del elemento seleccionado',
+    INC:'INCLUDE — carga los valores de la cue seleccionada al Programmer',
+    BACK:'Retroceder a cue anterior en la cuelist activa',
+  };
+  msg(m[a]||a+' — función de consola');
+}
+
+// ══════════════════════════════════
+// ENCODERS
+// ══════════════════════════════════
+let encDrag=null,encY0=0,encV0=0;
+['a','b','c','d'].forEach(id=>{
+  const el=document.getElementById('ek-'+id);
+  if(!el)return;
+  const startDrag=(e)=>{
+    encDrag=id; encY0=e.clientY||e.touches?.[0]?.clientY||0; encV0=S.enc[id];
+    el.classList.add('dragging'); e.preventDefault();
+  };
+  el.addEventListener('mousedown',startDrag);
+  el.addEventListener('touchstart',startDrag,{passive:false});
+});
+document.addEventListener('mousemove',e=>{
+  if(!encDrag)return;
+  const dy=encY0-(e.clientY);
+  const newV=Math.max(0,Math.min(255,Math.round(encV0+dy*1.8)));
+  updateEnc(encDrag,newV);
+});
+document.addEventListener('touchmove',e=>{
+  if(!encDrag)return;
+  const dy=encY0-(e.touches[0].clientY);
+  const newV=Math.max(0,Math.min(255,Math.round(encV0+dy*1.8)));
+  updateEnc(encDrag,newV); e.preventDefault();
+},{passive:false});
+const stopDrag=()=>{
+  if(encDrag){
+    document.getElementById('ek-'+encDrag)?.classList.remove('dragging');
+    encDrag=null;
+  }
+};
+document.addEventListener('mouseup',stopDrag);
+document.addEventListener('touchend',stopDrag);
+
+function updateEnc(id,v){
+  S.enc[id]=v;
+  const dot=document.getElementById('ei-'+id);
+  const angle=(v/255)*240-120;
+  if(dot) dot.style.transform=`rotate(${angle}deg)`;
+  document.getElementById('ev-'+id).textContent=v;
+  S.progDirty=true;
+  updStatus(); checkM(); drawStage();
+  const attr=document.getElementById('ea-'+id)?.textContent||id;
+  msg(attr+': '+v);
+}
+
+// ══════════════════════════════════
+// STATUS
+// ══════════════════════════════════
+function updStatus(){
+  const n=S.selGroups.size;
+  document.getElementById('sp').textContent='PROGRAMMER: '+(n*4)+' fixtures';
+  const parts=[];
+  if(S.selGroups.size) parts.push([...S.selGroups].map(id=>GROUPS.find(g=>g.id===id)?.n||'?').slice(0,2).join('+'));
+  if(S.selColour) parts.push('Col:'+S.selColour.name);
+  if(S.selPos) parts.push('Pos:'+S.selPos.name);
+  if(S.selBeam) parts.push('Beam:'+S.selBeam);
+  if(S.fxOn) parts.push('FX:'+S.fxType);
+  if(S.blind) parts.push('⚠BLIND');
+  document.getElementById('si').textContent=parts.join(' | ')||'Programmer vacío — seleccioná un grupo para empezar';
+}
+function msg(m){
+  document.getElementById('si').textContent=m;
+  clearTimeout(msg._t);
+  msg._t=setTimeout(updStatus,3000);
+}
+
+// ══════════════════════════════════
+// STAGE VISUALIZER
+// ══════════════════════════════════
+let rafId=null;
+function drawStage(){
+  const cv=document.getElementById('vc');
+  if(!cv)return;
+  cv.width=200; cv.height=140;
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  ctx.fillStyle='#05080e'; ctx.fillRect(0,0,W,H);
+  // Stage floor
+  ctx.fillStyle='#0c1320'; ctx.fillRect(8,H*.45,W-16,H*.5);
+  ctx.strokeStyle='#182030'; ctx.lineWidth=1; ctx.strokeRect(8,H*.45,W-16,H*.5);
+  // Truss
+  ctx.fillStyle='#222a36'; ctx.fillRect(6,6,W-12,10);
+  ctx.strokeStyle='#2a3444'; ctx.strokeRect(6,6,W-12,10);
+
+  const N=8; const sp=(W-24)/(N-1);
+  const colH=S.selColour?.hex||'#ffffff';
+  const r=parseInt(colH.slice(1,3),16),g=parseInt(colH.slice(3,5),16),b=parseInt(colH.slice(5,7),16);
+  const on=S.selGroups.size>0;
+  const gm=S.gmVal/100;
+  const pbMax=Math.max(...S.pbVals)/100;
+  const intens=on?Math.max(gm*(S.cuesRec>0?Math.max(.5,pbMax):.5),.35):0;
+
+  S.t+=.025;
+
+  for(let i=0;i<N;i++){
+    const fx=14+i*sp, fy=11;
+    // fixture dot
+    ctx.beginPath(); ctx.arc(fx,fy+3,2.5,0,Math.PI*2);
+    ctx.fillStyle=on?`rgb(${Math.min(255,r+60)},${Math.min(255,g+60)},${Math.min(255,b+60)})`:'#223';
+    ctx.fill();
+    if(!on||intens<.05)continue;
+    // target X
+    let bx=fx;
+    if(S.selPos){
+      const pn=S.selPos.name;
+      if(pn==='far left')bx=fx-30; else if(pn==='left')bx=fx-15;
+      else if(pn==='far right')bx=fx+30; else if(pn==='right')bx=fx+15;
+      else if(pn==='Fan Out')bx=fx+(i-N/2)*6;
+      else if(pn==='Audience')bx=fx;
+      else bx=fx+(i-N/2)*1.5;
+    } else bx=fx+(i-N/2)*1.5;
+    // FX sweep
+    if(S.fxOn){
+      const off=i/N;
+      const sweep=Math.sin((S.t+off)*Math.PI*2)*22;
+      bx+=sweep;
+      // rainbow
+      if(S.selGroups.has('g_allw')||S.selGroups.has('g_aq5')||S.selGroups.has('g_rogue')){
+        const hue=((S.t*.25+off)%1)*360;
+        const [rr,gg2,bb]=hsl(hue/360,1,.5);
+        drawBeam(ctx,fx,fy+6,bx,H-10,rr,gg2,bb,intens,S.enc.d/255);
+        continue;
+      }
+    }
+    drawBeam(ctx,fx,fy+6,bx,H-10,r,g,b,intens,S.enc.d/255);
+  }
+  // person
+  ctx.fillStyle='rgba(200,220,240,.1)';
+  const px=W/2,py=H-28;
+  ctx.beginPath();ctx.arc(px,py-16,5,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(px-3.5,py-11,7,15);
+  if(S.fxOn) rafId=requestAnimationFrame(drawStage);
+}
+function drawBeam(ctx,x0,y0,xT,yT,r,g,b,intens,zoom){
+  const bw=3+zoom*18;
+  const grad=ctx.createLinearGradient(x0,y0,xT,yT);
+  grad.addColorStop(0,`rgba(${r},${g},${b},${.2*intens})`);
+  grad.addColorStop(.6,`rgba(${r},${g},${b},${.1*intens})`);
+  grad.addColorStop(1,`rgba(${r},${g},${b},0)`);
+  ctx.beginPath();
+  ctx.moveTo(x0-2,y0);ctx.lineTo(xT-bw,yT);ctx.lineTo(xT+bw,yT);ctx.lineTo(x0+2,y0);
+  ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  // spot
+  const sg=ctx.createRadialGradient(xT,yT,0,xT,yT,bw*1.3);
+  sg.addColorStop(0,`rgba(${r},${g},${b},${.5*intens})`);
+  sg.addColorStop(1,`rgba(${r},${g},${b},0)`);
+  ctx.beginPath();ctx.arc(xT,yT,bw*1.3,0,Math.PI*2);ctx.fillStyle=sg;ctx.fill();
+}
+function hsl(h,s,l){
+  let r,g,b;
+  if(!s){r=g=b=l;}else{
+    const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+    const h2r=(_p,_q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return _p+(_q-_p)*6*t;if(t<.5)return _q;if(t<2/3)return _p+(_q-_p)*(2/3-t)*6;return _p;};
+    r=h2r(p,q,h+1/3);g=h2r(p,q,h);b=h2r(p,q,h-1/3);
+  }
+  return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+
+// ══════════════════════════════════
+// MISSIONS PANEL
+// ══════════════════════════════════
+function renderMP(){
+  document.getElementById('mp-ico').textContent=mpCurrent<MISSIONS.length?MISSIONS[mpCurrent].ico:'🏆';
+  document.getElementById('mp-t').textContent=mpCurrent<MISSIONS.length?MISSIONS[mpCurrent].t:'CURSO COMPLETADO';
+  document.getElementById('mp-xp').textContent=mpXP+' XP';
+  document.getElementById('mp-fill').style.width=(mpCurrent/MISSIONS.length*100)+'%';
+  document.getElementById('mp-pt').textContent=mpCurrent+'/'+MISSIONS.length;
+
+  if(mpTab==='mis') renderMisTab();
+  else if(mpTab==='cri') renderCriTab();
+  else renderTipTab();
+}
+
+function renderMisTab(){
+  const body=document.getElementById('mp-body');
+  if(mpCurrent>=MISSIONS.length){
+    body.innerHTML=`<div style="text-align:center;padding:20px 10px">
+      <div style="font-size:28px;margin-bottom:8px">🏆</div>
+      <div style="font-family:var(--ui);font-size:18px;color:#ddaa00;letter-spacing:2px;margin-bottom:6px">COMPLETADO</div>
+      <div style="font-size:9px;color:#334">XP Total: <span style="color:var(--yellow)">${mpXP}</span></div>
+      <div style="margin-top:10px;font-size:9px;color:#334;font-family:var(--mono)">Seguí con el Crisis Guide →</div>
+    </div>`;return;
+  }
+  const m=MISSIONS[mpCurrent];
+  const steps=m.steps.map((s,i)=>{
+    const done=s.chk();
+    const cur=!done&&(i===0||m.steps.slice(0,i).every(x=>x.chk()));
+    return `<li class="mp-step ${done?'done':cur?'cur':''}">
+      <span class="mp-step-ic">${done?'✓':'·'}</span>
+      <span>${s.txt}</span></li>`;
+  }).join('');
+  const allDone=m.steps.every(s=>s.chk());
+  body.innerHTML=`
+    <div class="mp-obj">${m.obj}</div>
+    <ul class="mp-steps">${steps}</ul>
+    ${m.tip?`<div class="mp-tip">${m.tip}</div>`:''}
+    <div class="mp-actions">
+      ${allDone
+        ?`<button class="mp-btn ok" onclick="completeMis()">✓ COMPLETAR (+${m.xp} XP)</button>`
+        :`<button class="mp-btn skip" onclick="skipMis()">Saltar →</button>`}
+    </div>`;
+}
+
+function renderCriTab(){
+  document.getElementById('mp-body').innerHTML=`<div class="crisis-list">${
+    CRISIS.map(c=>`<div class="crisis-item">
+      <div class="crisis-q">⚠ ${c.q}</div>
+      <div class="crisis-a">${c.a}</div>
+      <ul class="crisis-steps">${c.steps.map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>`).join('')
+  }</div>`;
+}
+
+function renderTipTab(){
+  document.getElementById('mp-body').innerHTML=`<div class="tips-list">${
+    TIPS.map(t=>`<div class="tip-item" style="border-left-color:${t.accent}">
+      <div class="tip-tag" style="color:${t.accent}">${t.tag}</div>
+      <div class="tip-txt">${t.txt}</div>
+    </div>`).join('')
+  }</div>`;
+}
+
+function setMPTab(t){
+  mpTab=t;
+  ['mis','cri','tip'].forEach(id=>{
+    document.getElementById('tab-'+id)?.classList.toggle('on',id===t);
+  });
+  renderMP();
+}
+
+function checkM(){ if(mpTab==='mis') renderMisTab(); }
+
+function completeMis(){
+  const m=MISSIONS[mpCurrent];
+  mpXP+=m.xp; xpPop(m.xp,m.t+' ✓');
+  flash(); mpCurrent++;
+  renderMP();
+}
+function skipMis(){mpCurrent++;renderMP();}
+function toggleMP(){
+  document.getElementById('mp').classList.toggle('min');
+  document.getElementById('mp-tog').textContent=document.getElementById('mp').classList.contains('min')?'▲':'▼';
+}
+
+// ══════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════
+function xpPop(n,r){
+  mpXP+=0; // already added
+  const el=document.getElementById('xpp');
+  el.textContent=`+${n} XP — ${r}`;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+}
+function flash(){
+  const f=document.getElementById('fl');
+  f.classList.add('on');
+  setTimeout(()=>f.classList.remove('on'),280);
+}
+function goHome(){window.location.href='index.html';}
+
+// CLOCK
+function updateClock(){
+  const n=new Date();
+  const t=n.toLocaleTimeString('es',{hour12:false});
+  document.getElementById('clock').textContent=t;
+  document.getElementById('st').textContent='MQ500M · '+n.toLocaleDateString('es',{day:'2-digit',month:'short'})+' '+t+' · v1.9.0.0';
+}
+setInterval(updateClock,1000); updateClock();
+
+// INIT encoder indicators
+['a','b','c','d'].forEach(id=>{
+  const dot=document.getElementById('ei-'+id);
+  const angle=(S.enc[id]/255)*240-120;
+  if(dot) dot.style.transform=`rotate(${angle}deg)`;
+});
+
+// INIT
+renderAll(); renderMP(); drawStage();
+// Keep FX animation going
+setInterval(()=>{ if(S.fxOn) drawStage(); },50);
+</script>
+</body>
+</html>

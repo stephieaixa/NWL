@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillForge — Aprendé Herramientas Profesionales</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0c0f;
+  --s1: #13131a;
+  --s2: #1a1a25;
+  --s3: #20202e;
+  --border: #252535;
+  --border2: #333348;
+  --text: #e0e0f0;
+  --muted: #5a5a7a;
+  --muted2: #8080a0;
+  --accent: #7c6cff;
+  --accent2: #ff6c6c;
+  --accent3: #6cffb4;
+  --accent4: #ffcc44;
+  --font-d: 'Clash Display', sans-serif;
+  --font: 'Cabinet Grotesk', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.4;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(12,12,15,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex; align-items: center; gap: 32px;
+  height: 60px;
+}
+.nav-logo {
+  font-family: var(--font-d);
+  font-size: 20px; font-weight: 700;
+  color: #fff; letter-spacing: -0.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo-mark {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+}
+.nav-links { display: flex; gap: 4px; margin-left: auto; }
+.nav-link {
+  padding: 6px 14px; border-radius: 6px;
+  font-size: 13px; color: var(--muted2);
+  cursor: pointer; transition: all .2s;
+  text-decoration: none;
+  font-family: var(--font);
+}
+.nav-link:hover { color: var(--text); background: var(--s2); }
+.nav-cta {
+  padding: 7px 18px; border-radius: 8px;
+  background: var(--accent); color: #fff;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  border: none; font-family: var(--font);
+}
+.nav-cta:hover { background: #8f80ff; transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 40px 80px;
+  position: relative; z-index: 1;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(124,108,255,0.1);
+  border: 1px solid rgba(124,108,255,0.25);
+  border-radius: 100px;
+  padding: 5px 14px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--accent); letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 28px;
+}
+.eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  animation: blink 2s ease infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.hero h1 {
+  font-family: var(--font-d);
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 700; line-height: .93;
+  letter-spacing: -3px; color: #fff;
+  margin-bottom: 24px;
+  max-width: 900px;
+}
+.hero h1 .accent { color: var(--accent); }
+.hero h1 .stroke {
+  -webkit-text-stroke: 2px rgba(255,255,255,0.3);
+  color: transparent;
+}
+
+.hero-sub {
+  font-size: 18px; color: var(--muted2);
+  max-width: 560px; line-height: 1.7;
+  font-weight: 300; margin-bottom: 40px;
+}
+
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.btn-primary {
+  padding: 14px 32px; border-radius: 10px;
+  background: var(--accent); color: #fff;
+  font-size: 15px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  border: none; font-family: var(--font);
+  text-decoration: none; display: inline-block;
+}
+.btn-primary:hover { background: #8f80ff; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(124,108,255,0.3); }
+.btn-ghost {
+  padding: 13px 32px; border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--border2); color: var(--muted2);
+  font-size: 15px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  font-family: var(--font); text-decoration: none; display: inline-block;
+}
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+/* ── STATS ── */
+.hero-stats {
+  display: flex; gap: 48px; flex-wrap: wrap; justify-content: center;
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+}
+.stat { text-align: center; }
+.stat-n {
+  font-family: var(--font-d); font-size: 36px; font-weight: 700;
+  color: #fff; letter-spacing: -1px;
+}
+.stat-l { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+/* ── SECTION ── */
+.section {
+  padding: 100px 40px;
+  position: relative; z-index: 1;
+  max-width: 1200px; margin: 0 auto;
+}
+.section-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 14px;
+}
+.section-title {
+  font-family: var(--font-d); font-size: clamp(32px,5vw,56px);
+  font-weight: 700; letter-spacing: -2px; color: #fff;
+  line-height: .95; margin-bottom: 16px;
+}
+.section-sub {
+  font-size: 16px; color: var(--muted2); font-weight: 300;
+  max-width: 560px; line-height: 1.7;
+}
+
+/* ── TRACKS GRID ── */
+.tracks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px; margin-top: 56px;
+}
+
+.track-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  cursor: pointer;
+  transition: all .25s;
+  position: relative; overflow: hidden;
+  text-decoration: none; display: block;
+}
+.track-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--card-accent, rgba(124,108,255,0.05)), transparent 60%);
+  transition: opacity .3s;
+}
+.track-card:hover { border-color: var(--border2); transform: translateY(-4px); }
+.track-card:hover::before { opacity: 1.5; }
+
+.track-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 100px;
+  margin-bottom: 20px;
+}
+.track-icon { font-size: 32px; margin-bottom: 14px; display: block; }
+.track-title {
+  font-family: var(--font-d); font-size: 22px; font-weight: 600;
+  color: #fff; margin-bottom: 8px; letter-spacing: -.5px;
+}
+.track-desc { font-size: 13px; color: var(--muted2); line-height: 1.6; font-weight: 300; }
+.track-meta {
+  display: flex; gap: 16px; margin-top: 20px;
+  padding-top: 18px; border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.track-chip {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: 1px;
+}
+.track-cta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 20px;
+}
+.track-start {
+  font-size: 12px; font-family: var(--mono);
+  padding: 7px 16px; border-radius: 6px;
+  border: 1px solid; cursor: pointer;
+  transition: all .15s; text-decoration: none;
+  display: inline-block;
+}
+.track-coming {
+  font-size: 11px; font-family: var(--mono); letter-spacing: 1px;
+  padding: 5px 10px; border-radius: 100px;
+  background: rgba(255,255,255,0.05); color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+/* Card accent colors */
+.card-lighting { --card-accent: rgba(255,204,68,0.08); }
+.card-daw { --card-accent: rgba(108,255,180,0.08); }
+.card-video { --card-accent: rgba(255,108,108,0.08); }
+.card-control { --card-accent: rgba(124,108,255,0.08); }
+.card-3d { --card-accent: rgba(108,200,255,0.08); }
+.card-stream { --card-accent: rgba(255,108,200,0.08); }
+
+/* ── HOW IT WORKS ── */
+.how-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 24px;
+  margin-top: 56px;
+}
+.how-card {
+  padding: 28px;
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.how-num {
+  font-family: var(--font-d); font-size: 48px; font-weight: 700;
+  color: var(--border2); line-height: 1; margin-bottom: 14px;
+}
+.how-title { font-size: 16px; font-weight: 500; color: #fff; margin-bottom: 8px; }
+.how-desc { font-size: 13px; color: var(--muted2); font-weight: 300; line-height: 1.6; }
+
+/* ── EMERGENCY SECTION ── */
+.emergency-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px;
+  margin-top: 40px;
+}
+.emergency-card {
+  background: rgba(255,108,108,0.06);
+  border: 1px solid rgba(255,108,108,0.2);
+  border-radius: 10px; padding: 20px;
+}
+.emergency-card h4 { font-size: 14px; font-weight: 500; color: #ff9090; margin-bottom: 6px; }
+.emergency-card p { font-size: 12px; color: var(--muted2); font-weight: 300; line-height: 1.5; }
+.emergency-tag {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
+  color: var(--accent2); text-transform: uppercase;
+  background: rgba(255,108,108,0.1); padding: 2px 7px;
+  border-radius: 3px; margin-bottom: 10px; display: inline-block;
+}
+
+/* ── MOTIVATION STRIP ── */
+.motivation-strip {
+  background: linear-gradient(135deg, rgba(124,108,255,0.12), rgba(108,255,180,0.08));
+  border: 1px solid rgba(124,108,255,0.2);
+  border-radius: 16px;
+  padding: 48px;
+  margin: 80px 0;
+  text-align: center;
+  position: relative; z-index: 1;
+}
+.motivation-strip h2 {
+  font-family: var(--font-d); font-size: 36px; font-weight: 700;
+  color: #fff; letter-spacing: -1px; margin-bottom: 12px;
+}
+.motivation-strip p { font-size: 15px; color: var(--muted2); font-weight: 300; max-width: 500px; margin: 0 auto 24px; }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 40px;
+  text-align: center;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); letter-spacing: 1px;
+  position: relative; z-index: 1;
+}
+
+/* ── AMBIENT GLOWS ── */
+.glow-1 {
+  position: fixed; width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,108,255,0.08) 0%, transparent 70%);
+  top: -200px; left: -200px; pointer-events: none; z-index: 0;
+}
+.glow-2 {
+  position: fixed; width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(108,255,180,0.05) 0%, transparent 70%);
+  bottom: -100px; right: -100px; pointer-events: none; z-index: 0;
+}
+
+@media(max-width:768px) {
+  .how-grid { grid-template-columns: 1fr; }
+  nav { padding: 0 20px; }
+  .section { padding: 60px 20px; }
+  .hero { padding: 100px 20px 60px; }
+  .hero-stats { gap: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="glow-1"></div>
+<div class="glow-2"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-mark">SF</div>
+    SkillForge
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="#tracks">Tracks</a>
+    <a class="nav-link" href="#como">Cómo funciona</a>
+    <a class="nav-link" href="#emergency">Emergencias</a>
+  </div>
+  <a class="nav-cta" href="magicq.html">Empezar ahora →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">
+    <span class="eyebrow-dot"></span>
+    Plataforma de aprendizaje técnico profesional
+  </div>
+  <h1>Dominá las<br><span class="accent">herramientas</span><br><span class="stroke">que importan</span></h1>
+  <p class="hero-sub">Tutoriales interactivos con simuladores reales, ejercicios progresivos y guías para situaciones de crisis. Aprendé haciendo, no leyendo.</p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="magicq.html">Empezar con MagicQ →</a>
+    <a class="btn-ghost" href="#tracks">Ver todos los tracks</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-n">12+</div><div class="stat-l">Módulos interactivos</div></div>
+    <div class="stat"><div class="stat-n">0</div><div class="stat-l">Software necesario</div></div>
+    <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Play-to-learn</div></div>
+    <div class="stat"><div class="stat-n">Pro</div><div class="stat-l">Nivel industria</div></div>
+  </div>
+</div>
+
+<!-- TRACKS -->
+<div class="section" id="tracks">
+  <div class="section-tag">// Tracks de aprendizaje</div>
+  <div class="section-title">Elegí tu<br>herramienta</div>
+  <p class="section-sub">Cada track incluye simulador del software real, ejercicios guiados, quizzes y guías de emergencia para shows en vivo.</p>
+
+  <div class="tracks-grid">
+
+    <!-- MAGICQ — AVAILABLE -->
+    <a class="track-card card-lighting" href="magicq.html" style="border-color:rgba(255,204,68,0.3)">
+      <div class="track-badge" style="background:rgba(255,204,68,0.12);color:#ffcc44;border:1px solid rgba(255,204,68,0.25)">
+        <span style="width:6px;height:6px;border-radius:50%;background:#ffcc44"></span>
+        DISPONIBLE
+      </div>
+      <span class="track-icon">🎛️</span>
+      <div class="track-title">MagicQ by ChamSys</div>
+      <div class="track-desc">Control de iluminación profesional. Simulador del layout real, paletas, FX Generator, seguidor, playback en vivo y situaciones de crisis.</div>
+      <div class="track-meta">
+        <span class="track-chip">12 misiones</span>
+        <span class="track-chip">Sim interactivo</span>
+        <span class="track-chip">Crisis guide</span>
+        <span class="track-chip">FX visual</span>
+      </div>
+      <div class="track-cta">
+        <a class="track-start" href="magicq.html" style="color:#ffcc44;border-color:rgba(255,204,68,0.4);background:rgba(255,204,68,0.08)">Empezar →</a>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">~3hs contenido</span>
+      </div>
+    </a>
+
+    <!-- ABLETON — COMING SOON -->
+    <div class="track-card card-daw">
+      <div class="track-badge" style="background:rgba(108,255,180,0.08);color:#6cffb4;border:1px solid rgba(108,255,180,0.2)">
+        <span style="width:6px;height:6px;border-radius:50%;background:#6cffb4;opacity:.4"></span>
+        PRÓXIMAMENTE
+      </div>
+      <span class="track-icon">🎵</span>
+      <div class="track-title">Ableton Live</div>
+      <div class="track-desc">Producción musical y performance en vivo. Session View, clips, routing de audio, automatización y sincronización con iluminación.</div>
+      <div class="track-meta">
+        <span class="track-chip">Session View</span>
+        <span class="track-chip">Clips & Warping</span>
+        <span class="track-chip">MIDI routing</span>
+      </div>
+      <div class="track-cta">
+        <span class="track-coming">En desarrollo</span>
+      </div>
+    </div>
+
+    <!-- RESOLUME — COMING SOON -->
+    <div class="track-card card-video">
+      <div class="track-badge" style="background:rgba(255,108,108,0.08);color:#ff9090;border:1px solid rgba(255,108,108,0.2)">
+        <span style="width:6px;height:6px;border-radius:50%;background:#ff9090;opacity:.4"></span>
+        PRÓXIMAMENTE
+      </div>
+      <span class="track-icon">📽️</span>
+      <div class="track-title">Resolume Avenue</div>
+      <div class="track-desc">VJ software y media server. Compositing en tiempo real, mapping, MIDI triggering y sincronización con consola de luces.</div>
+      <div class="track-meta">
+        <span class="track-chip">VJ en vivo</span>
+        <span class="track-chip">Pixel mapping</span>
+        <span class="track-chip">MIDI sync</span>
+      </div>
+      <div class="track-cta">
+        <span class="track-coming">En desarrollo</span>
+      </div>
+    </div>
+
+    <!-- MA3 — COMING SOON -->
+    <div class="track-card card-control">
+      <div class="track-badge" style="background:rgba(124,108,255,0.08);color:#a090ff;border:1px solid rgba(124,108,255,0.2)">
+        <span style="width:6px;height:6px;border-radius:50%;background:#a090ff;opacity:.4"></span>
+        PRÓXIMAMENTE
+      </div>
+      <span class="track-icon">💡</span>
+      <div class="track-title">grandMA3</div>
+      <div class="track-desc">La consola de iluminación de gira mundial. Phaser engine, recipes, ejecutores y flujo de trabajo de productions internacionales.</div>
+      <div class="track-meta">
+        <span class="track-chip">Phaser</span>
+        <span class="track-chip">Recipes</span>
+        <span class="track-chip">Network</span>
+      </div>
+      <div class="track-cta">
+        <span class="track-coming">En desarrollo</span>
+      </div>
+    </div>
+
+    <!-- BLENDER — COMING SOON -->
+    <div class="track-card card-3d">
+      <div class="track-badge" style="background:rgba(108,200,255,0.08);color:#80d0ff;border:1px solid rgba(108,200,255,0.2)">
+        <span style="width:6px;height:6px;border-radius:50%;background:#80d0ff;opacity:.4"></span>
+        PRÓXIMAMENTE
+      </div>
+      <span class="track-icon">🧊</span>
+      <div class="track-title">Blender</div>
+      <div class="track-desc">3D, compositing y motion graphics para producción audiovisual. Modeling, rigging, cycles render y pipeline para eventos.</div>
+      <div class="track-meta">
+        <span class="track-chip">3D modeling</span>
+        <span class="track-chip">Compositing</span>
+        <span class="track-chip">Motion</span>
+      </div>
+      <div class="track-cta">
+        <span class="track-coming">En desarrollo</span>
+      </div>
+    </div>
+
+    <!-- OBS — COMING SOON -->
+    <div class="track-card card-stream">
+      <div class="track-badge" style="background:rgba(255,108,200,0.08);color:#ff90d0;border:1px solid rgba(255,108,200,0.2)">
+        <span style="width:6px;height:6px;border-radius:50%;background:#ff90d0;opacity:.4"></span>
+        PRÓXIMAMENTE
+      </div>
+      <span class="track-icon">📡</span>
+      <div class="track-title">OBS Studio</div>
+      <div class="track-desc">Producción de streaming y broadcast. Escenas, fuentes, transiciones, filtros y configuración para eventos híbridos profesionales.</div>
+      <div class="track-meta">
+        <span class="track-chip">Streaming</span>
+        <span class="track-chip">Broadcast</span>
+        <span class="track-chip">Eventos hybrid</span>
+      </div>
+      <div class="track-cta">
+        <span class="track-coming">En desarrollo</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section" id="como" style="border-top:1px solid var(--border)">
+  <div class="section-tag">// Metodología</div>
+  <div class="section-title">Play to learn.<br>No leer, hacer.</div>
+  <p class="section-sub">Cada módulo sigue la misma metodología: entendés el concepto, lo probás en el simulador, lo aplicás en ejercicios reales.</p>
+
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-num">01</div>
+      <div class="how-title">Simulador del software real</div>
+      <div class="how-desc">Interfaz que replica el layout exacto de la herramienta. Ventanas, botones, encoders y paneles funcionan como en el software original.</div>
+    </div>
+    <div class="how-card">
+      <div class="how-num">02</div>
+      <div class="how-title">Misiones progresivas</div>
+      <div class="how-desc">Empezás desde cero y avanzás por misiones que se desbloquean. Cada una construye sobre la anterior. Sistema de XP para mantener el ritmo.</div>
+    </div>
+    <div class="how-card">
+      <div class="how-num">03</div>
+      <div class="how-title">Guías de crisis en vivo</div>
+      <div class="how-desc">¿Qué hacés cuando el zoom no responde? ¿Cuando el programmer pisa el playback? Guías de diagnóstico para las situaciones más frecuentes en shows reales.</div>
+    </div>
+  </div>
+</div>
+
+<!-- EMERGENCY SECTION -->
+<div class="section" id="emergency" style="border-top:1px solid var(--border)">
+  <div class="section-tag">// Guías de emergencia</div>
+  <div class="section-title">Cuando algo<br>falla en vivo</div>
+  <p class="section-sub">Las situaciones complejas más frecuentes en producción real, con diagnóstico paso a paso para resolverlas rápido.</p>
+
+  <div class="emergency-grid">
+    <div class="emergency-card">
+      <div class="emergency-tag">MagicQ</div>
+      <h4>El zoom del seguidor no toma el nuevo valor</h4>
+      <p>El Programmer puede estar pisando el playback, o hay otro fader activo con LTP conflicto. Diagnóstico: CLEAR → solo el playback correcto activo.</p>
+    </div>
+    <div class="emergency-card">
+      <div class="emergency-tag">MagicQ</div>
+      <h4>Los fixtures no responden pero DMX está activo</h4>
+      <p>Verificar universo, dirección, y si el Grand Master está en cero. El modo Blind puede estar activo sin darte cuenta.</p>
+    </div>
+    <div class="emergency-card">
+      <div class="emergency-tag">MagicQ</div>
+      <h4>Un color cambia en todas las cues cuando no debería</h4>
+      <p>Actualizaste la paleta de color en lugar de el valor directo. Las paletas son globales — si la cambiás, cambia en todos los cues que la referencian.</p>
+    </div>
+    <div class="emergency-card">
+      <div class="emergency-tag">MagicQ</div>
+      <h4>FX sigue corriendo aunque bajé el fader</h4>
+      <p>El FX puede estar grabado en otro playback activo o en el Programmer. Revisar todos los faders activos y el estado del Programmer.</p>
+    </div>
+    <div class="emergency-card">
+      <div class="emergency-tag">General</div>
+      <h4>El show cargó pero faltan fixtures en la rig</h4>
+      <p>El archivo show puede ser de otra versión del software. Verificar patch, confirmar que los universos DMX están asignados correctamente.</p>
+    </div>
+    <div class="emergency-card">
+      <div class="emergency-tag">General</div>
+      <h4>Perdiste la conexión Art-Net en medio del show</h4>
+      <p>Los fixtures quedan en su último valor (HLD). No entres en pánico. Verifica cable → switch → IP del nodo → universo asignado en DMX I/O.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MOTIVATION STRIP -->
+<div style="padding:0 40px;position:relative;z-index:1;max-width:1200px;margin:0 auto">
+  <div class="motivation-strip">
+    <h2>Tu próximo show<br>empieza aquí</h2>
+    <p>No necesitás el hardware. No necesitás el software instalado. Solo necesitás ganas de aprender antes de que las luces se enciendan.</p>
+    <a class="btn-primary" href="magicq.html">Abrir MagicQ Simulator →</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div style="margin-bottom:8px;color:var(--muted2)">
+    <strong style="color:var(--text);font-family:var(--font-d);font-size:14px">SkillForge</strong>
+    &nbsp;·&nbsp; Plataforma de aprendizaje técnico profesional
+  </div>
+  CONSTRUIDO CON PROPÓSITO · MagicQ es marca registrada de ChamSys Ltd
+</footer>
+
+</body>
+</html>
