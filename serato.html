@@ -41,11 +41,21 @@ body{background:var(--bg);color:var(--txt);font-family:var(--mono);overflow-x:hi
 .wv-bpm.b{color:var(--b);}
 .wv-title{position:absolute;bottom:3px;left:5px;right:5px;font-size:8px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .wv-time{position:absolute;bottom:3px;right:5px;font-size:8px;color:var(--txt3);}
-.master-display{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#0c1018;border-radius:3px;border:1px solid var(--brd);padding:6px;}
+.master-display{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#0c1018;border-radius:3px;border:1px solid var(--brd);padding:6px;}
 .mbpm{font-size:20px;font-weight:800;color:#fff;font-family:var(--mono);letter-spacing:2px;}
 .mbpm-l{font-size:7px;color:var(--txt3);letter-spacing:2px;}
 .sync-toggle{font-size:8px;letter-spacing:1px;padding:3px 10px;border-radius:3px;cursor:pointer;border:1px solid var(--brd2);color:var(--txt3);background:transparent;transition:all .15s;}
 .sync-toggle.on{background:#0a1e0a;border-color:var(--grn);color:var(--grn);}
+/* PHASE METER */
+.phase-wrap{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid var(--brd);padding-top:4px;margin-top:2px;}
+.phase-lbl{font-size:7px;color:var(--txt3);letter-spacing:1px;}
+.phase-bar{position:relative;width:100%;height:6px;background:#0a0e14;border-radius:3px;border:1px solid var(--brd);overflow:hidden;}
+.phase-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#333;}
+.phase-needle{position:absolute;top:1px;bottom:1px;width:4px;border-radius:2px;transform:translateX(-50%);transition:left .08s,background .2s;}
+.phase-row{display:flex;justify-content:space-between;width:100%;}
+.phase-side{font-size:7px;color:var(--txt3);}
+.phase-status{font-size:8px;font-weight:700;letter-spacing:1px;transition:color .2s;}
+.bpm-diff{font-size:8px;color:var(--txt3);letter-spacing:1px;}
 
 /* MAIN */
 .main{display:grid;grid-template-columns:1fr 180px 1fr;gap:3px;padding:4px 6px;}
@@ -340,6 +350,19 @@ body{background:var(--bg);color:var(--txt);font-family:var(--mono);overflow-x:hi
     <div class="mbpm-l">MASTER BPM</div>
     <div class="mbpm" id="mbpm">128.00</div>
     <button class="sync-toggle" id="sync-all-btn" onclick="toggleSyncAll()">AUTO SYNC</button>
+    <div class="phase-wrap">
+      <div class="phase-lbl">FASE B vs A</div>
+      <div class="phase-bar">
+        <div class="phase-center"></div>
+        <div class="phase-needle" id="phase-needle" style="left:50%;background:#333"></div>
+      </div>
+      <div class="phase-row">
+        <span class="phase-side">← ATR</span>
+        <span class="phase-status" id="phase-status" style="color:#444">——</span>
+        <span class="phase-side">ADL →</span>
+      </div>
+      <div class="bpm-diff" id="bpm-diff">DIFF: — BPM</div>
+    </div>
   </div>
   <div class="wv">
     <canvas id="wv-b" height="56"></canvas>
@@ -1334,6 +1357,7 @@ setInterval(()=>{
     }
   });
   drawWaveforms();
+  updatePhase();
 },50);
 
 // ══════════════════════════════════════
@@ -1598,6 +1622,61 @@ function flash(){
 function msg(m){
   document.getElementById('s-msg').textContent=m;
 }
+
+// ══════════════════════════════════════════════════════
+// PHASE METER — beatmatch visual guide
+// ══════════════════════════════════════════════════════
+function updatePhase(){
+  const needle=document.getElementById('phase-needle');
+  const status=document.getElementById('phase-status');
+  const diffEl=document.getElementById('bpm-diff');
+  if(!needle||!status||!diffEl) return;
+
+  const bothPlaying=S.a.playing&&S.b.playing&&AU.a.chain&&AU.b.chain;
+  const bpmA=deckBpm('a')||0;
+  const bpmB=deckBpm('b')||0;
+
+  if(!bothPlaying||!bpmA||!bpmB){
+    needle.style.left='50%'; needle.style.background='#333';
+    status.style.color='#444'; status.textContent='——';
+    diffEl.textContent='DIFF: — BPM';
+    return;
+  }
+
+  // BPM difference
+  const diff=bpmB-bpmA;
+  diffEl.textContent='DIFF: '+(diff>=0?'+':'')+diff.toFixed(2)+' BPM';
+
+  // Phase: compare when next quarter-note beat fires for each deck
+  const beatA=60/bpmA; // quarter note duration in seconds
+  const tA=AU.a.nextT;
+  const tB=AU.b.nextT;
+  // Time to next quarter note for each (beat16 % 4 gives 16th-note offset within beat)
+  const step16A=beatA/4;
+  const step16B=(60/bpmB)/4;
+  const timeToNextBeatA=((4-(AU.a.beat16%4))%4)*step16A;
+  const timeToNextBeatB=((4-(AU.b.beat16%4))%4)*step16B;
+  const absA=tA+timeToNextBeatA;
+  const absB=tB+timeToNextBeatB;
+
+  // Phase offset as fraction of a beat (-0.5 to 0.5)
+  let phase=(absB-absA)/beatA;
+  phase=phase-Math.round(phase); // wrap to -0.5..0.5
+
+  const pct=(phase+0.5)*100; // 0%=behind, 50%=sync, 100%=ahead
+  needle.style.left=Math.max(2,Math.min(98,pct))+'%';
+
+  const abs=Math.abs(phase);
+  let color,label;
+  if(abs<0.04){      color=var_grn; label='SYNC ✓'; }
+  else if(abs<0.12){ color='#ddaa00'; label=phase>0?'ADL ▶':'◀ ATR'; }
+  else{              color='#cc3333'; label=phase>0?'MUY ADL':'MUY ATR'; }
+
+  needle.style.background=color;
+  status.style.color=color;
+  status.textContent=label;
+}
+const var_grn='#22cc66';
 
 // ══════════════════════════════════════════════════════
 // CHAT ASSISTANT
