@@ -1378,10 +1378,11 @@ function renderMisTab(){
     <ul class="mp-steps">${steps}</ul>
     ${m.tip?`<div class="mp-tip">${m.tip}</div>`:''}
     <div class="mp-actions">
+      ${mpCurrent>0?`<button class="mp-btn skip" onclick="prevMis()" style="padding:5px 8px">← Ant.</button>`:''}
       <button class="mp-btn hint" onclick="doHint()">💡 HINT</button>
       ${allDone
         ?`<button class="mp-btn ok" onclick="completeMis()">✓ COMPLETAR (+${m.xp} XP)</button>`
-        :`<button class="mp-btn skip" onclick="skipMis()">Saltar →</button>`}
+        :`<button class="mp-btn skip" onclick="skipMis()">Siguiente →</button>`}
     </div>`;
 }
 
@@ -1612,6 +1613,7 @@ function completeMis(){
   renderMP();
 }
 function skipMis(){mpCurrent++;renderMP();}
+function prevMis(){if(mpCurrent>0){mpCurrent--;renderMP();}}
 function toggleMP(){
   document.getElementById('mp').classList.toggle('min');
   document.getElementById('mp-tog').textContent=document.getElementById('mp').classList.contains('min')?'▲':'▼';
@@ -1776,7 +1778,7 @@ async function astSend(text){
 
   let ans;
   try{
-    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})});
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,program:'magicq'})});
     ans=r.ok?(await r.json()).reply||astFallback(q):astFallback(q);
   }catch{ ans=astFallback(q); }
 
