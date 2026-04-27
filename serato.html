@@ -846,13 +846,14 @@ function doPlay(d){
   const btn=document.getElementById('play-'+d);
   btn.classList.toggle('on',S[d].playing);
   btn.textContent=S[d].playing?'❚❚ PAUSE':'▶ PLAY';
+  if(S[d].playing) startAudio(d); else stopAudio(d);
   msg(S[d].playing?`Deck ${d.toUpperCase()}: reproduciendo`:`Deck ${d.toUpperCase()}: pausado`);
   checkM();
 }
 
 function doCue(d){
   if(S[d].trackIdx===null){msg('⚠ Cargá una pista primero');return;}
-  S[d].playing=false;S[d].pos=0;
+  S[d].playing=false;S[d].pos=0;stopAudio(d);
   const pb=document.getElementById('play-'+d);
   pb.classList.remove('on');pb.textContent='▶ PLAY';
   const cb=document.getElementById('cue-'+d);
@@ -1101,6 +1102,7 @@ document.addEventListener('touchend',()=>{chDrag=null;});
 
 function updateChFader(d){
   const v=S[d].vol;
+  if(AU[d].chain) AU[d].chain.volGain.gain.value=v/100;
   const pct=v/100;
   const h=document.getElementById('chf-'+d)?.clientHeight||80;
   const ff=document.getElementById('chff-'+d);
@@ -1152,11 +1154,17 @@ document.addEventListener('touchend',()=>{
 
 function updateKnobUI(d,band){
   const v=S.eq[d][band];
-  const angle=(v/24)*120; // -24→-120deg, 0→0, 6→30deg
+  const angle=(v/24)*120;
   const dot=document.getElementById('eqd-'+d+'-'+band);
   if(dot)dot.style.transform=`rotate(${angle}deg)`;
   const val=document.getElementById('eqv-'+d+'-'+band);
   if(val)val.textContent=(v>0?'+':'')+v;
+  // audio
+  if(AU[d].chain){
+    if(band==='hi')  AU[d].chain.eqHi.gain.value=v;
+    if(band==='mid') AU[d].chain.eqMid.gain.value=v;
+    if(band==='lo')  AU[d].chain.eqLo.gain.value=v;
+  }
 }
 
 // ══════════════════════════════════════
@@ -1199,6 +1207,7 @@ function updateXFUI(){
   document.getElementById('xf-fill-b').style.width=v+'%';
   document.getElementById('xf-th').style.left=v+'%';
   document.getElementById('s-xf').textContent=v;
+  setXFAudio();
 }
 
 // ══════════════════════════════════════
@@ -1569,6 +1578,142 @@ function flash(){
 }
 function msg(m){
   document.getElementById('s-msg').textContent=m;
+}
+
+// ══════════════════════════════════════════════════════
+// AUDIO ENGINE — Web Audio API
+// ══════════════════════════════════════════════════════
+let ACX=null;
+const AU={
+  a:{chain:null,sched:null,nextT:0,beat16:0},
+  b:{chain:null,sched:null,nextT:0,beat16:0}
+};
+
+// 16-step bass patterns (MIDI note, 0=rest) per track
+const BASS_PAT=[
+  [36,0,36,0, 36,0,36,0, 41,0,41,0, 41,0,41,0], // Levels
+  [36,0,0,36, 0,0,36,0,  36,0,0,38, 0,0,36,0],  // One More Time
+  [36,36,0,36,36,0,38,0, 36,36,0,36,41,0,38,0], // Around The World
+  [36,0,0,0,  0,0,0,0,   41,0,0,0,  0,0,36,0],  // Midnight City
+  [36,0,36,0, 0,0,36,0,  36,0,36,0, 0,36,0,0],  // Bad Guy
+  [36,36,36,36,38,38,38,38,36,36,36,36,38,38,38,36], // Sandstorm
+  [36,0,0,0,  0,0,0,0,   38,0,0,0,  0,0,0,0],   // Strobe
+  [36,38,41,38,36,38,41,38,43,41,38,36,43,41,38,36], // Blue
+];
+
+function midiHz(m){ return 440*Math.pow(2,(m-69)/12); }
+
+function getACX(){
+  if(!ACX) ACX=new(window.AudioContext||window.webkitAudioContext)();
+  if(ACX.state==='suspended') ACX.resume();
+  return ACX;
+}
+
+function buildChain(d){
+  const ctx=getACX();
+  const eqLo=ctx.createBiquadFilter(); eqLo.type='lowshelf'; eqLo.frequency.value=300;
+  const eqMid=ctx.createBiquadFilter(); eqMid.type='peaking'; eqMid.frequency.value=1200; eqMid.Q.value=0.8;
+  const eqHi=ctx.createBiquadFilter(); eqHi.type='highshelf'; eqHi.frequency.value=3500;
+  const volGain=ctx.createGain(); volGain.gain.value=S[d].vol/100;
+  const xfGain=ctx.createGain();
+  eqLo.connect(eqMid); eqMid.connect(eqHi); eqHi.connect(volGain); volGain.connect(xfGain); xfGain.connect(ctx.destination);
+  AU[d].chain={eqLo,eqMid,eqHi,volGain,xfGain};
+  // apply current eq state
+  ['hi','mid','lo'].forEach(b=>updateKnobUI(d,b));
+  setXFAudio();
+}
+
+function setXFAudio(){
+  if(!AU.a.chain&&!AU.b.chain) return;
+  const v=S.xfade/100;
+  const gA=v<=0.5?1:1-(v-0.5)*2;
+  const gB=v>=0.5?1:v*2;
+  if(AU.a.chain) AU.a.chain.xfGain.gain.value=gA;
+  if(AU.b.chain) AU.b.chain.xfGain.gain.value=gB;
+}
+
+function playKick(t,dest){
+  const ctx=getACX();
+  const e=ctx.createGain(); e.connect(dest);
+  e.gain.setValueAtTime(0.85,t); e.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+  const o=ctx.createOscillator(); o.connect(e);
+  o.frequency.setValueAtTime(180,t); o.frequency.exponentialRampToValueAtTime(42,t+0.14);
+  o.start(t); o.stop(t+0.4);
+  const ck=ctx.createOscillator(); const cg=ctx.createGain();
+  ck.connect(cg); cg.connect(dest);
+  ck.frequency.value=900; cg.gain.setValueAtTime(0.25,t); cg.gain.exponentialRampToValueAtTime(0.001,t+0.02);
+  ck.start(t); ck.stop(t+0.02);
+}
+
+function playSnare(t,dest){
+  const ctx=getACX();
+  const len=0.18;
+  const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*len),ctx.sampleRate);
+  const d2=buf.getChannelData(0); for(let i=0;i<d2.length;i++) d2[i]=Math.random()*2-1;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2800; f.Q.value=0.6;
+  const e=ctx.createGain(); src.connect(f); f.connect(e); e.connect(dest);
+  e.gain.setValueAtTime(0.32,t); e.gain.exponentialRampToValueAtTime(0.001,t+len);
+  const o=ctx.createOscillator(); const oe=ctx.createGain();
+  o.connect(oe); oe.connect(dest); o.frequency.value=190;
+  oe.gain.setValueAtTime(0.18,t); oe.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+  o.start(t); o.stop(t+len); src.start(t);
+}
+
+function playHihat(t,dest,open){
+  const ctx=getACX();
+  const len=open?0.22:0.05;
+  const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*len),ctx.sampleRate);
+  const d2=buf.getChannelData(0); for(let i=0;i<d2.length;i++) d2[i]=Math.random()*2-1;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const f=ctx.createBiquadFilter(); f.type='highpass'; f.frequency.value=7500;
+  const e=ctx.createGain(); src.connect(f); f.connect(e); e.connect(dest);
+  e.gain.setValueAtTime(open?0.14:0.1,t); e.gain.exponentialRampToValueAtTime(0.001,t+len);
+  src.start(t);
+}
+
+function playBass(t,midi,dest,dur){
+  if(!midi) return;
+  const ctx=getACX();
+  const hz=midiHz(midi);
+  const o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.value=hz;
+  const f=ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=380; f.Q.value=2.5;
+  const e=ctx.createGain(); o.connect(f); f.connect(e); e.connect(dest);
+  e.gain.setValueAtTime(0.28,t); e.gain.exponentialRampToValueAtTime(0.001,t+dur*0.85);
+  o.start(t); o.stop(t+dur);
+}
+
+function schedulerTick(d){
+  if(!AU[d].chain||!S[d].playing) return;
+  const ctx=getACX();
+  const bpm=deckBpm(d)||128;
+  const step=60/(bpm*4); // 16th note
+  const dest=AU[d].chain.eqLo;
+  const ti=S[d].trackIdx??0;
+  const pat=BASS_PAT[ti%BASS_PAT.length];
+  while(AU[d].nextT < ctx.currentTime+0.1){
+    const t=AU[d].nextT;
+    const b=AU[d].beat16%16;
+    if(b%4===0) playKick(t,dest);
+    if(b===4||b===12) playSnare(t,dest);
+    if(b%2===0) playHihat(t,dest,b===8);
+    playBass(t,pat[b],dest,step*0.82);
+    AU[d].nextT+=step;
+    AU[d].beat16=(AU[d].beat16+1)%16;
+  }
+  AU[d].sched=setTimeout(()=>schedulerTick(d),35);
+}
+
+function startAudio(d){
+  if(!AU[d].chain) buildChain(d);
+  else getACX(); // resume if suspended
+  AU[d].nextT=getACX().currentTime+0.05;
+  AU[d].beat16=0;
+  schedulerTick(d);
+}
+
+function stopAudio(d){
+  clearTimeout(AU[d].sched); AU[d].sched=null;
 }
 
 // ══════════════════════════════════════
