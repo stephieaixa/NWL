@@ -8,7 +8,7 @@
 :root{
   --bg:#1a1b1e;--sur:#202227;--sur2:#26282e;--sur3:#2c2e35;
   --brd:#35383f;--brd2:#44474f;
-  --txt:#d0d4dc;--txt2:#8891a0;--txt3:#4a5060;
+  --txt:#d0d4dc;--txt2:#9aa8b8;--txt3:#6a7888;
   --acc:#5599dd;--live:#e84040;--liveOn:#22cc44;--rec:#cc3333;
   --yel:#ddaa00;--grn:#22cc66;--pur:#8855dd;
   --mono:'Courier New',monospace;--ui:'Segoe UI',system-ui,sans-serif;
@@ -144,7 +144,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 .mp-step.cur{color:#fff;}
 .mp-step.done{color:var(--grn);text-decoration:line-through;}
 .mp-step-ic{flex-shrink:0;width:12px;text-align:center;}
-.mp-tip{font-size:8px;color:#3a4a5a;border-left:2px solid #2a3a4a;padding:4px 8px;margin-bottom:6px;line-height:1.5;font-style:italic;}
+.mp-tip{font-size:8px;color:#7090a8;border-left:2px solid #3a5060;padding:4px 8px;margin-bottom:6px;line-height:1.5;font-style:italic;}
 .mp-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
 .mp-btn{padding:5px 12px;border-radius:3px;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid;transition:all .15s;text-transform:uppercase;}
 .mp-btn.ok{border-color:var(--grn);color:var(--grn);background:rgba(34,204,102,.08);}
@@ -169,15 +169,15 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 .tip-item{border-left:2px solid;padding:6px 8px;margin-bottom:4px;}
 .tip-tag{font-size:8px;font-weight:700;letter-spacing:1px;margin-bottom:2px;}
 .tip-txt{font-size:8px;color:var(--txt2);line-height:1.5;}
-.mnt-intro{font-size:9px;color:#3a4a5a;padding:4px 0 8px;line-height:1.6;}
+.mnt-intro{font-size:9px;color:#7090a8;padding:4px 0 8px;line-height:1.6;}
 .mnt-scene{border:1px solid var(--brd);border-radius:4px;padding:9px 10px 9px 13px;margin-bottom:6px;background:#16181c;position:relative;overflow:hidden;}
 .mnt-scene::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sa,#336);}
 .mnt-scene-head{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
 .mnt-badge{font-family:var(--ui);font-size:8px;letter-spacing:2px;font-weight:800;padding:2px 7px;border-radius:2px;flex-shrink:0;}
 .mnt-time{font-size:8px;color:var(--txt3);font-family:var(--mono);}
 .mnt-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px;}
-.mnt-tag{background:#111316;border:1px solid var(--brd);border-radius:2px;padding:1px 5px;font-size:8px;color:#3a4a5a;}
-.mnt-rec{font-size:8px;color:#3a4a5a;line-height:1.5;margin-bottom:4px;}
+.mnt-tag{background:#111316;border:1px solid var(--brd);border-radius:2px;padding:1px 5px;font-size:8px;color:#6a7888;}
+.mnt-rec{font-size:8px;color:#7090a8;line-height:1.5;margin-bottom:4px;}
 .mnt-pro{font-size:8px;font-weight:700;line-height:1.5;}
 .mnt-cta{display:block;width:100%;margin-top:10px;padding:11px;border-radius:4px;cursor:pointer;font-family:var(--ui);font-size:11px;letter-spacing:2.5px;font-weight:800;text-align:center;background:linear-gradient(135deg,#0e1624,#142038);border:1px solid #1e3a5a;color:#4488bb;transition:all .2s;}
 .mnt-cta:hover{border-color:var(--acc);color:var(--acc);box-shadow:0 0 16px rgba(85,153,221,.12);}
@@ -203,6 +203,23 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 .show-nav{display:flex;gap:4px;padding:0 16px 12px;background:#111316;}
 .show-nav-btn{flex:1;padding:6px;border-radius:3px;cursor:pointer;text-align:center;font-size:8px;letter-spacing:1px;border:1px solid #1e2a38;color:var(--txt3);background:transparent;transition:all .15s;}
 .show-nav-btn.on,.show-nav-btn:hover{border-color:var(--acc);color:var(--acc);background:#0e1828;}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:150px;}
+.chat-msgs{flex:1;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:4px;}
+.chat-msg{max-width:90%;padding:5px 8px;border-radius:4px;font-size:9px;line-height:1.5;word-break:break-word;}
+.chat-msg.bot{background:#1a2030;color:#a0b8d0;align-self:flex-start;border:1px solid #253040;}
+.chat-msg.user{background:#1a2a1a;color:#90b890;align-self:flex-end;border:1px solid #253525;}
+.chat-msg.typing{color:#5a7888;font-style:italic;}
+.chat-row{display:flex;gap:4px;padding:5px 8px;border-top:1px solid var(--brd);}
+.chat-input{flex:1;background:#111316;border:1px solid var(--brd);border-radius:3px;color:var(--txt);font-size:9px;padding:4px 6px;font-family:var(--ui);outline:none;}
+.chat-input:focus{border-color:var(--acc);}
+.chat-send{padding:4px 10px;border-radius:3px;cursor:pointer;font-size:9px;font-weight:700;background:rgba(85,153,221,.12);border:1px solid #2a4a6a;color:var(--acc);transition:all .15s;letter-spacing:.5px;}
+.chat-send:hover{background:rgba(85,153,221,.22);border-color:var(--acc);}
+.chat-chips{display:flex;flex-wrap:wrap;gap:3px;padding:4px 8px 0;}
+.chat-chip{padding:2px 7px;border-radius:10px;font-size:8px;cursor:pointer;border:1px solid var(--brd);color:var(--txt3);background:transparent;transition:all .12s;}
+.chat-chip:hover{border-color:var(--acc);color:var(--acc);}
+@keyframes hintBtnPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,200,0,.9);}50%{box-shadow:0 0 0 8px rgba(255,200,0,0);}}
 </style>
 </head>
 <body>
@@ -318,6 +335,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
     <div class="mp-tab" id="tab-cri" onclick="setMPTab('cri')">🚨 CRISIS</div>
     <div class="mp-tab" id="tab-tip" onclick="setMPTab('tip')">💡 TIPS</div>
     <div class="mp-tab" id="tab-mnt" onclick="setMPTab('mnt')">📡 SETUP</div>
+    <div class="mp-tab" id="tab-ast" onclick="setMPTab('ast')">🤖 CHAT</div>
   </div>
   <div class="mp-body" id="mp-body"></div>
   <div class="mp-prog">
@@ -1022,6 +1040,7 @@ function renderMP(){
   if(mpTab==='mis')renderMisTab();
   else if(mpTab==='cri')renderCriTab();
   else if(mpTab==='mnt')renderMntTab();
+  else if(mpTab==='ast')renderAstTab();
   else renderTipTab();
 }
 function renderMisTab(){
@@ -1044,7 +1063,8 @@ function renderMisTab(){
     <ul class="mp-steps">${steps}</ul>
     ${m.tip?`<div class="mp-tip">${m.tip}</div>`:''}
     <div class="mp-actions">
-      <button class="mp-btn hint" onclick="doHint()">💡 HINT</button>
+      ${mpCur>0?`<button class="mp-btn skip" onclick="prevMis()">← Ant.</button>`:''}
+      <button class="mp-btn hint" onclick="doHint()" style="animation:hintBtnPulse 1.4s ease-in-out infinite;">💡 HINT</button>
       ${allDone
         ?`<button class="mp-btn ok" onclick="completeMis()">✓ COMPLETAR (+${m.xp} XP)</button>`
         :`<button class="mp-btn skip" onclick="skipMis()">Saltar →</button>`}
@@ -1081,12 +1101,13 @@ function renderMntTab(){
     <button class="mnt-cta" onclick="openShow()">▶ VER PRODUCCIÓN EN GRANDE</button>`;
 }
 function setMPTab(t){
-  mpTab=t;['mis','cri','tip','mnt'].forEach(id=>document.getElementById('tab-'+id)?.classList.toggle('on',id===t));
+  mpTab=t;['mis','cri','tip','mnt','ast'].forEach(id=>document.getElementById('tab-'+id)?.classList.toggle('on',id===t));
   renderMP();
 }
 function checkM(){if(mpTab==='mis')renderMisTab();}
 function completeMis(){const m=MISSIONS[mpCur];mpXP+=m.xp;xpPop(m.xp,m.t+' ✓');flash();mpCur++;renderMP();}
 function skipMis(){mpCur++;renderMP();}
+function prevMis(){if(mpCur>0){mpCur--;renderMP();}}
 function toggleMP(){
   document.getElementById('mp').classList.toggle('min');
   document.getElementById('mp-tog').textContent=document.getElementById('mp').classList.contains('min')?'▲':'▼';
@@ -1172,6 +1193,65 @@ function drawShowFrame(){
     if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
   }
   ctx.stroke();
+}
+
+// ══════════════════════════════════════
+// CHAT ASSISTANT
+// ══════════════════════════════════════
+const OBS_FAQ=[
+  {q:'frames caídos',a:'Reducí el bitrate o cambiá el encoder a NVENC/AMF (GPU). En Settings → Output bajá de 1080p60 a 1080p30 o 720p60.'},
+  {q:'audio desfasado',a:'Clic derecho en la fuente de audio → Propiedades → ajustá el Sync Offset. Valores comunes: -100ms a +200ms.'},
+  {q:'webcam negra',a:'Cerrá cualquier app que use la cámara (Zoom, Teams). En OBS borrá la fuente y volvé a agregarla.'},
+  {q:'pixelado',a:'Necesitás más bitrate: mínimo 6000 kbps para 1080p60. Activá keyframe interval = 2s y usá preset Quality en el encoder.'},
+  {q:'eco',a:'Desactivá monitoreo en Settings → Audio. Verificá que Desktop Audio y el mic de la cámara no estén duplicados.'},
+  {q:'studio mode',a:'Studio Mode muestra Preview y Program. Preparás el próximo look en Preview y lo enviás al aire con el botón CORTE sin que el público vea el cambio.'},
+  {q:'browser source',a:'Browser Source carga una URL en OBS — así aparecen alertas de Streamlabs, chat overlay o cualquier página web como fuente visual.'},
+  {q:'bitrate',a:'Para Twitch: máximo 6000 kbps. YouTube: hasta 51000 kbps. Kick: 8000 kbps. Usá como máximo el 70% de tu upload real.'},
+];
+
+let astMsgs=[];
+function renderAstTab(){
+  if(!astMsgs.length){
+    astMsgs=[{r:'bot',t:'¡Hola! Soy tu asistente de OBS Studio. Preguntame sobre escenas, audio, streaming, frames caídos o cualquier duda técnica.'}];
+  }
+  const chips=['¿Cómo configuro el bitrate?','Frames caídos','Audio desfasado','Browser Source','Studio Mode'];
+  document.getElementById('mp-body').innerHTML=`
+    <div class="chat-wrap">
+      <div class="chat-chips">${chips.map(c=>`<span class="chat-chip" onclick="astQuick(this)">${c}</span>`).join('')}</div>
+      <div class="chat-msgs" id="ast-msgs">${astMsgs.map(m=>`<div class="chat-msg ${m.r}">${m.t}</div>`).join('')}</div>
+      <div class="chat-row">
+        <input class="chat-input" id="ast-inp" placeholder="Preguntá sobre OBS..." onkeydown="if(event.key==='Enter')astSend()">
+        <button class="chat-send" onclick="astSend()">▶</button>
+      </div>
+    </div>`;
+  const ms=document.getElementById('ast-msgs');if(ms)ms.scrollTop=ms.scrollHeight;
+}
+function astQuick(el){
+  const inp=document.getElementById('ast-inp');
+  if(inp){inp.value=el.textContent;astSend();}
+}
+async function astSend(){
+  const inp=document.getElementById('ast-inp');if(!inp)return;
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';
+  astMsgs.push({r:'user',t:txt});
+  astMsgs.push({r:'bot typing',t:'...'});
+  renderAstTab();
+  // local FAQ fallback
+  const lower=txt.toLowerCase();
+  const hit=OBS_FAQ.find(f=>lower.includes(f.q));
+  if(hit){
+    astMsgs.pop();astMsgs.push({r:'bot',t:hit.a});renderAstTab();return;
+  }
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,program:'obs'})});
+    const data=await res.json();
+    astMsgs.pop();
+    astMsgs.push({r:'bot',t:data.reply||'No pude responder. Intentá de nuevo.'});
+  }catch(e){
+    astMsgs.pop();astMsgs.push({r:'bot',t:'Sin conexión. Revisá tu red o la API key en Vercel.'});
+  }
+  renderAstTab();
 }
 
 // ══════════════════════════════════════
