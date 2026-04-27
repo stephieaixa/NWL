@@ -241,6 +241,23 @@ body{background:var(--bg);color:var(--txt);font-family:var(--mono);overflow-x:hi
 @keyframes hintArrowBounce{0%{transform:translateY(0);}100%{transform:translateY(5px);}}
 #hint-arrow .ha-arrow{animation:hintArrowBounce .4s ease-in-out infinite alternate;}
 
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:100%;gap:0;}
+.chat-topics{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px 0;flex-shrink:0;}
+.chat-chip{font-size:9px;padding:3px 8px;border-radius:10px;cursor:pointer;background:#0d1520;border:1px solid var(--brd2);color:var(--txt3);transition:all .12s;letter-spacing:.5px;}
+.chat-chip:hover{background:#1a2535;color:var(--txt);}
+.chat-msgs{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:0;}
+.chat-msgs::-webkit-scrollbar{width:2px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--brd2);}
+.chat-msg{padding:7px 10px;border-radius:4px;font-size:10px;line-height:1.55;max-width:92%;}
+.chat-msg.bot{background:#0d1520;border:1px solid var(--brd);color:var(--txt2);align-self:flex-start;border-left:2px solid var(--a);}
+.chat-msg.user{background:#0a1422;border:1px solid var(--brd2);color:var(--txt2);align-self:flex-end;}
+.chat-msg.bot strong{color:var(--txt);}
+.chat-input-row{display:flex;gap:5px;padding:8px;border-top:1px solid var(--brd);flex-shrink:0;}
+.chat-input{flex:1;background:#07101a;border:1px solid var(--brd);color:var(--txt);border-radius:3px;padding:6px 8px;font-size:10px;font-family:var(--mono);outline:none;}
+.chat-input:focus{border-color:var(--brd2);}
+.chat-send{padding:6px 12px;background:#0d1a2a;border:1px solid var(--brd2);border-radius:3px;color:var(--txt2);font-size:10px;font-family:var(--mono);cursor:pointer;letter-spacing:1px;transition:all .15s;}
+.chat-send:hover{color:var(--a);border-color:var(--a);}
 /* CRISIS/TIPS */
 .crisis-list,.tips-list{display:flex;flex-direction:column;gap:8px;}
 .crisis-item{background:#101520;border:1px solid var(--brd);border-radius:3px;padding:8px;}
@@ -543,6 +560,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--mono);overflow-x:hi
     <div class="mp-tab" id="tab-cri" onclick="setTab('cri')">🚨 CRISIS</div>
     <div class="mp-tab" id="tab-tip" onclick="setTab('tip')">💡 TIPS</div>
     <div class="mp-tab" id="tab-mnt" onclick="setTab('mnt')">🎬 SET</div>
+    <div class="mp-tab" id="tab-ast" onclick="setTab('ast')">🤖 CHAT</div>
   </div>
   <div class="mp-body" id="mp-body"></div>
   <div class="mp-prog">
@@ -1330,6 +1348,7 @@ function renderMP(){
   if(mpTab==='mis')renderMisTab();
   else if(mpTab==='cri')renderCriTab();
   else if(mpTab==='mnt')renderMntTab();
+  else if(mpTab==='ast')renderAstTab();
   else renderTipTab();
 }
 
@@ -1405,7 +1424,7 @@ function renderMntTab(){
 
 function setTab(t){
   mpTab=t;
-  ['mis','cri','tip','mnt'].forEach(id=>{
+  ['mis','cri','tip','mnt','ast'].forEach(id=>{
     document.getElementById('tab-'+id)?.classList.toggle('on',id===t);
   });
   renderMP();
@@ -1578,6 +1597,68 @@ function flash(){
 }
 function msg(m){
   document.getElementById('s-msg').textContent=m;
+}
+
+// ══════════════════════════════════════════════════════
+// CHAT ASSISTANT
+// ══════════════════════════════════════════════════════
+const AST_HIST=[];
+const AST_CHIPS_S=['Cargar pista','Beatmatch','EQ kill','Crossfader','Scratch','Hot cue','Loop','Sync','Mezcla en vivo'];
+const AST_FAQ_S=[
+  {k:['cargar','load','pista','track','library'],a:'Hacé clic en una pista de la <strong>LIBRARY</strong> para seleccionarla, luego presioná <strong>LOAD A</strong> o <strong>LOAD B</strong> para cargarla al deck. También podés hacer doble clic directo en la pista.'},
+  {k:['play','reproducir','start','pause','pausar'],a:'Presioná <strong>▶ PLAY</strong> en el deck. Para una entrada limpia usá <strong>CUE</strong> primero (vuelve al inicio) y después PLAY. En shows reales siempre empezás desde CUE.'},
+  {k:['beatmatch','bpm','tempo','compas','compás','ritmo'],a:'Para beatmatch: escuchá los dos decks en los auriculares y ajustá el <strong>PITCH</strong> del deck nuevo hasta que los kicks coincidan. Mover pitch hacia arriba = más rápido. Tolerancia ±0.5 BPM.'},
+  {k:['sync','sincronizar','sincronización'],a:'<strong>SYNC</strong> ajusta automáticamente el BPM del deck al master. Es válido usarlo en shows modernos. Después de sync podés ajustar el pitch manualmente para refinar.'},
+  {k:['crossfader','cross','fader','transicion','transición'],a:'El crossfader mezcla entre decks A (izquierda) y B (derecha). Moverlo de A hacia B hace la transición. Para mezclas limpias, trabajá primero los EQ y el volumen de canal, y usá el crossfader para el movimiento final.'},
+  {k:['eq','grave','bajo','bajo','high','mid','hi','kill'],a:'Los knobs de EQ (HI/MID/LO) controlan frecuencias. <strong>EQ kill de graves</strong>: bajá LO del deck saliente antes de subir el nuevo — evitás que dos kicks compitan. Girá a la izquierda para bajar, derecha para subir.'},
+  {k:['hot cue','hotcue','cue point','punto','marcador'],a:'Los <strong>HC 1-4</strong> guardan puntos en la pista. Presionalos vacíos = setear el punto. Presionalos con punto guardado = saltar ahí instantáneamente. Ideal para marcar intro, drop y outro.'},
+  {k:['loop','bucle','repetir','loopear'],a:'<strong>LOOP</strong> activa un loop del tamaño seleccionado (½, 1, 2, 4 bars). Con el loop activo podés mezclar la otra pista con tiempo. Para salir del loop, presioná LOOP de nuevo.'},
+  {k:['scratch','scratching','vinilo','jog wheel','jog'],a:'Para scratch: pausá el deck y arrastrá el <strong>jog wheel</strong> adelante/atrás. En CDJs/Rane: tocás el top del jog = scratch (mueve el audio). El borde = pitch bend (acelera sin scratchar).'},
+  {k:['fx','efecto','echo','reverb','flanger'],a:'Seleccioná <strong>ECHO o REVERB</strong> y activá con <strong>FX ON</strong>. Echo out = una forma elegante de terminar un deck (el sonido se desvanece con eco). No sobreusar — un FX bien puesto es más impactante.'},
+  {k:['volumen','volume','canal','channel','fader de canal'],a:'Los faders de canal (A y B en el mixer) controlan el volumen de cada deck en la mezcla. Son independientes del crossfader. La práctica pro es siempre tener los faders a 100% y usar el crossfader para la transición.'},
+  {k:['mezcla','mix','transición','profesional','técnica'],a:'Transición profesional: 1) Sync → 2) EQ kill lows del deck saliente → 3) Subí fader del deck entrante → 4) Crossfader → 5) Bajá fader del deck viejo. Todo en ~32 bars (1 minuto a 128 BPM).'},
+  {k:['waveform','forma de onda','visual'],a:'La forma de onda muestra la estructura de la pista: picos = kicks/snares, valle = break, zona densa = drop. Aprendé a leerla para saber cuándo va a caer el kick sin escuchar.'},
+];
+
+let astInit=false;
+function renderAstTab(){
+  const b=document.getElementById('mp-body');
+  if(!astInit){astInit=true;AST_HIST.push({r:'bot',t:'Hola, soy tu asistente de Serato DJ. Preguntame sobre técnicas de mezcla, EQ, sync, scratching, o lo que necesites.'});}
+  b.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.className='chat-wrap'; wrap.style.height='100%';
+  const chips=document.createElement('div'); chips.className='chat-topics';
+  AST_CHIPS_S.forEach(c=>{const ch=document.createElement('span');ch.className='chat-chip';ch.textContent=c;ch.onclick=()=>astSendS(c);chips.appendChild(ch);});
+  const msgs=document.createElement('div'); msgs.className='chat-msgs'; msgs.id='ast-msgs-s';
+  AST_HIST.forEach(m=>msgs.appendChild(mkMsg(m)));
+  const row=document.createElement('div'); row.className='chat-input-row';
+  const inp=document.createElement('input'); inp.className='chat-input'; inp.id='ast-inp-s';
+  inp.placeholder='Preguntá sobre Serato DJ...'; inp.autocomplete='off';
+  inp.onkeydown=e=>{if(e.key==='Enter')astSendS();};
+  const btn=document.createElement('button'); btn.className='chat-send'; btn.textContent='ENVIAR'; btn.onclick=()=>astSendS();
+  row.appendChild(inp); row.appendChild(btn);
+  wrap.appendChild(chips); wrap.appendChild(msgs); wrap.appendChild(row);
+  b.appendChild(wrap);
+  setTimeout(()=>{msgs.scrollTop=msgs.scrollHeight;},50);
+}
+function mkMsg(m){const el=document.createElement('div');el.className='chat-msg '+(m.r==='bot'?'bot':'user');el.innerHTML=m.t;return el;}
+async function astSendS(text){
+  const inp=document.getElementById('ast-inp-s');
+  const q=(text||inp?.value||'').trim(); if(!q)return; if(inp)inp.value='';
+  AST_HIST.push({r:'user',t:q});
+  const msgs=document.getElementById('ast-msgs-s');
+  if(msgs){msgs.appendChild(mkMsg({r:'user',t:q}));const ld=document.createElement('div');ld.className='chat-msg bot';ld.id='ast-ld-s';ld.innerHTML='<span style="opacity:.4;letter-spacing:3px">...</span>';msgs.appendChild(ld);msgs.scrollTop=msgs.scrollHeight;}
+  let ans;
+  try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})});ans=r.ok?(await r.json()).reply||astFallS(q):astFallS(q);}
+  catch{ans=astFallS(q);}
+  document.getElementById('ast-ld-s')?.remove();
+  AST_HIST.push({r:'bot',t:ans});
+  if(msgs){msgs.appendChild(mkMsg({r:'bot',t:ans}));msgs.scrollTop=msgs.scrollHeight;}
+}
+function astFallS(q){
+  const lq=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  for(const e of AST_FAQ_S){if(e.k.some(k=>lq.includes(k.normalize('NFD').replace(/[\u0300-\u036f]/g,''))))return e.a;}
+  return 'No encontré una respuesta exacta. Preguntame sobre: <strong>beatmatch, EQ, crossfader, sync, scratch, hot cues, loops, FX o técnicas de mezcla</strong>.';
 }
 
 // ══════════════════════════════════════════════════════
