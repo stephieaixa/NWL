@@ -211,8 +211,35 @@ body{background:var(--bg);color:var(--txt);font-family:var(--mono);overflow-x:hi
 .mp-bar{flex:1;height:2px;background:#0c1020;border-radius:2px;overflow:hidden;}
 .mp-fill{height:100%;background:linear-gradient(90deg,var(--a),#ff9900);transition:width .5s;}
 .mp-pt{font-size:8px;color:var(--txt3);}
-@keyframes hintPulse{0%{box-shadow:0 0 0 0 rgba(255,200,0,.9);}50%{box-shadow:0 0 0 10px rgba(255,200,0,0);}100%{box-shadow:0 0 0 0 rgba(255,200,0,.9);}}
-.hint-pulse{animation:hintPulse .7s ease-in-out 5 !important;outline:2px solid rgba(255,200,0,.9) !important;position:relative;z-index:10;}
+@keyframes hintPulse{
+  0%,100%{box-shadow:0 0 0 2px rgba(255,210,0,1),0 0 12px 4px rgba(255,210,0,.5);outline-color:rgba(255,210,0,1);}
+  50%{box-shadow:0 0 0 5px rgba(255,210,0,.7),0 0 24px 10px rgba(255,210,0,.3);outline-color:rgba(255,210,0,.7);}
+}
+.hint-pulse{
+  animation:hintPulse .55s ease-in-out infinite !important;
+  outline:3px solid rgba(255,210,0,1) !important;
+  outline-offset:2px !important;
+  position:relative !important;
+  z-index:50 !important;
+}
+/* floating hint arrow */
+#hint-arrow{
+  position:fixed;z-index:9999;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  transform:translateX(-50%);
+}
+#hint-arrow .ha-label{
+  background:#ffcc00;color:#000;font-family:var(--mono);
+  font-size:9px;font-weight:800;letter-spacing:1px;
+  padding:3px 10px;border-radius:3px;white-space:nowrap;
+  box-shadow:0 2px 10px rgba(255,200,0,.7);
+}
+#hint-arrow .ha-arrow{
+  font-size:18px;line-height:1;color:#ffcc00;
+  text-shadow:0 0 8px rgba(255,200,0,.9);
+}
+@keyframes hintArrowBounce{0%{transform:translateY(0);}100%{transform:translateY(5px);}}
+#hint-arrow .ha-arrow{animation:hintArrowBounce .4s ease-in-out infinite alternate;}
 
 /* CRISIS/TIPS */
 .crisis-list,.tips-list{display:flex;flex-direction:column;gap:8px;}
@@ -480,7 +507,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--mono);overflow-x:hi
 </div>
 
 <!-- LIBRARY -->
-<div class="lib">
+<div class="lib" id="lib-wrap">
   <div class="lib-hdr">
     <span class="lib-lbl">LIBRARY</span>
     <div class="lib-deck">
@@ -756,9 +783,9 @@ const SET_SCENES=[
 // HINT MAP
 // ══════════════════════════════════════
 const HINTS={
-  '0-0':['lib-body'],'0-1':['lib-body'],
-  '1-0':['lib-body'],'1-1':['play-a'],
-  '2-0':['lib-body','play-b'],'2-1':['xf-track'],
+  '0-0':['lib-wrap'],'0-1':['lib-wrap'],
+  '1-0':['lib-wrap'],'1-1':['play-a'],
+  '2-0':['lib-wrap','play-b'],'2-1':['xf-track'],
   '3-0':['play-a','play-b'],'3-1':['pt-b'],
   '4-0':['lib-body'],'4-1':['sync-b'],
   '5-0':['play-a','play-b'],'5-1':['eq-a-lo'],
@@ -767,7 +794,7 @@ const HINTS={
   '8-0':['play-a'],'8-1':['jog-a'],
   '9-0':['fx-echo','fx-reverb'],'9-1':['fx-on'],
   '10-0':['sync-a','sync-b'],'10-1':['eq-a-lo'],'10-2':['xf-track','chf-b'],
-  '11-0':['lib-body'],'11-1':['fx-on'],'11-2':['hca-0','hcb-0'],
+  '11-0':['lib-wrap'],'11-1':['fx-on'],'11-2':['hca-0','hcb-0'],
 };
 
 function doHint(){
@@ -777,16 +804,37 @@ function doHint(){
   if(si<0){msg('Todos los pasos listos — presioná COMPLETAR');return;}
   const ids=HINTS[mpCur+'-'+si]||[];
   if(!ids.length){msg('Revisá la descripción de la misión');return;}
+  // remove any existing arrows
+  document.querySelectorAll('#hint-arrow').forEach(e=>e.remove());
   let found=0;
   ids.forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;found++;
+    // pulse on element
     el.classList.remove('hint-pulse');void el.offsetWidth;
     el.classList.add('hint-pulse');
     el.scrollIntoView({behavior:'smooth',block:'nearest'});
-    setTimeout(()=>el.classList.remove('hint-pulse'),3500);
+    // floating arrow indicator
+    const arrow=document.createElement('div');
+    arrow.id='hint-arrow';
+    arrow.innerHTML='<div class="ha-label">AQUÍ ▼</div><div class="ha-arrow">▼</div>';
+    document.body.appendChild(arrow);
+    function posArrow(){
+      const r=el.getBoundingClientRect();
+      arrow.style.left=(r.left+r.width/2)+'px';
+      arrow.style.top=Math.max(4,r.top-36)+'px';
+    }
+    posArrow();
+    const tid=setTimeout(()=>{
+      el.classList.remove('hint-pulse');
+      arrow.remove();
+    },4000);
+    // reposition if page scrolls
+    const scrollH=()=>posArrow();
+    window.addEventListener('scroll',scrollH,{passive:true});
+    setTimeout(()=>window.removeEventListener('scroll',scrollH),4100);
   });
-  msg(found?'Hint: mirá el elemento resaltado':'Revisá la descripción');
+  msg(found?'Buscá el elemento resaltado en amarillo':'Revisá la descripción');
 }
 
 // ══════════════════════════════════════
