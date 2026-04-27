@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OBS Studio — SkillForge</title>
+<style>
+:root{
+  --bg:#1a1b1e;--sur:#202227;--sur2:#26282e;--sur3:#2c2e35;
+  --brd:#35383f;--brd2:#44474f;
+  --txt:#d0d4dc;--txt2:#8891a0;--txt3:#4a5060;
+  --acc:#5599dd;--live:#e84040;--liveOn:#22cc44;--rec:#cc3333;
+  --yel:#ddaa00;--grn:#22cc66;--pur:#8855dd;
+  --mono:'Courier New',monospace;--ui:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;display:flex;flex-direction:column;min-height:100vh;padding-bottom:230px;}
+
+/* TOP MENUBAR */
+.menubar{display:flex;align-items:center;height:28px;background:#141517;border-bottom:1px solid var(--brd);padding:0 6px;gap:1px;font-size:12px;}
+.mb-logo{font-family:var(--ui);font-size:11px;font-weight:800;color:#fff;padding:0 8px;letter-spacing:.5px;cursor:pointer;}
+.mb-logo span{color:var(--acc);}
+.menu-item{padding:2px 10px;border-radius:3px;cursor:pointer;color:var(--txt2);transition:all .1s;}
+.menu-item:hover{background:var(--sur2);color:var(--txt);}
+.mb-r{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.stat-chip{display:flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);color:var(--txt3);padding:0 6px;}
+.stat-chip.warn{color:#cc8833;}
+.stat-chip.good{color:var(--grn);}
+.stat-val{font-weight:700;color:var(--txt2);}
+.stat-val.live{color:var(--liveOn);}
+
+/* XP / FLASH */
+#xpp{position:fixed;top:50px;left:50%;transform:translateX(-50%) translateY(-8px);background:#141200;border:1px solid var(--yel);border-radius:4px;padding:5px 16px;font-size:11px;color:var(--yel);opacity:0;transition:all .35s;z-index:500;pointer-events:none;}
+#xpp.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:400;opacity:0;transition:opacity .28s;background:rgba(50,200,100,.04);}
+.flash.on{opacity:1;}
+
+/* MAIN PREVIEW AREA */
+.preview-area{background:#111214;border-bottom:1px solid var(--brd);padding:6px;display:flex;gap:6px;align-items:flex-start;}
+.preview-wrap{flex:1;position:relative;background:#000;border:1px solid var(--brd2);border-radius:3px;overflow:hidden;}
+.preview-wrap.studio-l{flex:1;}
+.preview-wrap.studio-r{flex:1;border-color:var(--liveOn);}
+.preview-label{position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.5);padding:3px 8px;font-size:9px;letter-spacing:2px;color:var(--txt3);display:flex;align-items:center;gap:6px;z-index:2;}
+.preview-label.program{color:var(--liveOn);border-bottom:1px solid rgba(34,204,102,.3);}
+#cv-preview,#cv-program{display:block;width:100%;aspect-ratio:16/9;}
+.live-badge{position:absolute;top:8px;right:8px;background:var(--live);color:#fff;font-size:9px;font-weight:800;letter-spacing:2px;padding:3px 8px;border-radius:3px;opacity:0;transition:opacity .3s;z-index:2;}
+.live-badge.on{opacity:1;animation:liveBlink 1.5s ease-in-out infinite;}
+.rec-badge{position:absolute;top:8px;right:8px;background:var(--rec);color:#fff;font-size:9px;font-weight:800;letter-spacing:2px;padding:3px 8px;border-radius:3px;opacity:0;transition:opacity .3s;z-index:2;}
+.rec-badge.on{opacity:1;}
+.studio-transition-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;}
+@keyframes liveBlink{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* BOTTOM PANELS */
+.panels{display:grid;grid-template-columns:190px 230px 1fr 170px;gap:2px;padding:4px 6px;background:var(--bg);}
+.panel{background:var(--sur);border:1px solid var(--brd);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;}
+.panel-hdr{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--sur2);border-bottom:1px solid var(--brd);font-size:11px;font-weight:600;color:var(--txt2);letter-spacing:.5px;flex-shrink:0;}
+.panel-hdr-btn{margin-left:auto;cursor:pointer;font-size:11px;color:var(--txt3);padding:1px 5px;border-radius:2px;transition:all .12s;border:1px solid transparent;}
+.panel-hdr-btn:hover{background:var(--sur3);color:var(--txt);border-color:var(--brd);}
+.panel-body{flex:1;overflow-y:auto;padding:2px 0;}
+
+/* SCENES */
+.scene-item{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;transition:background .1s;border-bottom:1px solid #1e2025;}
+.scene-item:hover{background:var(--sur3);}
+.scene-item.active{background:#1a2a3a;border-left:3px solid var(--acc);padding-left:5px;}
+.scene-icon{font-size:13px;}
+.scene-name{font-size:11px;color:var(--txt);}
+.scene-add{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px;cursor:pointer;font-size:10px;color:var(--txt3);transition:all .12s;border-top:1px solid var(--brd);}
+.scene-add:hover{color:var(--txt2);background:var(--sur3);}
+
+/* SOURCES */
+.source-item{display:flex;align-items:center;gap:5px;padding:5px 8px;cursor:pointer;transition:background .1s;border-bottom:1px solid #1e2025;}
+.source-item:hover{background:var(--sur3);}
+.source-item.active{background:#1a2030;}
+.src-eye{font-size:10px;cursor:pointer;opacity:.5;transition:opacity .12s;min-width:14px;text-align:center;}
+.src-eye:hover,.src-eye.on{opacity:1;}
+.src-icon{font-size:11px;}
+.src-name{font-size:11px;color:var(--txt);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.src-type{font-size:9px;color:var(--txt3);}
+.src-btns{display:flex;gap:2px;margin-left:auto;}
+.src-btn{font-size:9px;padding:1px 4px;border-radius:2px;cursor:pointer;color:var(--txt3);background:transparent;border:1px solid transparent;transition:all .12s;}
+.src-btn:hover{background:var(--sur3);border-color:var(--brd);color:var(--txt2);}
+.src-add{display:flex;align-items:center;justify-content:center;gap:4px;padding:5px;cursor:pointer;font-size:10px;color:var(--txt3);border-top:1px solid var(--brd);transition:all .12s;}
+.src-add:hover{color:var(--txt2);background:var(--sur3);}
+
+/* AUDIO MIXER */
+.audio-panel-body{display:flex;gap:4px;padding:6px 8px;overflow-x:auto;}
+.audio-ch{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:60px;}
+.audio-ch-name{font-size:9px;color:var(--txt2);letter-spacing:.5px;text-align:center;white-space:nowrap;}
+.vu-wrap{position:relative;width:100%;}
+.vu-canvas{display:block;}
+.audio-fader-t{height:60px;width:14px;background:#111214;border-radius:4px;border:1px solid var(--brd);position:relative;cursor:ns-resize;margin:0 auto;}
+.audio-fader-fill{position:absolute;bottom:0;left:0;right:0;border-radius:4px;transition:height .04s;}
+.audio-fader-th{position:absolute;left:50%;transform:translateX(-50%);width:22px;height:5px;border-radius:2px;cursor:ns-resize;background:var(--sur3);border:1px solid var(--brd2);}
+.audio-val{font-size:8px;font-family:var(--mono);color:var(--txt3);text-align:center;}
+.audio-mute{padding:3px 6px;border-radius:3px;cursor:pointer;font-size:9px;letter-spacing:1px;border:1px solid var(--brd);color:var(--txt3);background:transparent;transition:all .12s;text-align:center;}
+.audio-mute:hover{border-color:var(--brd2);color:var(--txt2);}
+.audio-mute.on{background:#3a0808;border-color:#cc3333;color:#ff6666;}
+.audio-filter-btn{padding:2px 5px;border-radius:2px;cursor:pointer;font-size:8px;border:1px solid var(--brd);color:var(--txt3);background:transparent;transition:all .12s;text-align:center;}
+.audio-filter-btn.on{background:#1a1030;border-color:var(--pur);color:#aa77ee;}
+.audio-filter-btn:hover{border-color:var(--brd2);color:var(--txt2);}
+
+/* CONTROLS */
+.controls-body{display:flex;flex-direction:column;gap:4px;padding:8px;}
+.ctrl-btn{padding:8px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;text-align:center;transition:all .15s;border:1px solid;letter-spacing:.5px;}
+.ctrl-stream{border-color:#992222;color:#cc3333;background:rgba(200,50,50,.08);}
+.ctrl-stream:hover{background:rgba(200,50,50,.16);}
+.ctrl-stream.on{border-color:var(--liveOn);color:#fff;background:rgba(34,204,68,.15);}
+.ctrl-rec{border-color:#774422;color:#aa6633;background:rgba(180,100,50,.08);}
+.ctrl-rec:hover{background:rgba(180,100,50,.15);}
+.ctrl-rec.on{border-color:var(--rec);color:#ff6666;background:rgba(200,50,50,.12);}
+.ctrl-studio{border-color:var(--brd2);color:var(--txt2);background:transparent;}
+.ctrl-studio:hover{background:var(--sur3);}
+.ctrl-studio.on{border-color:var(--acc);color:var(--acc);background:rgba(85,153,221,.08);}
+.ctrl-settings{border-color:var(--brd);color:var(--txt3);background:transparent;}
+.ctrl-settings:hover{background:var(--sur3);color:var(--txt2);}
+.ctrl-lbl{font-size:9px;color:var(--txt3);text-align:center;font-family:var(--mono);}
+.transition-row{display:flex;gap:3px;flex-wrap:wrap;}
+.trans-btn{flex:1;padding:4px;border-radius:3px;cursor:pointer;font-size:9px;text-align:center;border:1px solid var(--brd);color:var(--txt3);background:transparent;transition:all .12s;letter-spacing:.5px;}
+.trans-btn.on{background:#1a2030;border-color:var(--acc);color:var(--acc);}
+.trans-btn:hover{border-color:var(--brd2);color:var(--txt2);}
+.trans-apply{width:100%;padding:7px;border-radius:3px;cursor:pointer;font-size:11px;font-weight:700;text-align:center;background:linear-gradient(135deg,#1a2a3a,#1e3448);border:1px solid #2a4a6a;color:var(--acc);transition:all .15s;letter-spacing:1px;}
+.trans-apply:hover{background:linear-gradient(135deg,#1e3040,#243a50);border-color:var(--acc);}
+
+/* STATUS BAR */
+.statusbar{display:flex;align-items:center;gap:10px;padding:3px 8px;background:#111214;border-top:1px solid var(--brd);font-size:9px;font-family:var(--mono);color:var(--txt3);}
+.sb-msg{flex:1;color:var(--txt2);}
+
+/* MISSION PANEL */
+#mp{position:fixed;bottom:0;left:0;right:0;background:#16181c;border-top:1px solid var(--brd2);z-index:200;max-height:260px;transition:max-height .3s;}
+#mp.min{max-height:36px;}
+.mp-head{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--brd);background:#1a1c21;}
+.mp-ico{font-size:14px;}
+.mp-title{font-family:var(--ui);font-size:11px;font-weight:700;color:#fff;flex:1;}
+.mp-xp{font-size:10px;color:var(--yel);font-weight:700;}
+.mp-tog{font-size:10px;color:var(--txt3);}
+.mp-tabs{display:flex;border-bottom:1px solid var(--brd);}
+.mp-tab{flex:1;padding:5px;text-align:center;cursor:pointer;font-size:9px;letter-spacing:1px;color:var(--txt3);border-bottom:2px solid transparent;transition:all .15s;}
+.mp-tab.on{color:#fff;border-bottom-color:var(--acc);}
+.mp-tab:hover{color:var(--txt2);}
+.mp-body{padding:8px 12px;overflow-y:auto;max-height:175px;font-size:9px;line-height:1.5;}
+.mp-obj{color:var(--txt2);margin-bottom:6px;line-height:1.5;}
+.mp-steps{list-style:none;margin-bottom:8px;}
+.mp-step{display:flex;gap:6px;padding:3px 0;color:var(--txt3);}
+.mp-step.cur{color:#fff;}
+.mp-step.done{color:var(--grn);text-decoration:line-through;}
+.mp-step-ic{flex-shrink:0;width:12px;text-align:center;}
+.mp-tip{font-size:8px;color:#3a4a5a;border-left:2px solid #2a3a4a;padding:4px 8px;margin-bottom:6px;line-height:1.5;font-style:italic;}
+.mp-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.mp-btn{padding:5px 12px;border-radius:3px;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid;transition:all .15s;text-transform:uppercase;}
+.mp-btn.ok{border-color:var(--grn);color:var(--grn);background:rgba(34,204,102,.08);}
+.mp-btn.ok:hover{background:var(--grn);color:#000;}
+.mp-btn.skip{border-color:#333;color:var(--txt3);background:transparent;}
+.mp-btn.skip:hover{color:var(--txt2);}
+.mp-btn.hint{border-color:#554400;color:#998800;background:rgba(160,130,0,.07);}
+.mp-btn.hint:hover{background:rgba(180,150,0,.18);color:#ddbb00;}
+.mp-prog{border-top:1px solid var(--brd);padding:4px 12px;display:flex;align-items:center;gap:8px;}
+.mp-bar{flex:1;height:2px;background:#1e2230;border-radius:2px;overflow:hidden;}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--acc),#66bbff);transition:width .5s;}
+.mp-pt{font-size:8px;color:var(--txt3);}
+@keyframes hintPulse{0%{box-shadow:0 0 0 0 rgba(255,200,0,.9);}50%{box-shadow:0 0 0 10px rgba(255,200,0,0);}100%{box-shadow:0 0 0 0 rgba(255,200,0,.9);}}
+.hint-pulse{animation:hintPulse .7s ease-in-out 5 !important;outline:2px solid rgba(255,200,0,.9) !important;position:relative;z-index:10;}
+.crisis-list,.tips-list{display:flex;flex-direction:column;gap:8px;}
+.crisis-item{background:#1a1c21;border:1px solid var(--brd);border-radius:3px;padding:8px;}
+.crisis-q{font-size:9px;font-weight:700;color:#cc8833;margin-bottom:3px;}
+.crisis-a{font-size:8px;color:var(--txt2);margin-bottom:4px;line-height:1.5;}
+.crisis-steps{list-style:none;padding-left:6px;}
+.crisis-steps li{font-size:8px;color:var(--txt3);padding:1px 0;}
+.crisis-steps li::before{content:'→ ';}
+.tip-item{border-left:2px solid;padding:6px 8px;margin-bottom:4px;}
+.tip-tag{font-size:8px;font-weight:700;letter-spacing:1px;margin-bottom:2px;}
+.tip-txt{font-size:8px;color:var(--txt2);line-height:1.5;}
+.mnt-intro{font-size:9px;color:#3a4a5a;padding:4px 0 8px;line-height:1.6;}
+.mnt-scene{border:1px solid var(--brd);border-radius:4px;padding:9px 10px 9px 13px;margin-bottom:6px;background:#16181c;position:relative;overflow:hidden;}
+.mnt-scene::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sa,#336);}
+.mnt-scene-head{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.mnt-badge{font-family:var(--ui);font-size:8px;letter-spacing:2px;font-weight:800;padding:2px 7px;border-radius:2px;flex-shrink:0;}
+.mnt-time{font-size:8px;color:var(--txt3);font-family:var(--mono);}
+.mnt-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px;}
+.mnt-tag{background:#111316;border:1px solid var(--brd);border-radius:2px;padding:1px 5px;font-size:8px;color:#3a4a5a;}
+.mnt-rec{font-size:8px;color:#3a4a5a;line-height:1.5;margin-bottom:4px;}
+.mnt-pro{font-size:8px;font-weight:700;line-height:1.5;}
+.mnt-cta{display:block;width:100%;margin-top:10px;padding:11px;border-radius:4px;cursor:pointer;font-family:var(--ui);font-size:11px;letter-spacing:2.5px;font-weight:800;text-align:center;background:linear-gradient(135deg,#0e1624,#142038);border:1px solid #1e3a5a;color:#4488bb;transition:all .2s;}
+.mnt-cta:hover{border-color:var(--acc);color:var(--acc);box-shadow:0 0 16px rgba(85,153,221,.12);}
+#show-modal{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.95);align-items:center;justify-content:center;}
+#show-modal.open{display:flex;}
+.show-inner{width:min(94vw,800px);background:#141618;border:1px solid var(--brd2);border-radius:8px;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.9);}
+.show-hdr{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--brd);background:#1a1c22;}
+.show-badge{font-family:var(--ui);font-size:9px;letter-spacing:3px;font-weight:800;padding:3px 11px;border-radius:3px;min-width:80px;text-align:center;}
+.show-hdr-time{font-size:9px;color:var(--txt3);font-family:var(--mono);}
+.show-hdr-right{font-size:9px;color:var(--txt3);margin-left:auto;}
+.show-close{background:none;border:1px solid var(--brd2);border-radius:3px;color:var(--txt3);font-size:10px;cursor:pointer;padding:3px 9px;font-family:var(--mono);letter-spacing:1px;margin-left:8px;transition:all .15s;}
+.show-close:hover{border-color:#334;color:#668;}
+#show-cv{display:block;width:100%;}
+.show-info{padding:12px 16px 8px;border-top:1px solid var(--brd);}
+.show-info-rec{font-size:10px;color:#5a7090;line-height:1.6;margin-bottom:5px;}
+.show-info-pro{font-size:10px;font-weight:700;line-height:1.5;transition:color .4s;}
+.show-tl{padding:8px 16px 5px;background:#111316;border-top:1px solid var(--brd);}
+.show-tl-bar{height:2px;background:#1e2230;border-radius:2px;margin-bottom:6px;}
+.show-tl-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--acc),#66bbff);transition:width .4s ease;}
+.show-tl-row{display:flex;justify-content:space-between;}
+.show-tl-lbl{font-size:8px;color:var(--txt3);cursor:pointer;padding:2px 4px;transition:color .3s;}
+.show-tl-lbl.on{color:var(--acc);}
+.show-nav{display:flex;gap:4px;padding:0 16px 12px;background:#111316;}
+.show-nav-btn{flex:1;padding:6px;border-radius:3px;cursor:pointer;text-align:center;font-size:8px;letter-spacing:1px;border:1px solid #1e2a38;color:var(--txt3);background:transparent;transition:all .15s;}
+.show-nav-btn.on,.show-nav-btn:hover{border-color:var(--acc);color:var(--acc);background:#0e1828;}
+</style>
+</head>
+<body>
+
+<!-- MENUBAR -->
+<a href="index.html" style="position:fixed;top:6px;left:6px;z-index:999;display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;background:rgba(20,21,23,.9);border:1px solid #35383f;color:#4a5060;font-size:11px;font-family:'Segoe UI',sans-serif;text-decoration:none;backdrop-filter:blur(8px);transition:all .15s;" onmouseover="this.style.color='#d0d4dc';this.style.borderColor='#44474f'" onmouseout="this.style.color='#4a5060';this.style.borderColor='#35383f'">← Inicio</a>
+<div class="menubar">
+  <span class="mb-logo" onclick="window.location.href='index.html'">Skill<span>Forge</span></span>
+  <span class="menu-item">Archivo</span>
+  <span class="menu-item">Editar</span>
+  <span class="menu-item">Ver</span>
+  <span class="menu-item">Herramientas</span>
+  <span class="menu-item">Ayuda</span>
+  <div class="mb-r">
+    <div class="stat-chip">CPU <span class="stat-val" id="stat-cpu">3.2%</span></div>
+    <div class="stat-chip">FPS <span class="stat-val" id="stat-fps">60.00</span></div>
+    <div class="stat-chip">kbps <span class="stat-val" id="stat-kbps">0</span></div>
+    <div class="stat-chip">Dropped <span class="stat-val" id="stat-drop">0</span></div>
+    <div class="stat-chip">Tiempo <span class="stat-val" id="stat-time">00:00:00</span></div>
+  </div>
+</div>
+
+<div id="xpp"></div>
+<div class="flash" id="fl"></div>
+
+<!-- PREVIEW AREA -->
+<div class="preview-area" id="preview-area">
+  <!-- Normal mode: single preview -->
+  <div class="preview-wrap" id="preview-wrap-single">
+    <div class="preview-label">PREVIEW — <span id="scene-name-disp">Sin escena</span></div>
+    <canvas id="cv-preview"></canvas>
+    <div class="live-badge" id="live-badge">● LIVE</div>
+    <div class="rec-badge" id="rec-badge" style="top:36px">⏺ REC</div>
+  </div>
+  <!-- Studio mode: preview + program (hidden by default) -->
+  <div class="preview-wrap studio-l" id="preview-wrap-studio-l" style="display:none">
+    <div class="preview-label">PREVIEW — <span id="studio-preview-name">—</span></div>
+    <canvas id="cv-studio-preview"></canvas>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;display:none" id="studio-middle">
+    <div class="trans-apply" onclick="doStudioTransition()" style="writing-mode:vertical-lr;transform:rotate(180deg);width:auto;padding:14px 7px;letter-spacing:2px">▶ CORTE</div>
+  </div>
+  <div class="preview-wrap studio-r" id="preview-wrap-studio-r" style="display:none">
+    <div class="preview-label program">PROGRAM — EN VIVO</div>
+    <canvas id="cv-studio-program"></canvas>
+    <div class="live-badge on" style="top:28px">● LIVE</div>
+  </div>
+</div>
+
+<!-- BOTTOM PANELS -->
+<div class="panels">
+
+  <!-- SCENES -->
+  <div class="panel">
+    <div class="panel-hdr">
+      🎬 Escenas
+      <span class="panel-hdr-btn" onclick="addScene()">+</span>
+    </div>
+    <div class="panel-body" id="scenes-list"></div>
+  </div>
+
+  <!-- SOURCES -->
+  <div class="panel">
+    <div class="panel-hdr">
+      📦 Fuentes
+      <span class="panel-hdr-btn" id="add-src-btn" onclick="addSource()">+</span>
+    </div>
+    <div class="panel-body" id="sources-list"></div>
+  </div>
+
+  <!-- AUDIO MIXER -->
+  <div class="panel">
+    <div class="panel-hdr">🔊 Mezclador de Audio</div>
+    <div class="panel-body">
+      <div class="audio-panel-body" id="audio-channels"></div>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="panel">
+    <div class="panel-hdr">⚙️ Controles</div>
+    <div class="controls-body">
+      <div class="ctrl-btn ctrl-stream" id="btn-stream" onclick="toggleStream()">Iniciar Streaming</div>
+      <div class="ctrl-btn ctrl-rec" id="btn-rec" onclick="toggleRec()">Iniciar Grabación</div>
+      <div class="ctrl-btn ctrl-studio" id="btn-studio" onclick="toggleStudio()">Studio Mode</div>
+      <div style="height:4px"></div>
+      <div class="ctrl-lbl">TRANSICIÓN</div>
+      <div class="transition-row" id="trans-row">
+        <div class="trans-btn on" id="tr-cut" onclick="setTrans('cut')">CUT</div>
+        <div class="trans-btn" id="tr-fade" onclick="setTrans('fade')">FADE</div>
+        <div class="trans-btn" id="tr-swipe" onclick="setTrans('swipe')">SWIPE</div>
+      </div>
+      <div class="ctrl-btn ctrl-settings" onclick="msg('Settings: Encoder, bitrate, plataforma, resolución. Abrí OBS real para configurar.')">Configuración</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="statusbar">
+  <span class="sb-msg" id="sb-msg">Seleccioná una escena para comenzar</span>
+</div>
+
+<!-- MISSION PANEL -->
+<div id="mp">
+  <div class="mp-head" onclick="toggleMP()">
+    <span class="mp-ico" id="mp-ico">🎯</span>
+    <span class="mp-title" id="mp-t">Cargando...</span>
+    <span class="mp-xp" id="mp-xp">0 XP</span>
+    <span class="mp-tog" id="mp-tog">▼</span>
+  </div>
+  <div class="mp-tabs">
+    <div class="mp-tab on" id="tab-mis" onclick="setMPTab('mis')">MISIÓN</div>
+    <div class="mp-tab" id="tab-cri" onclick="setMPTab('cri')">🚨 CRISIS</div>
+    <div class="mp-tab" id="tab-tip" onclick="setMPTab('tip')">💡 TIPS</div>
+    <div class="mp-tab" id="tab-mnt" onclick="setMPTab('mnt')">📡 SETUP</div>
+  </div>
+  <div class="mp-body" id="mp-body"></div>
+  <div class="mp-prog">
+    <div class="mp-bar"><div class="mp-fill" id="mp-fill" style="width:0%"></div></div>
+    <div class="mp-pt" id="mp-pt">0/12</div>
+  </div>
+</div>
+
+<!-- SHOW MODAL -->
+<div id="show-modal">
+  <div class="show-inner">
+    <div class="show-hdr">
+      <div class="show-badge" id="sm-badge">PRE-SHOW</div>
+      <span class="show-hdr-time" id="sm-time">Setup</span>
+      <span class="show-hdr-right" id="sm-cue"></span>
+      <button class="show-close" onclick="closeShow()">✕ CERRAR</button>
+    </div>
+    <canvas id="show-cv" height="200"></canvas>
+    <div class="show-info">
+      <div class="show-info-rec" id="sm-rec"></div>
+      <div class="show-info-pro" id="sm-pro"></div>
+    </div>
+    <div class="show-tl">
+      <div class="show-tl-bar"><div class="show-tl-fill" id="sm-fill" style="width:25%"></div></div>
+      <div class="show-tl-row">
+        <span class="show-tl-lbl on" onclick="jumpShow(0)">PRE-SHOW</span>
+        <span class="show-tl-lbl" onclick="jumpShow(1)">ON AIR</span>
+        <span class="show-tl-lbl" onclick="jumpShow(2)">LIVE</span>
+        <span class="show-tl-lbl" onclick="jumpShow(3)">WRAP</span>
+      </div>
+    </div>
+    <div class="show-nav">
+      <div class="show-nav-btn on" id="snav-0" onclick="jumpShow(0)">▶ PRE-SHOW</div>
+      <div class="show-nav-btn" id="snav-1" onclick="jumpShow(1)">▶ ON AIR</div>
+      <div class="show-nav-btn" id="snav-2" onclick="jumpShow(2)">▶ LIVE</div>
+      <div class="show-nav-btn" id="snav-3" onclick="jumpShow(3)">▶ WRAP</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// DATA
+// ══════════════════════════════════════
+const SOURCE_TYPES = {
+  display:  {icon:'🖥️', label:'Display Capture'},
+  webcam:   {icon:'📷', label:'Video Capture Device'},
+  mic:      {icon:'🎙️', label:'Audio Input Capture'},
+  desktop:  {icon:'🔊', label:'Audio Output Capture'},
+  browser:  {icon:'🌐', label:'Browser Source'},
+  image:    {icon:'🖼️', label:'Image'},
+  text:     {icon:'🔤', label:'Texto (GDI+)'},
+  media:    {icon:'🎬', label:'Media Source'},
+  game:     {icon:'🎮', label:'Game Capture'},
+};
+
+const INITIAL_SCENES = [
+  {name:'Pantalla principal',icon:'🖥️',sources:[
+    {name:'Display Capture',type:'display',visible:true},
+    {name:'Webcam',type:'webcam',visible:true},
+    {name:'Micrófono',type:'mic',visible:true},
+    {name:'Desktop Audio',type:'desktop',visible:true},
+  ]},
+  {name:'Cámara + overlay',icon:'📷',sources:[
+    {name:'Video Capture',type:'webcam',visible:true},
+    {name:'Chat Browser',type:'browser',visible:true},
+    {name:'Alert Overlay',type:'browser',visible:false},
+    {name:'Micrófono',type:'mic',visible:true},
+  ]},
+  {name:'Solo cámara',icon:'🎥',sources:[
+    {name:'Webcam HD',type:'webcam',visible:true},
+    {name:'Micrófono',type:'mic',visible:true},
+  ]},
+  {name:'BRB Screen',icon:'⏸️',sources:[
+    {name:'BRB Image',type:'image',visible:true},
+    {name:'Música BRB',type:'media',visible:true},
+  ]},
+  {name:'Starting Soon',icon:'▶️',sources:[
+    {name:'Starting Soon.png',type:'image',visible:true},
+    {name:'Intro music',type:'media',visible:true},
+  ]},
+];
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+const S = {
+  scenes: JSON.parse(JSON.stringify(INITIAL_SCENES)),
+  activeScene: 0,
+  previewScene: 0,   // studio mode preview
+  programScene: 0,   // studio mode program
+  studioMode: false,
+  streaming: false,
+  recording: false,
+  streamTime: 0,
+  recTime: 0,
+  transition: 'cut',
+  transitionDone: false,
+  browserAdded: false,
+  noiseFilter: false,
+  sourceToggled: false,
+  audio: {
+    desktop: {vol:75, muted:false, peak:0, t:0},
+    mic:     {vol:80, muted:false, peak:0, t:1.3, filter:false},
+    music:   {vol:40, muted:false, peak:0, t:2.1},
+  },
+  stats: {cpu:3.2, fps:60, kbps:0, drop:0},
+  animT: 0,
+};
+
+// ══════════════════════════════════════
+// MISSIONS
+// ══════════════════════════════════════
+let mpCur=0, mpXP=0, mpTab='mis';
+
+const MISSIONS = [
+  {ico:'🎬',t:'Seleccioná una escena',xp:50,
+   obj:'Hacé clic en cualquier escena de la lista <strong>Escenas</strong> (panel izquierdo). La escena se activa en el preview.',
+   steps:[
+     {txt:'Hacer clic en una escena de la lista',chk:()=>true}, // starts selected
+     {txt:'La escena aparece activa en el preview principal',chk:()=>S.activeScene>=0},
+   ],
+   tip:'En un stream real, organizás las escenas como "actos" de tu producción. Cada escena es un look visual diferente que activás con un clic o un hotkey.'},
+  {ico:'👁️',t:'Ocultá y mostrá fuentes',xp:60,
+   obj:'En el panel <strong>Fuentes</strong>, hacé clic en el ícono 👁️ para ocultar o mostrar una fuente. Probá con la Webcam.',
+   steps:[
+     {txt:'Clic en el ojo de cualquier fuente para alternar visibilidad',chk:()=>S.sourceToggled},
+   ],
+   tip:'Visibilidad de fuentes = tu switcher interno. Una webcam invisible sigue conectada — no consume CPU adicional, pero no aparece en el output.'},
+  {ico:'🎙️',t:'Ajustá el audio del micrófono',xp:70,
+   obj:'En el <strong>Mezclador de Audio</strong>, arrastrá el fader del Micrófono para ajustar el nivel. El medidor VU muestra el nivel en tiempo real.',
+   steps:[
+     {txt:'Mover el fader del Micrófono (Mic/Aux)',chk:()=>S.audio.mic.vol!==80},
+     {txt:'El nivel queda entre 60 y 90 (zona óptima)',chk:()=>S.audio.mic.vol>=60&&S.audio.mic.vol<=90},
+   ],
+   tip:'Nivel óptimo de micrófono: picos llegando a -6dB (la barra verde sin tocar el amarillo). Más alto = distorsión. Más bajo = tu voz se pierde en la mezcla.'},
+  {ico:'🔇',t:'Silenciá el audio de escritorio',xp:60,
+   obj:'Hacé clic en el botón <strong>MUTE</strong> del canal Desktop Audio. Útil cuando reproducís música sin querer que se escuche en el stream.',
+   steps:[
+     {txt:'Silenciar el canal Desktop Audio',chk:()=>S.audio.desktop.muted},
+   ],
+   tip:'Desktop audio silenciado en stream = buen hábito. Podés escuchar cosas en tu monitor sin que el público las oiga. Desmutealo solo cuando querés compartir audio del sistema.'},
+  {ico:'🎛️',t:'Activá Studio Mode',xp:80,
+   obj:'Hacé clic en el botón <strong>Studio Mode</strong> en el panel de controles. Aparecen dos pantallas: Preview (lo que editás) y Program (lo que sale al aire).',
+   steps:[
+     {txt:'Activar Studio Mode',chk:()=>S.studioMode},
+   ],
+   tip:'Studio Mode = tu mesa de dirección. Preview es donde preparás el próximo look. Program es lo que el público ve. Nunca muestres algo sin haberlo revisado en Preview primero.'},
+  {ico:'✂️',t:'Hacé una transición en Studio Mode',xp:90,
+   obj:'Con Studio Mode activo, seleccioná una escena diferente en la lista (va al Preview) y presioná el botón <strong>▶ CORTE</strong> para enviarla al Program.',
+   steps:[
+     {txt:'Studio Mode activo',chk:()=>S.studioMode},
+     {txt:'Ejecutar una transición del preview al program',chk:()=>S.transitionDone},
+   ],
+   tip:'En producción en vivo: nunca cambies de escena directo en Program. Siempre Preview → revisa → Transición. Un error en vivo se ve 1000 veces — uno en Preview, solo vos.'},
+  {ico:'🌐',t:'Agregá un Browser Source',xp:80,
+   obj:'Hacé clic en <strong>+</strong> en el panel de Fuentes y seleccioná <strong>Browser Source</strong> para agregar un overlay de chat o alertas.',
+   steps:[
+     {txt:'Agregar una fuente de tipo Browser Source',chk:()=>S.browserAdded},
+   ],
+   tip:'Browser Source = integración con Streamlabs, StreamElements, Twitch alerts. URL de la página de alertas va acá. Es cómo aparecen los follows, subs y donaciones en pantalla.'},
+  {ico:'🔇',t:'Cambiá el tipo de transición',xp:60,
+   obj:'En el panel de Controles, seleccioná <strong>FADE</strong> o <strong>SWIPE</strong> como transición activa. Distinto impacto visual para distintos momentos.',
+   steps:[
+     {txt:'Seleccionar Fade o Swipe como transición',chk:()=>S.transition!=='cut'},
+   ],
+   tip:'CUT = cambio instantáneo (para gaming, acción rápida). FADE = suave (para música, talk shows). SWIPE = dinamismo (para entertainment). Elegí según el tono de tu contenido.'},
+  {ico:'⏺️',t:'Iniciá la grabación',xp:100,
+   obj:'Presioná el botón <strong>Iniciar Grabación</strong>. OBS graba en local en paralelo al stream — tenés backup del contenido sin importar lo que pase con el stream.',
+   steps:[
+     {txt:'Iniciar la grabación local',chk:()=>S.recording},
+   ],
+   tip:'Grabá SIEMPRE aunque no estés streamando. El archivo local es tu material de corte para YouTube, clips, highlights. Los pros graban en MKV (sin pérdida de datos si crashea).'},
+  {ico:'📡',t:'Iniciá el streaming',xp:120,
+   obj:'Presioná <strong>Iniciar Streaming</strong>. El indicador LIVE aparece en rojo. El contador de tiempo y el bitrate se activan en la barra de estadísticas.',
+   steps:[
+     {txt:'Iniciar el stream',chk:()=>S.streaming},
+   ],
+   tip:'Antes de ir al aire: 1) Verificá el micrófono. 2) Verificá que no hay información privada en pantalla. 3) Revisá el título del stream. 4) Tenés 5 segundos de delay — úsalos.'},
+  {ico:'🔈',t:'Aplicá filtro al micrófono',xp:100,
+   obj:'En el canal de Micrófono del Mezclador, hacé clic en <strong>Filtro</strong> para activar el Noise Suppression. Elimina ruido de fondo automáticamente.',
+   steps:[
+     {txt:'Activar el filtro Noise Suppression en el micrófono',chk:()=>S.noiseFilter},
+   ],
+   tip:'Noise Suppression (RNNoise en OBS) elimina el 90% del ruido de ventiladores y teclado. Después agregá Gate (para cortar cuando no hablás) y Compressor (para igualar volumen).'},
+  {ico:'🏆',t:'Setup completo de producción',xp:200,
+   obj:'Tenés un setup profesional completo: stream activo + grabación local + Studio Mode + filtro de micrófono.',
+   steps:[
+     {txt:'Stream activo',chk:()=>S.streaming},
+     {txt:'Grabación local activa',chk:()=>S.recording},
+     {txt:'Studio Mode activado',chk:()=>S.studioMode},
+     {txt:'Filtro de micrófono activado',chk:()=>S.noiseFilter},
+   ],
+   tip:'El setup de un streamer profesional: OBS con NDI → software de producción (ATEM Mini, vMix) → stream. Para shows: HDMI capture de mixer de video → OBS → multistream a Twitch + YouTube simultáneo.'},
+];
+
+const CRISIS = [
+  {q:'Se escucha el audio doble (eco/delay en el stream)',
+   a:'Causas: monitoring activado en OBS + el micrófono captura el audio del speaker. O Desktop Audio + Video Capture duplicando el audio.',
+   steps:['Settings → Audio → Monitoreo → Desactivar para todos los dispositivos','Verificar que Desktop Audio y el micrófono de la cámara no estén ambos activos','En Windows: deshabilitar "escuchar este dispositivo" en propiedades del micrófono','Si usás auriculares, el problema desaparece — el mic no captura el speaker']},
+  {q:'Frames caídos / bitrate inestable',
+   a:'El encoder no puede comprimir a tiempo (CPU bound) o la conexión no aguanta el bitrate elegido.',
+   steps:['Stats → Dropped frames > 1%: reducir bitrate 500 kbps','Encoder: cambiar de x264 a NVENC/AMF (GPU) para liberar CPU','En Settings → Output: bajar resolución de 1080p60 a 1080p30 o 720p60','Test de velocidad real: en Twitch usás máximo el 70% de tu upload speed']},
+  {q:'La webcam no aparece / pantalla negra',
+   a:'Conflicto de acceso al dispositivo o driver desactualizado.',
+   steps:['Verificar que ningún otro programa (Teams, Zoom) tenga la cámara abierta','En OBS: clic derecho sobre la fuente → Propiedades → cambiar resolución/FPS','Borrar la fuente y volver a agregarla — resuelve el 80% de los casos','Si sigue: reiniciar el servicio de cámara en el Administrador de Dispositivos']},
+  {q:'El stream se ve pixelado / en bloque',
+   a:'Bitrate insuficiente para el contenido. El movimiento rápido necesita más bits que una pantalla estática.',
+   steps:['Para gaming/movimiento: mínimo 6000 kbps para 1080p60','Activar "Keyframe Interval = 2s" en Settings → Output → Avanzado','Probar CBR (bitrate constante) en vez de VBR para plataformas con restricciones','Verificar que el encoder preset sea "Quality" o "Balanced", no "Ultra-fast"']},
+  {q:'El audio y el video están desfasados en el stream',
+   a:'El encoder de video es más lento que el de audio, o hay latencia de dispositivo de captura.',
+   steps:['En OBS: clic derecho sobre fuente de audio → Propiedades → Sync Offset','Abrí un stream tuyo en otro dispositivo y medí el delay visual/auditivo','Valores comunes: -100ms a +200ms de corrección','Para capturadora HDMI: el delay de captura es generalmente 100-200ms']},
+];
+
+const TIPS = [
+  {tag:'BITRATE POR PLATAFORMA',txt:'Twitch: 6000 kbps max para Afiliados/Partners. YouTube: hasta 51000 kbps. Kick: 8000 kbps. Para 1080p60 de calidad: 6000-8000 kbps con NVENC. Con x264: +20% CPU.',accent:'#e84040'},
+  {tag:'ENCODER CHOICE',txt:'x264 slow = mejor calidad, alto CPU. NVENC (NVIDIA) / AMF (AMD) = GPU encoding, libera CPU para el juego/app. En 2024: NVENC con Preset P5-P6 es mejor que x264 medium en calidad.',accent:'#5599dd'},
+  {tag:'SCENE COLLECTION',txt:'Creá colecciones de escenas por tipo de contenido: Gaming, Talk Show, Music Stream, IRL. Cada colección tiene sus propias escenas, fuentes y audio. Las switcheás desde el menú de OBS.',accent:'#22cc66'},
+  {tag:'HOTKEYS OBLIGATORIOS',txt:'Configurá hotkeys para: cambio de escena (F1-F5), mute micrófono (Alt+M), inicio/fin de grabación clip. Los hotkeys funcionan aunque OBS no esté en foco. Indispensable en vivo.',accent:'#ddaa00'},
+  {tag:'VIRTUAL CAMERA',txt:'OBS tiene Virtual Camera: convierte tu output en una "cámara virtual" que usás en Zoom, Teams, Meet. Tu stream completo con overlays y escenas, en cualquier videollamada.',accent:'#aa44ee'},
+  {tag:'REPLAY BUFFER',txt:'Replay Buffer: OBS guarda los últimos N segundos continuamente en RAM. Con un hotkey guardás el clip retroactivamente. Perfecto para capturar momentos inesperados sin haber grabado.',accent:'#ff9900'},
+  {tag:'MULTISTREAM',txt:'Para streamear a Twitch + YouTube simultáneo: usás un servicio de restream (Restream.io) o el plugin obs-multi-rtmp. Un solo stream de OBS → múltiples plataformas al mismo tiempo.',accent:'#22aacc'},
+  {tag:'SHOWS EN VIVO',txt:'Para shows: capturadora HDMI del mixer de video → OBS como encoder. Salida a Twitch/YouTube. Agrega overlays de setlist, sponsors, countdown. El técnico de streaming controla OBS mientras el VJ opera Resolume.',accent:'#5599dd'},
+];
+
+const SETUP_SCENES = [
+  {label:'PRE-SHOW',time:'–30 min',accent:'#4477aa',badgeCol:'#fff',
+   colour:'#1a2840',
+   rec:'30 minutos antes del show: verificás cámaras, micrófono, conexión. Reproducís música de lobby en la escena "Starting Soon". El chat empieza a llenarse.',
+   pro:'PRO: Abrí el stream 20 min antes de empezar. El algoritmo de Twitch/YouTube te favorece si tenés viewers que llegan gradualmente vs un spike repentino.'},
+  {label:'ON AIR',time:'0:00',accent:'#e84040',badgeCol:'#fff',
+   colour:'#2a1010',
+   rec:'Start. Cámara principal activa, micrófono al nivel correcto, alerts activados. Studio Mode te permite preparar el próximo look sin mostrar el caos.',
+   pro:'PRO: Los primeros 5 minutos determinan el retention. Empezá en acción, no en setup. El "Vamos a esperar que llegue más gente" = abandono masivo.'},
+  {label:'LIVE',time:'Show',accent:'#22cc44',badgeCol:'#000',
+   colour:'#102210',
+   rec:'El show corre. Cambios de escena con transiciones. Si algo falla: BRB Screen + mute de micrófono + arreglás sin pánico. El buffer de delay te da margen.',
+   pro:'PRO: Tené siempre una escena de emergencia (BRB) con música y un cartel. Cuando algo falla, la primer acción es ir a BRB — no tocar nada al azar bajo presión.'},
+  {label:'WRAP',time:'Post',accent:'#8855dd',badgeCol:'#fff',
+   colour:'#180f28',
+   rec:'Fin del show. Fade a escena de cierre. Agradecés. Stop streaming → Stop recording. Los archivos MKV quedan en disco para edición.',
+   pro:'PRO: Dejá el stream 5 min después del show en "Gracias por ver" con links. El VOD se genera automáticamente en YouTube. Twitch lo borra en 14 días — descargalo.'},
+];
+
+// ══════════════════════════════════════
+// HINT MAP
+// ══════════════════════════════════════
+const HINTS = {
+  '0-0':['scenes-list'],'0-1':['scenes-list'],
+  '1-0':['sources-list'],
+  '2-0':['audio-channels'],'2-1':['audio-channels'],
+  '3-0':['audio-channels'],
+  '4-0':['btn-studio'],
+  '5-0':['btn-studio'],'5-1':['studio-middle'],
+  '6-0':['add-src-btn'],
+  '7-0':['trans-row'],
+  '8-0':['btn-rec'],
+  '9-0':['btn-stream'],
+  '10-0':['audio-channels'],
+  '11-0':['btn-stream'],'11-1':['btn-rec'],'11-2':['btn-studio'],'11-3':['audio-channels'],
+};
+
+function doHint(){
+  const m=MISSIONS[mpCur];if(!m)return;
+  const si=m.steps.findIndex((s,i)=>!s.chk()&&(i===0||m.steps.slice(0,i).every(x=>x.chk())));
+  if(si<0){msg('Todos los pasos listos — presioná COMPLETAR');return;}
+  const ids=HINTS[mpCur+'-'+si]||[];
+  if(!ids.length){msg('Revisá la descripción de la misión');return;}
+  let found=0;
+  ids.forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;found++;
+    el.classList.remove('hint-pulse');void el.offsetWidth;
+    el.classList.add('hint-pulse');
+    el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    setTimeout(()=>el.classList.remove('hint-pulse'),3500);
+  });
+  msg(found?'Hint: mirá el elemento resaltado':'Revisá la descripción arriba');
+}
+
+// ══════════════════════════════════════
+// SCENE ACTIONS
+// ══════════════════════════════════════
+function renderScenes(){
+  const list=document.getElementById('scenes-list');
+  list.innerHTML=S.scenes.map((sc,i)=>`
+    <div class="scene-item ${S.activeScene===i?'active':''}" onclick="selectScene(${i})">
+      <span class="scene-icon">${sc.icon}</span>
+      <span class="scene-name">${sc.name}</span>
+    </div>`).join('')+
+    `<div class="scene-add" onclick="addScene()">+ Agregar escena</div>`;
+}
+
+function selectScene(i){
+  if(S.studioMode){
+    S.previewScene=i;
+    document.getElementById('studio-preview-name').textContent=S.scenes[i].name;
+  } else {
+    S.activeScene=i;
+    document.getElementById('scene-name-disp').textContent=S.scenes[i].name;
+  }
+  renderScenes();renderSources();checkM();
+  msg(`Escena: ${S.scenes[i].name}`);
+}
+
+function addScene(){
+  const names=['Nueva escena','Escena '+( S.scenes.length+1),'Break Screen','Cam 2','Overlay especial'];
+  const name=names[S.scenes.length%names.length]||'Nueva escena';
+  S.scenes.push({name,icon:'🎬',sources:[
+    {name:'Display Capture',type:'display',visible:true},
+    {name:'Micrófono',type:'mic',visible:true},
+  ]});
+  renderScenes();msg(`Escena "${name}" creada`);xpPop(5,'Escena creada');checkM();
+}
+
+// ══════════════════════════════════════
+// SOURCE ACTIONS
+// ══════════════════════════════════════
+function renderSources(){
+  const scene=S.scenes[S.activeScene];
+  const list=document.getElementById('sources-list');
+  list.innerHTML=scene.sources.map((src,i)=>`
+    <div class="source-item" id="src-${i}">
+      <span class="src-eye ${src.visible?'on':''}" onclick="toggleSrc(${i})" title="Visibilidad">${src.visible?'👁️':'🙈'}</span>
+      <span class="src-icon">${SOURCE_TYPES[src.type]?.icon||'📦'}</span>
+      <span class="src-name" title="${src.name}">${src.name}</span>
+      <div class="src-btns">
+        <span class="src-btn" onclick="srcUp(${i})">↑</span>
+        <span class="src-btn" onclick="srcDown(${i})">↓</span>
+      </div>
+    </div>`).join('')+
+    `<div class="src-add" id="add-src-btn" onclick="addSource()">+ Agregar fuente</div>`;
+}
+
+function toggleSrc(i){
+  const scene=S.scenes[S.activeScene];
+  scene.sources[i].visible=!scene.sources[i].visible;
+  S.sourceToggled=true;
+  renderSources();checkM();
+  msg(`Fuente "${scene.sources[i].name}": ${scene.sources[i].visible?'visible':'oculta'}`);
+}
+
+function srcUp(i){
+  const src=S.scenes[S.activeScene].sources;
+  if(i>0)[src[i-1],src[i]]=[src[i],src[i-1]];
+  renderSources();msg('Fuente movida arriba');
+}
+function srcDown(i){
+  const src=S.scenes[S.activeScene].sources;
+  if(i<src.length-1)[src[i],src[i+1]]=[src[i+1],src[i]];
+  renderSources();msg('Fuente movida abajo');
+}
+
+const SOURCE_MENU=['display','webcam','mic','desktop','browser','image','text','media','game'];
+let srcMenuOpen=false;
+function addSource(){
+  const types=['🖥️ Display Capture','📷 Video Capture Device','🎙️ Audio Input (Mic)','🔊 Audio Output (Desktop)','🌐 Browser Source','🖼️ Image','🔤 Texto (GDI+)','🎬 Media Source','🎮 Game Capture'];
+  const idx=Math.floor(Math.random()*types.length);
+  const typeKey=SOURCE_MENU[idx];
+  const src={name:SOURCE_TYPES[typeKey].label,type:typeKey,visible:true};
+  S.scenes[S.activeScene].sources.unshift(src);
+  if(typeKey==='browser') S.browserAdded=true;
+  renderSources();
+  msg(`Fuente agregada: ${src.name}`);
+  xpPop(5,'Fuente agregada');
+  checkM();
+}
+
+// ══════════════════════════════════════
+// AUDIO MIXER
+// ══════════════════════════════════════
+function renderAudio(){
+  const channels=[
+    {id:'desktop',name:'Desktop Audio',col:'#5599dd'},
+    {id:'mic',    name:'Mic/Aux',       col:'#22cc88'},
+    {id:'music',  name:'Music',         col:'#aa55ee'},
+  ];
+  document.getElementById('audio-channels').innerHTML=channels.map(ch=>`
+    <div class="audio-ch">
+      <div class="audio-ch-name" style="color:${ch.col}">${ch.name}</div>
+      <canvas class="vu-canvas" id="vu-${ch.id}" width="28" height="50"></canvas>
+      <div class="audio-fader-t" id="af-${ch.id}">
+        <div class="audio-fader-fill" id="aff-${ch.id}" style="height:${S.audio[ch.id].vol}%;background:linear-gradient(0deg,${ch.col}22,${ch.col}66)"></div>
+        <div class="audio-fader-th" id="afth-${ch.id}" style="bottom:calc(${S.audio[ch.id].vol}% - 3px);border-color:${ch.col}"></div>
+      </div>
+      <div class="audio-val" id="avol-${ch.id}">${S.audio[ch.id].vol}</div>
+      <div class="audio-mute ${S.audio[ch.id].muted?'on':''}" id="amute-${ch.id}" onclick="toggleMute('${ch.id}')">${S.audio[ch.id].muted?'UNMUTE':'MUTE'}</div>
+      ${ch.id==='mic'?`<div class="audio-filter-btn ${S.audio.mic.filter?'on':''}" id="mic-filter-btn" onclick="toggleMicFilter()">Filtro</div>`:''}
+    </div>`).join('');
+  setupAudioDrag();
+}
+
+function toggleMute(id){
+  S.audio[id].muted=!S.audio[id].muted;
+  document.getElementById('amute-'+id).classList.toggle('on',S.audio[id].muted);
+  document.getElementById('amute-'+id).textContent=S.audio[id].muted?'UNMUTE':'MUTE';
+  msg(S.audio[id].muted?`${id} silenciado`:`${id} activo`);checkM();
+}
+
+function toggleMicFilter(){
+  S.noiseFilter=!S.noiseFilter;
+  S.audio.mic.filter=S.noiseFilter;
+  const btn=document.getElementById('mic-filter-btn');
+  if(btn){btn.classList.toggle('on',S.noiseFilter);btn.textContent=S.noiseFilter?'Filtro ✓':'Filtro';}
+  msg(S.noiseFilter?'Noise Suppression (RNNoise) activado — ruido de fondo eliminado':'Filtro desactivado');
+  xpPop(S.noiseFilter?10:0,'Filtro de audio');checkM();
+}
+
+let audioDrag=null,audioY0=0,audioV0=0;
+function setupAudioDrag(){
+  ['desktop','mic','music'].forEach(id=>{
+    const el=document.getElementById('af-'+id);if(!el)return;
+    const start=e=>{audioDrag=id;audioY0=(e.clientY||e.touches?.[0]?.clientY||0);audioV0=S.audio[id].vol;e.preventDefault();};
+    el.addEventListener('mousedown',start);
+    el.addEventListener('touchstart',start,{passive:false});
+  });
+}
+document.addEventListener('mousemove',e=>{
+  if(!audioDrag)return;
+  const dy=audioY0-e.clientY;
+  S.audio[audioDrag].vol=Math.max(0,Math.min(100,Math.round(audioV0+dy*1.5)));
+  updateAudioUI(audioDrag);checkM();
+});
+document.addEventListener('touchmove',e=>{
+  if(!audioDrag)return;
+  const dy=audioY0-e.touches[0].clientY;
+  S.audio[audioDrag].vol=Math.max(0,Math.min(100,Math.round(audioV0+dy*1.5)));
+  updateAudioUI(audioDrag);checkM();e.preventDefault();
+},{passive:false});
+document.addEventListener('mouseup',()=>{audioDrag=null;});
+document.addEventListener('touchend',()=>{audioDrag=null;});
+
+function updateAudioUI(id){
+  const v=S.audio[id].vol;
+  const ff=document.getElementById('aff-'+id);
+  const th=document.getElementById('afth-'+id);
+  const vl=document.getElementById('avol-'+id);
+  if(ff)ff.style.height=v+'%';
+  if(th)th.style.bottom=`calc(${v}% - 3px)`;
+  if(vl)vl.textContent=v;
+}
+
+// ══════════════════════════════════════
+// VU METERS
+// ══════════════════════════════════════
+function drawVU(id){
+  const cv=document.getElementById('vu-'+id);if(!cv)return;
+  const ctx=cv.getContext('2d');const W=28,H=50;
+  ctx.fillStyle='#111316';ctx.fillRect(0,0,W,H);
+  const ch=S.audio[id];
+  if(ch.muted){ctx.fillStyle='#3a0808';ctx.fillRect(4,0,20,H);return;}
+  const raw=Math.sin(S.animT*3+ch.t)*0.3+Math.sin(S.animT*7.3+ch.t)*0.15+0.55;
+  ch.peak=raw*(ch.vol/100);
+  const pxH=Math.round(ch.peak*H);
+  const grad=ctx.createLinearGradient(0,H,0,0);
+  grad.addColorStop(0,'#22cc44');
+  grad.addColorStop(0.7,'#ddcc00');
+  grad.addColorStop(1,'#ee3333');
+  ctx.fillStyle=grad;
+  for(let y=H;y>H-pxH;y-=4){
+    const h=Math.min(3,y-(H-pxH));
+    ctx.fillRect(4,y-h,20,h);
+  }
+}
+
+// ══════════════════════════════════════
+// CONTROLS
+// ══════════════════════════════════════
+function toggleStream(){
+  S.streaming=!S.streaming;
+  const btn=document.getElementById('btn-stream');
+  btn.classList.toggle('on',S.streaming);
+  btn.textContent=S.streaming?'⏹ Detener Streaming':'Iniciar Streaming';
+  document.getElementById('live-badge').classList.toggle('on',S.streaming&&!S.studioMode);
+  if(S.streaming){
+    S.stats.kbps=6000;S.stats.cpu=18;
+    msg('📡 STREAMING — en vivo. Bitrate: 6000 kbps · 1080p60');
+    flash();xpPop(20,'¡Streaming activo!');
+  } else {
+    S.stats.kbps=0;S.stats.cpu=3.2;S.streamTime=0;
+    msg('Stream detenido');
+  }
+  checkM();
+}
+
+function toggleRec(){
+  S.recording=!S.recording;
+  const btn=document.getElementById('btn-rec');
+  btn.classList.toggle('on',S.recording);
+  btn.textContent=S.recording?'⏹ Detener Grabación':'Iniciar Grabación';
+  document.getElementById('rec-badge').classList.toggle('on',S.recording&&!S.studioMode);
+  if(S.recording){msg('⏺ Grabando en local — MKV en disco');flash();xpPop(10,'Grabando');}
+  else{S.recTime=0;msg('Grabación detenida. Archivo guardado en ~/Videos/OBS');}
+  checkM();
+}
+
+function toggleStudio(){
+  S.studioMode=!S.studioMode;
+  const btn=document.getElementById('btn-studio');
+  btn.classList.toggle('on',S.studioMode);
+  btn.textContent=S.studioMode?'Studio Mode ✓':'Studio Mode';
+  // toggle layout
+  document.getElementById('preview-wrap-single').style.display=S.studioMode?'none':'block';
+  document.getElementById('preview-wrap-studio-l').style.display=S.studioMode?'block':'none';
+  document.getElementById('studio-middle').style.display=S.studioMode?'flex':'none';
+  document.getElementById('preview-wrap-studio-r').style.display=S.studioMode?'block':'none';
+  document.getElementById('live-badge').classList.toggle('on',S.streaming&&!S.studioMode);
+  if(S.studioMode){
+    S.previewScene=S.activeScene;
+    S.programScene=S.activeScene;
+    document.getElementById('studio-preview-name').textContent=S.scenes[S.previewScene].name;
+  }
+  msg(S.studioMode?'Studio Mode ON — Preview | Program activos':'Studio Mode OFF — vista única');
+  checkM();
+}
+
+function doStudioTransition(){
+  if(!S.studioMode){msg('⚠ Studio Mode debe estar activo');return;}
+  const prev=S.previewScene;
+  S.programScene=prev;
+  S.activeScene=prev;
+  S.transitionDone=true;
+  document.getElementById('scene-name-disp').textContent=S.scenes[prev].name;
+  renderScenes();renderSources();
+  msg(`Transición (${S.transition.toUpperCase()}) → "${S.scenes[prev].name}" ahora en PROGRAM`);
+  flash();xpPop(10,'Transición ejecutada');checkM();
+}
+
+function setTrans(type){
+  S.transition=type;
+  ['cut','fade','swipe'].forEach(t=>{
+    document.getElementById('tr-'+t)?.classList.toggle('on',t===type);
+  });
+  const btn=document.getElementById('studio-middle')?.querySelector('.trans-apply');
+  if(btn)btn.textContent={cut:'▶ CORTE',fade:'▶ FADE',swipe:'▶ SWIPE'}[type]||'▶ CORTE';
+  msg(`Transición: ${type.toUpperCase()}`);checkM();
+}
+
+// ══════════════════════════════════════
+// PREVIEW CANVAS
+// ══════════════════════════════════════
+function drawPreview(canvasId, sceneIdx, isProgram){
+  const cv=document.getElementById(canvasId);if(!cv)return;
+  const W=cv.offsetWidth||600;
+  cv.width=W;cv.height=Math.round(W*9/16);
+  const ctx=cv.getContext('2d');
+  const H=cv.height;
+  const scene=S.scenes[sceneIdx];if(!scene)return;
+  const hasSrc=(type)=>scene.sources.some(s=>s.type===type&&s.visible);
+
+  // BG based on scene
+  const sceneColors=['#0a1428','#120a28','#0a200a','#1a0a14','#0a1818'];
+  ctx.fillStyle=sceneColors[sceneIdx%sceneColors.length]||'#080c14';
+  ctx.fillRect(0,0,W,H);
+
+  // desktop / display source
+  if(hasSrc('display')||hasSrc('game')){
+    // fake desktop
+    ctx.fillStyle='#0d1520';ctx.fillRect(0,0,W,H);
+    // "taskbar"
+    ctx.fillStyle='#1a2030';ctx.fillRect(0,H-20,W,20);
+    ctx.fillStyle='#2a3044';ctx.fillRect(2,H-18,40,16);
+    ctx.fillStyle='#aabbcc';ctx.font=`${Math.round(H*.08)}px sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    // window
+    ctx.fillStyle='#0e1a2a';ctx.fillRect(W*.05,H*.06,W*.6,H*.75);
+    ctx.strokeStyle='#1e3050';ctx.lineWidth=1;ctx.strokeRect(W*.05,H*.06,W*.6,H*.75);
+    ctx.fillStyle='#1a2a40';ctx.fillRect(W*.05,H*.06,W*.6,18);
+    ctx.fillStyle='#5599dd';ctx.fillRect(W*.05,H*.06,3,H*.75);
+    // "content" lines
+    for(let y=H*.18;y<H*.76;y+=14){
+      ctx.fillStyle=`rgba(100,150,200,${0.04+Math.random()*0.04})`;
+      ctx.fillRect(W*.07,y,W*.5*(0.4+Math.random()*.5),8);
+    }
+  }
+
+  // webcam
+  if(hasSrc('webcam')){
+    const isPiP=hasSrc('display');
+    const wx=isPiP?W*.68:0, wy=isPiP?H*.55:0;
+    const ww=isPiP?W*.3:W, wh=isPiP?H*.4:H;
+    const grad=ctx.createLinearGradient(wx,wy,wx+ww,wy+wh);
+    grad.addColorStop(0,'#1a2a3a');grad.addColorStop(1,'#0d1828');
+    ctx.fillStyle=grad;ctx.fillRect(wx,wy,ww,wh);
+    // person silhouette
+    const px=wx+ww/2,py=wy+wh*.3;
+    ctx.fillStyle='rgba(100,140,180,.15)';
+    ctx.beginPath();ctx.arc(px,py,wh*.18,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(px-wh*.14,py+wh*.18*0.9,wh*.28,wh*.35);
+    if(isPiP){ctx.strokeStyle='#2a4060';ctx.lineWidth=1;ctx.strokeRect(wx,wy,ww,wh);}
+  }
+
+  // BRB scene
+  if(sceneIdx===3){
+    const g=ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#100818');g.addColorStop(1,'#1a0f2a');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(150,100,200,.6)';
+    ctx.font=`bold ${Math.round(H*.14)}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('BE RIGHT BACK',W/2,H*.42);
+    ctx.fillStyle='rgba(150,100,200,.3)';
+    ctx.font=`${Math.round(H*.07)}px sans-serif`;
+    ctx.fillText('volvemos en un momento',W/2,H*.62);
+  }
+
+  // Starting Soon
+  if(sceneIdx===4){
+    const g=ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#080e18');g.addColorStop(1,'#0d1828');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(85,153,221,.7)';
+    ctx.font=`bold ${Math.round(H*.12)}px sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('STARTING SOON',W/2,H*.38);
+    // progress bar
+    const pw=W*.7,ph=6,px2=(W-pw)/2,py2=H*.6;
+    ctx.fillStyle='#1a2840';ctx.fillRect(px2,py2,pw,ph);
+    const prog=((S.animT*0.1)%1);
+    ctx.fillStyle='#5599dd';ctx.fillRect(px2,py2,pw*prog,ph);
+  }
+
+  // browser overlay
+  if(hasSrc('browser')&&sceneIdx!==3&&sceneIdx!==4){
+    // chat overlay
+    const cw=W*.22,ch2=H*.5;
+    const cx2=W-cw-4,cy2=H*.08;
+    ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(cx2,cy2,cw,ch2);
+    const chatLines=['viewer123: hola!','user456: gg','fan99: 🎉🎉','otro: sub!'];
+    chatLines.forEach((l,i)=>{
+      ctx.fillStyle=`rgba(180,200,220,${.3+i*.1})`;
+      ctx.font=`${Math.round(H*.04)}px sans-serif`;
+      ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(l,cx2+4,cy2+4+i*(H*.047));
+    });
+  }
+
+  // stream indicator
+  if(isProgram&&S.streaming){
+    const blink=Math.sin(S.animT*3)>0;
+    ctx.fillStyle=blink?'rgba(232,64,64,.15)':'transparent';
+    ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle=blink?'rgba(232,64,64,.4)':'rgba(232,64,64,.1)';
+    ctx.lineWidth=2;ctx.strokeRect(1,1,W-2,H-2);
+  }
+
+  // scene name label bottom left
+  ctx.fillStyle='rgba(0,0,0,.5)';
+  ctx.fillRect(0,H-20,W,20);
+  ctx.fillStyle='rgba(180,200,220,.5)';
+  ctx.font=`${Math.round(H*.06)}px monospace`;
+  ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText(scene.name,6,H-10);
+}
+
+// ══════════════════════════════════════
+// STATS UPDATE
+// ══════════════════════════════════════
+let streamSec=0;
+function updateStats(){
+  if(S.streaming){
+    streamSec++;
+    const h=Math.floor(streamSec/3600),m=Math.floor((streamSec%3600)/60),s=streamSec%60;
+    document.getElementById('stat-time').textContent=
+      `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    const kbps=5800+Math.round(Math.sin(streamSec*.1)*400);
+    document.getElementById('stat-kbps').textContent=kbps;
+    document.getElementById('stat-kbps').className='stat-val live';
+    document.getElementById('stat-cpu').textContent=(16+Math.sin(streamSec*.07)*4).toFixed(1)+'%';
+  } else {
+    document.getElementById('stat-kbps').textContent='0';
+    document.getElementById('stat-kbps').className='stat-val';
+    document.getElementById('stat-cpu').textContent=(3+Math.random()*.5).toFixed(1)+'%';
+  }
+}
+
+// ══════════════════════════════════════
+// MAIN ANIMATION LOOP
+// ══════════════════════════════════════
+setInterval(()=>{
+  S.animT+=0.035;
+  // VU meters
+  ['desktop','mic','music'].forEach(id=>drawVU(id));
+  // Preview
+  if(S.studioMode){
+    drawPreview('cv-studio-preview',S.previewScene,false);
+    drawPreview('cv-studio-program',S.programScene,true);
+  } else {
+    drawPreview('cv-preview',S.activeScene,true);
+  }
+  updateStats();
+},50);
+
+// ══════════════════════════════════════
+// MISSION PANEL
+// ══════════════════════════════════════
+function renderMP(){
+  document.getElementById('mp-ico').textContent=mpCur<MISSIONS.length?MISSIONS[mpCur].ico:'🏆';
+  document.getElementById('mp-t').textContent=mpCur<MISSIONS.length?MISSIONS[mpCur].t:'CURSO COMPLETADO';
+  document.getElementById('mp-xp').textContent=mpXP+' XP';
+  document.getElementById('mp-fill').style.width=(mpCur/MISSIONS.length*100)+'%';
+  document.getElementById('mp-pt').textContent=mpCur+'/'+MISSIONS.length;
+  if(mpTab==='mis')renderMisTab();
+  else if(mpTab==='cri')renderCriTab();
+  else if(mpTab==='mnt')renderMntTab();
+  else renderTipTab();
+}
+function renderMisTab(){
+  const body=document.getElementById('mp-body');
+  if(mpCur>=MISSIONS.length){
+    body.innerHTML=`<div style="text-align:center;padding:20px 10px">
+      <div style="font-size:28px;margin-bottom:8px">🏆</div>
+      <div style="font-family:var(--ui);font-size:18px;color:var(--yel);letter-spacing:2px">COMPLETADO</div>
+      <div style="font-size:9px;color:var(--txt3);margin-top:6px">XP Total: <span style="color:var(--yel)">${mpXP}</span></div>
+    </div>`;return;
+  }
+  const m=MISSIONS[mpCur];
+  const steps=m.steps.map((s,i)=>{
+    const done=s.chk(),cur=!done&&(i===0||m.steps.slice(0,i).every(x=>x.chk()));
+    return `<li class="mp-step ${done?'done':cur?'cur':''}"><span class="mp-step-ic">${done?'✓':'·'}</span><span>${s.txt}</span></li>`;
+  }).join('');
+  const allDone=m.steps.every(s=>s.chk());
+  body.innerHTML=`
+    <div class="mp-obj">${m.obj}</div>
+    <ul class="mp-steps">${steps}</ul>
+    ${m.tip?`<div class="mp-tip">${m.tip}</div>`:''}
+    <div class="mp-actions">
+      <button class="mp-btn hint" onclick="doHint()">💡 HINT</button>
+      ${allDone
+        ?`<button class="mp-btn ok" onclick="completeMis()">✓ COMPLETAR (+${m.xp} XP)</button>`
+        :`<button class="mp-btn skip" onclick="skipMis()">Saltar →</button>`}
+    </div>`;
+}
+function renderCriTab(){
+  document.getElementById('mp-body').innerHTML=`<div class="crisis-list">${
+    CRISIS.map(c=>`<div class="crisis-item">
+      <div class="crisis-q">⚠ ${c.q}</div>
+      <div class="crisis-a">${c.a}</div>
+      <ul class="crisis-steps">${c.steps.map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>`).join('')}</div>`;
+}
+function renderTipTab(){
+  document.getElementById('mp-body').innerHTML=`<div class="tips-list">${
+    TIPS.map(t=>`<div class="tip-item" style="border-left-color:${t.accent}">
+      <div class="tip-tag" style="color:${t.accent}">${t.tag}</div>
+      <div class="tip-txt">${t.txt}</div>
+    </div>`).join('')}</div>`;
+}
+function renderMntTab(){
+  const cards=SETUP_SCENES.map(sc=>`
+    <div class="mnt-scene" style="--sa:${sc.accent}">
+      <div class="mnt-scene-head">
+        <div class="mnt-badge" style="background:${sc.accent};color:${sc.badgeCol}">${sc.label}</div>
+        <span class="mnt-time">${sc.time}</span>
+      </div>
+      <div class="mnt-rec">${sc.rec}</div>
+      <div class="mnt-pro" style="color:${sc.accent}">${sc.pro}</div>
+    </div>`).join('');
+  document.getElementById('mp-body').innerHTML=`
+    <div class="mnt-intro">Setup completo de producción en vivo — desde el pre-show hasta el cierre. Lo que hace un técnico de streaming profesional.</div>
+    ${cards}
+    <button class="mnt-cta" onclick="openShow()">▶ VER PRODUCCIÓN EN GRANDE</button>`;
+}
+function setMPTab(t){
+  mpTab=t;['mis','cri','tip','mnt'].forEach(id=>document.getElementById('tab-'+id)?.classList.toggle('on',id===t));
+  renderMP();
+}
+function checkM(){if(mpTab==='mis')renderMisTab();}
+function completeMis(){const m=MISSIONS[mpCur];mpXP+=m.xp;xpPop(m.xp,m.t+' ✓');flash();mpCur++;renderMP();}
+function skipMis(){mpCur++;renderMP();}
+function toggleMP(){
+  document.getElementById('mp').classList.toggle('min');
+  document.getElementById('mp-tog').textContent=document.getElementById('mp').classList.contains('min')?'▲':'▼';
+}
+
+// ══════════════════════════════════════
+// SHOW PREVIEW
+// ══════════════════════════════════════
+let showScene=0,showT=0,showRaf=null,showAuto=null;
+function openShow(){
+  const modal=document.getElementById('show-modal');modal.classList.add('open');
+  showScene=0;showT=0;
+  const cv=document.getElementById('show-cv');
+  const W=modal.querySelector('.show-inner').offsetWidth||700;
+  cv.width=W;cv.height=Math.round(W*9/16*.55);
+  updateShowUI();startShowAnim();
+}
+function closeShow(){
+  document.getElementById('show-modal').classList.remove('open');
+  if(showRaf){cancelAnimationFrame(showRaf);showRaf=null;}
+  clearTimeout(showAuto);
+}
+function jumpShow(i){clearTimeout(showAuto);showScene=i;showT=0;updateShowUI();}
+function updateShowUI(){
+  const sc=SETUP_SCENES[showScene];
+  const badge=document.getElementById('sm-badge');
+  badge.textContent=sc.label;badge.style.background=sc.accent+'22';
+  badge.style.color=sc.accent;badge.style.border='1px solid '+sc.accent+'44';
+  document.getElementById('sm-time').textContent=sc.time;
+  document.getElementById('sm-rec').textContent=sc.rec;
+  const pro=document.getElementById('sm-pro');pro.textContent=sc.pro;pro.style.color=sc.accent;
+  document.getElementById('sm-fill').style.width=((showScene+1)/SETUP_SCENES.length*100)+'%';
+  document.querySelectorAll('.show-tl-lbl').forEach((el,i)=>el.classList.toggle('on',i===showScene));
+  document.querySelectorAll('.show-nav-btn').forEach((el,i)=>el.classList.toggle('on',i===showScene));
+  clearTimeout(showAuto);
+  showAuto=setTimeout(()=>{if(showScene<SETUP_SCENES.length-1){showScene++;showT=0;updateShowUI();}},5000);
+}
+function startShowAnim(){
+  if(showRaf)cancelAnimationFrame(showRaf);
+  function loop(){
+    if(!document.getElementById('show-modal').classList.contains('open')){showRaf=null;return;}
+    showT+=0.022;drawShowFrame();showRaf=requestAnimationFrame(loop);
+  }
+  loop();
+}
+function drawShowFrame(){
+  const cv=document.getElementById('show-cv');if(!cv)return;
+  const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;if(!W||!H)return;
+  const sc=SETUP_SCENES[showScene];
+  const hex=sc.colour.replace('#','');
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  ctx.fillStyle=sc.colour;ctx.fillRect(0,0,W,H);
+  // scanlines
+  for(let y=0;y<H;y+=4){ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(0,y,W,2);}
+  // grid overlay
+  ctx.strokeStyle=`rgba(${r+40},${g+40},${b+40},.08)`;ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // "monitor" frame
+  ctx.fillStyle=`rgba(${r+30},${g+30},${b+30},.15)`;
+  ctx.fillRect(W*.06,H*.08,W*.88,H*.76);
+  ctx.strokeStyle=`rgba(${r+80},${g+80},${b+80},.3)`;ctx.lineWidth=1;
+  ctx.strokeRect(W*.06,H*.08,W*.88,H*.76);
+  // scene label
+  ctx.fillStyle=`rgba(${r+100},${g+100},${b+100},.7)`;
+  ctx.font=`bold ${Math.round(H*.14)}px monospace`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(sc.label,W/2,H*.46);
+  // LIVE indicator
+  if(showScene>=1){
+    const blink=Math.sin(showT*4)>0;
+    ctx.fillStyle=blink?'#e84040':'#882020';
+    ctx.beginPath();ctx.arc(W*.1,H*.15,5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(232,64,64,.7)';
+    ctx.font=`bold ${Math.round(H*.08)}px monospace`;
+    ctx.textAlign='left';ctx.fillText('LIVE',W*.14,H*.16);
+  }
+  // bitrate waveform
+  ctx.strokeStyle=`rgba(85,153,221,${.15+showScene*.08})`;ctx.lineWidth=1.5;
+  ctx.beginPath();
+  for(let x=0;x<W;x++){
+    const y=H*.88+Math.sin((x+showT*50)*0.08)*8*showScene;
+    if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+// ══════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════
+function xpPop(n,r){
+  if(n<=0)return;
+  const el=document.getElementById('xpp');
+  el.textContent=`+${n} XP — ${r}`;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+}
+function flash(){
+  const f=document.getElementById('fl');f.classList.add('on');
+  setTimeout(()=>f.classList.remove('on'),280);
+}
+function msg(m){document.getElementById('sb-msg').textContent=m;}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+renderScenes();
+renderSources();
+renderAudio();
+renderMP();
+document.getElementById('scene-name-disp').textContent=S.scenes[0].name;
+</script>
+</body>
+</html>

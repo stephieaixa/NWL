@@ -462,11 +462,60 @@ body{
   transition:all .15s;
 }
 .show-nav-btn.on,.show-nav-btn:hover{border-color:#1e4080;color:#4477aa;background:#07101e;}
+/* ── CHAT ASSISTANT ── */
+.chat-wrap{display:flex;flex-direction:column;height:100%;gap:0;}
+.chat-msgs{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:0;}
+.chat-msgs::-webkit-scrollbar{width:2px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:#1e3050;}
+.chat-msg{padding:7px 10px;border-radius:4px;font-size:10px;line-height:1.55;max-width:92%;}
+.chat-msg.bot{background:#0d1724;border:1px solid #1a2a3a;color:#7a9ab0;align-self:flex-start;border-left:2px solid var(--cyan);}
+.chat-msg.user{background:#0a1820;border:1px solid #1a3050;color:#6a8aaa;align-self:flex-end;text-align:right;}
+.chat-msg.bot strong{color:#b0cce0;}
+.chat-input-row{display:flex;gap:5px;padding:8px;border-top:1px solid #1a2840;flex-shrink:0;}
+.chat-input{
+  flex:1;background:#07101e;border:1px solid #1a2840;color:var(--text);
+  border-radius:3px;padding:6px 8px;font-size:10px;font-family:var(--mono);
+  outline:none;
+}
+.chat-input:focus{border-color:#2a4060;}
+.chat-send{
+  padding:6px 12px;background:#0d1e30;border:1px solid #1a3050;
+  border-radius:3px;color:#4a8aaa;font-size:10px;font-family:var(--mono);
+  cursor:pointer;letter-spacing:1px;transition:all .15s;
+}
+.chat-send:hover{background:#112030;color:#88aacc;}
+.chat-topics{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px 0;flex-shrink:0;}
+.chat-chip{
+  font-size:9px;padding:3px 8px;border-radius:10px;cursor:pointer;
+  background:#0d1724;border:1px solid #1a3050;color:#4a6a8a;
+  transition:all .12s;letter-spacing:.5px;
+}
+.chat-chip:hover{background:#112030;color:#88aacc;border-color:#2a4060;}
+/* ── MOBILE ── */
+@media (max-width:700px){
+  html,body{height:auto;overflow:visible;}
+  body{overflow-x:hidden;}
+  .main{flex-direction:column;min-height:0;overflow:visible;}
+  .wins{height:200px;min-height:200px;overflow:hidden;}
+  .wins-row{grid-template-columns:1fr 1fr !important;}
+  .con{width:100%;border-left:none;border-top:1px solid #282828;overflow:visible;}
+  .vis{height:80px;}
+  #vc{height:60px !important;}
+  .encs{grid-template-columns:repeat(4,1fr);}
+  .enc-knob{width:26px;height:26px;}
+  .cbtns{grid-template-columns:repeat(6,1fr);}
+  .cbtn{font-size:7px;padding:4px 1px;}
+  .pbs{height:80px;overflow-x:auto;}
+  .pb-gm{min-width:50px;}
+  #mp{width:calc(100vw - 12px);right:6px;top:auto;bottom:0;max-height:52vh;}
+  .statusbar{font-size:8px;}
+}
 </style>
 </head>
 <body>
 
 <!-- TOP BAR -->
+<a href="index.html" style="position:fixed;top:10px;left:10px;z-index:999;display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;background:rgba(12,12,15,.85);border:1px solid #252535;color:#8080a0;font-size:11px;font-family:'JetBrains Mono',monospace;text-decoration:none;backdrop-filter:blur(8px);transition:all .15s;" onmouseover="this.style.color='#e0e0f0';this.style.borderColor='#333348'" onmouseout="this.style.color='#8080a0';this.style.borderColor='#252535'">← Inicio</a>
 <div class="topbar">
   <div class="tb-logo">
     <div style="width:16px;height:16px;background:#7c6cff;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700">SF</div>
@@ -659,6 +708,7 @@ body{
     <div class="mp-tab" id="tab-cri" onclick="setMPTab('cri')">🚨 CRISIS</div>
     <div class="mp-tab" id="tab-tip" onclick="setMPTab('tip')">💡 TIPS</div>
     <div class="mp-tab" id="tab-mnt" onclick="setMPTab('mnt')">🎬 SHOW</div>
+    <div class="mp-tab" id="tab-ast" onclick="setMPTab('ast')">🤖 CHAT</div>
   </div>
   <div class="mp-body" id="mp-body"></div>
   <div class="mp-prog">
@@ -1300,6 +1350,7 @@ function renderMP(){
   if(mpTab==='mis') renderMisTab();
   else if(mpTab==='cri') renderCriTab();
   else if(mpTab==='mnt') renderMntTab();
+  else if(mpTab==='ast') renderAstTab();
   else renderTipTab();
 }
 
@@ -1546,7 +1597,7 @@ function drawShowScene(){
 
 function setMPTab(t){
   mpTab=t;
-  ['mis','cri','tip','mnt'].forEach(id=>{
+  ['mis','cri','tip','mnt','ast'].forEach(id=>{
     document.getElementById('tab-'+id)?.classList.toggle('on',id===t);
   });
   renderMP();
@@ -1582,6 +1633,157 @@ function flash(){
   setTimeout(()=>f.classList.remove('on'),280);
 }
 function goHome(){window.location.href='index.html';}
+
+// ══════════════════════════════════
+// NWL ASSISTANT (in-browser FAQ bot)
+// ══════════════════════════════════
+const AST_HISTORY=[];
+const AST_GREET='Hola, soy el asistente de MagicQ. Preguntame cualquier cosa sobre la consola, los fixtures, las cues, o cómo operar el show. También podés tocar uno de los temas de abajo.';
+
+const AST_FAQ=[
+  {keys:['fixture','fixt','selec','grupo','group'],
+   ans:'Para seleccionar fixtures, hacé click en una paleta del panel <strong>GROUP</strong> (arriba izquierda). Los fixtures seleccionados aparecen en el Programmer. Siempre seleccioná el grupo antes de cambiar atributos.'},
+  {keys:['color','colour','rojo','azul','verde','cyan','magenta'],
+   ans:'Con fixtures seleccionados, hacé click en cualquier color del panel <strong>COLOUR</strong>. El color entra en el Programmer (modo de edición). Para que quede en un playback, después tenés que usar <strong>REC</strong>.'},
+  {keys:['posicion','posición','pos','tilt','pan','mover'],
+   ans:'Con fixtures seleccionados, hacé click en una posición del panel <strong>POSITION</strong>. Los encoders A/B también controlan Pan y Tilt si el tab activo es POS. Arrastrá los encoders arriba/abajo.'},
+  {keys:['cue','grabar','rec','guardar','save','record'],
+   ans:'Para grabar una cue: 1) Seleccioná fixtures → 2) Aplicá colores/posiciones → 3) Presioná <strong>REC</strong> → 4) Mové un fader para asignarla → 5) Presioná <strong>CLR</strong> siempre después de grabar.'},
+  {keys:['clr','clear','limpiar','programmer','prog'],
+   ans:'<strong>CLR</strong> limpia el Programmer. Es crucial: si el Programmer tiene valores activos, pisan los playbacks y no vas a ver los cambios de tus cues. Después de cada REC, presioná CLR.'},
+  {keys:['fader','playback','pb','activar','subir'],
+   ans:'Los faders en la barra inferior activan las cues grabadas. Subí el fader para que la cue tome control de los fixtures. Podés tener varios faders activos al mismo tiempo — los colores y FX se mezclan.'},
+  {keys:['fx','efecto','effect','sweep','pan sweep','barrido'],
+   ans:'Seleccioná fixtures → presioná el botón <strong>FX</strong> en la consola → se activa un Pan Sweep automático visible en el visualizador. El FX se graba dentro de la cue junto con colores y posiciones.'},
+  {keys:['zoom','beam','haz','iris','foco','focus'],
+   ans:'Los atributos de beam se controlan con los encoders A-D. Cambiá al tab <strong>BEAM</strong> en la consola para que los encoders apunten a Zoom, Iris, Focus y Gobo. También podés usar paletas del panel BEAM.'},
+  {keys:['blind','ciego','preview'],
+   ans:'<strong>BLIND</strong> activa el modo de edición invisible — podés modificar el Programmer sin que los cambios salgan por DMX al escenario. Útil para preparar la próxima cue mientras corre el show.'},
+  {keys:['undo','deshacer','error','equivoc'],
+   ans:'Presioná <strong>UNDO</strong> en la consola para deshacer la última acción del Programmer. MagicQ tiene historial múltiple. Si grabaste algo mal, podés entrar a View Cue Stack y borrar la cue específica.'},
+  {keys:['dmx','patch','universe','universo','address','dirección'],
+   ans:'En un show real: Setup → DMX I/O para configurar universos. Patch → asignar dirección DMX a cada fixture. En este simulador el patch es virtual, pero las misiones te enseñan el flujo correcto.'},
+  {keys:['locate','loc','locate'],
+   ans:'<strong>LOC</strong> (Locate) pone todos los fixtures seleccionados en su posición y estado de "home": intensidad al 100%, pan/tilt al centro, color blanco, gobo abierto. Es el punto de partida para programar.'},
+  {keys:['highlight','high','hl','ver fixture'],
+   ans:'<strong>HIGH</strong> (Highlight) pone los fixtures seleccionados a full intensidad blanca para identificarlos visualmente en el escenario, sin afectar los demás. Presioná de nuevo para desactivar.'},
+  {keys:['go','siguiente','next','avanzar','play'],
+   ans:'El botón <strong>GO</strong> avanza al siguiente paso en la Cue Stack del playback activo. Si la cue stack tiene múltiples cues con fade time, <strong>GO</strong> es el disparador manual para pasar de una a otra.'},
+  {keys:['stack','cuelist','cue stack','lista'],
+   ans:'Una Cue Stack es una lista de cues en secuencia asignada a un fader. Podés verla con el botón <strong>CUE STK</strong>. Cada cue puede tener fade time y delay time para transiciones automáticas.'},
+  {keys:['macro','automatizar','auto','trigger'],
+   ans:'Las Macros en MagicQ permiten automatizar secuencias de botones. Se asignan a cues o se disparan por MIDI/timecode. En el simulador, el botón MACR muestra el panel correspondiente.'},
+  {keys:['misión','mision','que hago','como empiezo','start','empezar'],
+   ans:'Volvé al tab <strong>MISIÓN</strong> para ver el objetivo actual, los pasos a completar y consejos. Cada misión te enseña una función clave de MagicQ. ¡El orden importa — seguí las misiones en secuencia!'},
+  {keys:['xp','puntos','puntaje','score'],
+   ans:'Ganás XP completando misiones. Cada misión tiene su valor de XP mostrado al lado del título. Los puntos son solo para tu motivación — no se guardan entre sesiones todavía.'},
+  {keys:['show','live','en vivo','montaje','operación'],
+   ans:'Para operar un show en vivo: 1) Tené las cues grabadas en faders. 2) Subí/bajá faders para activar escenas. 3) Usá los botones GO para stacks en secuencia. 4) Tab SHOW para ver recomendaciones profesionales.'},
+];
+
+const AST_CHIPS=[
+  'Seleccionar fixtures','Grabar una cue','Usar FX','Limpiar Programmer',
+  'Faders y playbacks','Modo BLIND','Operar en vivo'
+];
+
+let astRendered=false;
+
+function renderAstTab(){
+  if(astRendered){
+    // just re-render the HTML shell but keep messages
+    const b=document.getElementById('mp-body');
+    b.innerHTML='';
+    b.appendChild(buildAstHTML());
+    return;
+  }
+  astRendered=true;
+  AST_HISTORY.push({role:'bot',text:AST_GREET});
+  const b=document.getElementById('mp-body');
+  b.innerHTML='';
+  b.appendChild(buildAstHTML());
+}
+
+function buildAstHTML(){
+  const wrap=document.createElement('div');
+  wrap.className='chat-wrap';
+  wrap.style.height='100%';
+
+  // quick-topic chips
+  const chips=document.createElement('div');
+  chips.className='chat-topics';
+  AST_CHIPS.forEach(c=>{
+    const ch=document.createElement('span');
+    ch.className='chat-chip';
+    ch.textContent=c;
+    ch.onclick=()=>astSend(c);
+    chips.appendChild(ch);
+  });
+  wrap.appendChild(chips);
+
+  // messages
+  const msgs=document.createElement('div');
+  msgs.className='chat-msgs';
+  msgs.id='ast-msgs';
+  AST_HISTORY.forEach(m=>msgs.appendChild(makeMsgEl(m)));
+  wrap.appendChild(msgs);
+
+  // input row
+  const row=document.createElement('div');
+  row.className='chat-input-row';
+  const inp=document.createElement('input');
+  inp.className='chat-input';
+  inp.id='ast-inp';
+  inp.type='text';
+  inp.placeholder='Escribí tu pregunta...';
+  inp.setAttribute('autocomplete','off');
+  inp.onkeydown=e=>{ if(e.key==='Enter') astSend(); };
+  const btn=document.createElement('button');
+  btn.className='chat-send';
+  btn.textContent='ENVIAR';
+  btn.onclick=()=>astSend();
+  row.appendChild(inp);
+  row.appendChild(btn);
+  wrap.appendChild(row);
+
+  // scroll to bottom
+  setTimeout(()=>{ msgs.scrollTop=msgs.scrollHeight; },50);
+  return wrap;
+}
+
+function makeMsgEl(m){
+  const el=document.createElement('div');
+  el.className='chat-msg '+m.role;
+  el.innerHTML=m.text;
+  return el;
+}
+
+function astSend(text){
+  const inp=document.getElementById('ast-inp');
+  const q=(text||inp?.value||'').trim();
+  if(!q) return;
+  if(inp) inp.value='';
+
+  AST_HISTORY.push({role:'user',text:q});
+  const ans=astAnswer(q);
+  AST_HISTORY.push({role:'bot',text:ans});
+
+  const msgs=document.getElementById('ast-msgs');
+  if(msgs){
+    msgs.appendChild(makeMsgEl({role:'user',text:q}));
+    msgs.appendChild(makeMsgEl({role:'bot',text:ans}));
+    setTimeout(()=>{ msgs.scrollTop=msgs.scrollHeight; },30);
+  }
+}
+
+function astAnswer(q){
+  const lq=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  for(const entry of AST_FAQ){
+    if(entry.keys.some(k=>lq.includes(k.normalize('NFD').replace(/[\u0300-\u036f]/g,'')))){
+      return entry.ans;
+    }
+  }
+  return 'No encontré una respuesta exacta para eso. Intentá preguntarme sobre: <strong>fixtures, colores, posiciones, cues, faders, FX, Programmer, BLIND, playbacks</strong> o volvé al tab MISIÓN para el tutorial paso a paso.';
+}
 
 // CLOCK
 function updateClock(){
