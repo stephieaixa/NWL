@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plomería Básica — SkillForge</title>
+<style>
+:root{
+  --bg:#181614;--sur:#201e1b;--sur2:#272420;--sur3:#2e2b26;
+  --brd:#3a3630;--brd2:#4a4640;
+  --txt:#e0d8cc;--txt2:#a09080;--txt3:#706050;
+  --acc:#e8a030;--grn:#44bb66;--red:#cc4433;--blu:#4488cc;
+  --water:#5599ee;--chrome:#9aacb0;
+  --mono:'Courier New',monospace;--ui:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;min-height:100vh;padding-bottom:250px;}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;height:36px;background:#100e0c;border-bottom:1px solid var(--brd);padding:0 10px;gap:8px;flex-wrap:wrap;}
+.hdr-back{font-size:11px;color:var(--txt3);text-decoration:none;padding:3px 8px;border-radius:3px;border:1px solid var(--brd);transition:all .15s;white-space:nowrap;}
+.hdr-back:hover{color:var(--txt2);border-color:var(--brd2);}
+.hdr-title{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.5px;}
+.hdr-sub{font-size:10px;color:var(--txt3);}
+.sc-tabs{display:flex;gap:4px;margin-left:auto;}
+.sc-tab{padding:3px 10px;border-radius:3px;cursor:pointer;font-size:10px;border:1px solid var(--brd);color:var(--txt3);background:transparent;transition:all .12s;letter-spacing:.3px;white-space:nowrap;}
+.sc-tab.on{background:rgba(232,160,48,.12);border-color:var(--acc);color:var(--acc);}
+.sc-tab:hover{color:var(--txt2);}
+
+/* FLASH / XP */
+#xpp{position:fixed;top:50px;left:50%;transform:translateX(-50%) translateY(-8px);background:#120e00;border:1px solid var(--acc);border-radius:4px;padding:5px 16px;font-size:11px;color:var(--acc);opacity:0;transition:all .35s;z-index:500;pointer-events:none;}
+#xpp.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:400;opacity:0;transition:opacity .28s;background:rgba(232,160,48,.05);}
+.flash.on{opacity:1;}
+
+/* FEEDBACK TOAST */
+#fb{position:fixed;top:46px;left:50%;transform:translateX(-50%);padding:7px 18px;border-radius:5px;font-size:11px;opacity:0;transition:all .3s;z-index:600;pointer-events:none;text-align:center;max-width:85vw;border:1px solid;}
+#fb.show{opacity:1;}
+#fb.ok{background:#081a10;border-color:var(--grn);color:#88ee99;}
+#fb.err{background:#1a0808;border-color:var(--red);color:#ff9988;}
+#fb.tip{background:#12100a;border-color:var(--acc);color:#e0c080;}
+
+/* SCENE */
+.scene-wrap{position:relative;overflow:hidden;background:#1a1714;border-bottom:2px solid var(--brd2);}
+#scene-svg{display:block;width:100%;max-height:300px;}
+
+/* SELECTED TOOL CURSOR INDICATOR */
+#tool-cursor{position:fixed;top:0;left:0;pointer-events:none;z-index:700;font-size:22px;transform:translate(8px,8px);display:none;}
+
+/* BOTTOM PANEL */
+#bottom{position:fixed;bottom:0;left:0;right:0;background:#141210;border-top:2px solid var(--brd2);z-index:200;display:flex;flex-direction:column;max-height:260px;}
+
+/* INVENTORY */
+.inv{display:flex;align-items:center;gap:3px;padding:5px 8px;border-bottom:1px solid var(--brd);overflow-x:auto;flex-shrink:0;min-height:58px;}
+.inv-lbl{font-size:8px;color:var(--txt3);letter-spacing:1px;white-space:nowrap;margin-right:6px;text-transform:uppercase;}
+.inv-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 7px;border-radius:4px;cursor:pointer;border:1px solid var(--brd);background:transparent;transition:all .15s;min-width:50px;flex-shrink:0;}
+.inv-item:hover{border-color:var(--brd2);background:var(--sur3);}
+.inv-item.sel{border-color:var(--acc);background:rgba(232,160,48,.13);box-shadow:0 0 0 1px var(--acc);}
+.inv-item.used{opacity:.3;cursor:default;pointer-events:none;}
+.inv-icon{font-size:20px;line-height:1;}
+.inv-name{font-size:7px;color:var(--txt3);text-align:center;line-height:1.2;}
+.inv-item.sel .inv-name{color:var(--acc);}
+.inv-deselect{padding:4px 8px;font-size:9px;color:var(--txt3);border:1px solid var(--brd);border-radius:3px;cursor:pointer;display:none;transition:all .12s;flex-shrink:0;}
+.inv-deselect:hover{color:var(--txt2);}
+
+/* MISSION PANEL */
+.mp{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.mp-head{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--sur2);border-bottom:1px solid var(--brd);cursor:pointer;flex-shrink:0;}
+.mp-ico{font-size:13px;}
+.mp-title{font-size:11px;font-weight:700;color:#fff;flex:1;}
+.mp-xp{font-size:10px;color:var(--acc);font-weight:700;}
+.mp-tog{font-size:10px;color:var(--txt3);}
+.mp-tabs{display:flex;border-bottom:1px solid var(--brd);flex-shrink:0;}
+.mp-tab{flex:1;padding:4px;text-align:center;cursor:pointer;font-size:9px;letter-spacing:.5px;color:var(--txt3);border-bottom:2px solid transparent;transition:all .15s;}
+.mp-tab.on{color:#fff;border-bottom-color:var(--acc);}
+.mp-tab:hover{color:var(--txt2);}
+.mp-body{flex:1;overflow-y:auto;padding:8px 12px;font-size:9px;line-height:1.5;}
+.mp-obj{color:var(--txt2);margin-bottom:6px;line-height:1.5;}
+.mp-steps{list-style:none;margin-bottom:8px;}
+.mp-step{display:flex;gap:6px;padding:3px 0;color:var(--txt3);}
+.mp-step.cur{color:#fff;}
+.mp-step.done{color:var(--grn);text-decoration:line-through;}
+.mp-step-ic{flex-shrink:0;width:12px;text-align:center;}
+.mp-tip{font-size:8px;color:#7090a8;border-left:2px solid #3a5060;padding:4px 8px;margin-bottom:6px;line-height:1.5;font-style:italic;}
+.mp-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.mp-btn{padding:4px 10px;border-radius:3px;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid;transition:all .15s;text-transform:uppercase;}
+.mp-btn.ok{border-color:var(--grn);color:var(--grn);background:rgba(68,187,102,.08);}
+.mp-btn.ok:hover{background:var(--grn);color:#000;}
+.mp-btn.skip{border-color:#333;color:var(--txt3);background:transparent;}
+.mp-btn.hint{border-color:#554400;color:#aa9900;background:rgba(160,130,0,.07);}
+.mp-btn.hint:hover{background:rgba(180,150,0,.18);color:#ddbb00;}
+.mp-prog{border-top:1px solid var(--brd);padding:3px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.mp-bar{flex:1;height:2px;background:#201c18;border-radius:2px;overflow:hidden;}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--acc),#ffcc66);transition:width .5s;}
+.mp-pt{font-size:8px;color:var(--txt3);}
+
+/* CRISIS / TIPS */
+.crisis-item{background:var(--sur2);border:1px solid var(--brd);border-radius:3px;padding:8px;margin-bottom:6px;}
+.crisis-q{font-size:9px;font-weight:700;color:#cc8833;margin-bottom:3px;}
+.crisis-a{font-size:8px;color:var(--txt2);line-height:1.5;margin-bottom:3px;}
+.crisis-steps{list-style:none;padding-left:6px;}
+.crisis-steps li{font-size:8px;color:var(--txt3);padding:1px 0;}
+.crisis-steps li::before{content:'→ ';}
+.tip-item{border-left:2px solid var(--acc);padding:5px 8px;margin-bottom:5px;}
+.tip-tag{font-size:8px;font-weight:700;color:var(--acc);letter-spacing:1px;margin-bottom:2px;}
+.tip-txt{font-size:8px;color:var(--txt2);line-height:1.5;}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:145px;}
+.chat-chips{display:flex;flex-wrap:wrap;gap:3px;padding:4px 8px;}
+.chat-chip{padding:2px 7px;border-radius:10px;font-size:8px;cursor:pointer;border:1px solid var(--brd);color:var(--txt3);transition:all .12s;}
+.chat-chip:hover{border-color:var(--acc);color:var(--acc);}
+.chat-msgs{flex:1;overflow-y:auto;padding:4px 8px;display:flex;flex-direction:column;gap:3px;}
+.chat-msg{max-width:90%;padding:4px 7px;border-radius:4px;font-size:9px;line-height:1.5;word-break:break-word;}
+.chat-msg.bot{background:#1a1e28;color:#a0b8d0;align-self:flex-start;border:1px solid #253040;}
+.chat-msg.user{background:#1e1a10;color:#c0a860;align-self:flex-end;border:1px solid #352808;}
+.chat-msg.typing{color:#5a7888;font-style:italic;}
+.chat-row{display:flex;gap:4px;padding:4px 8px;border-top:1px solid var(--brd);}
+.chat-input{flex:1;background:#111;border:1px solid var(--brd);border-radius:3px;color:var(--txt);font-size:9px;padding:3px 6px;font-family:var(--ui);outline:none;}
+.chat-input:focus{border-color:var(--acc);}
+.chat-send{padding:3px 9px;border-radius:3px;cursor:pointer;font-size:9px;font-weight:700;background:rgba(232,160,48,.12);border:1px solid #4a3010;color:var(--acc);transition:all .15s;}
+.chat-send:hover{background:rgba(232,160,48,.22);}
+
+@keyframes drip{
+  0%{transform:translateY(0) scaleY(.5);opacity:0;}
+  15%{opacity:1;transform:translateY(2px) scaleY(1);}
+  80%{opacity:.9;}
+  100%{transform:translateY(38px) scaleY(1.4);opacity:0;}
+}
+@keyframes drip2{
+  0%,40%{transform:translateY(0) scaleY(.5);opacity:0;}
+  55%{opacity:1;transform:translateY(2px) scaleY(1);}
+  95%,100%{transform:translateY(32px) scaleY(1.4);opacity:0;}
+}
+@keyframes pulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+@keyframes hintBlink{0%,100%{box-shadow:0 0 0 0 rgba(255,200,0,.9);}50%{box-shadow:0 0 0 8px rgba(255,200,0,0);}}
+.drip-1{animation:drip 1.6s ease-in infinite;}
+.drip-2{animation:drip2 1.6s ease-in infinite;}
+.hint-pulse{animation:hintBlink .8s ease-in-out 5 !important;outline:2px solid rgba(255,200,0,.8) !important;z-index:10;position:relative;}
+.clickzone{cursor:pointer;fill:transparent;}
+.clickzone:hover{fill:rgba(232,160,48,.10);}
+</style>
+</head>
+<body>
+
+<div id="xpp"></div>
+<div class="flash" id="fl"></div>
+<div id="fb"></div>
+<div id="tool-cursor"></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <a href="index.html" class="hdr-back">← Inicio</a>
+  <span class="hdr-title">🚰 Plomería</span>
+  <span class="hdr-sub">SkillForge Hogar</span>
+  <div class="sc-tabs">
+    <div class="sc-tab on" id="sctab-0" onclick="loadScenario(0)">Canilla gotea</div>
+    <div class="sc-tab" id="sctab-1" onclick="loadScenario(1)">Desagüe tapado</div>
+    <div class="sc-tab" id="sctab-2" onclick="loadScenario(2)">Llave general</div>
+  </div>
+</div>
+
+<!-- SCENE -->
+<div class="scene-wrap">
+  <svg id="scene-svg" viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<!-- BOTTOM PANEL -->
+<div id="bottom">
+  <!-- INVENTORY -->
+  <div class="inv" id="inv-bar">
+    <span class="inv-lbl">🧰 Herramientas</span>
+  </div>
+  <!-- MISSION -->
+  <div class="mp">
+    <div class="mp-head" onclick="toggleMP()">
+      <span class="mp-ico" id="mp-ico">🔧</span>
+      <span class="mp-title" id="mp-t">Cargando...</span>
+      <span class="mp-xp" id="mp-xp">0 XP</span>
+      <span class="mp-tog" id="mp-tog">▼</span>
+    </div>
+    <div class="mp-tabs">
+      <div class="mp-tab on" id="tab-mis" onclick="setTab('mis')">MISIÓN</div>
+      <div class="mp-tab" id="tab-cri" onclick="setTab('cri')">🚨 CRISIS</div>
+      <div class="mp-tab" id="tab-tip" onclick="setTab('tip')">💡 TIPS</div>
+      <div class="mp-tab" id="tab-ast" onclick="setTab('ast')">🤖 CHAT</div>
+    </div>
+    <div class="mp-body" id="mp-body"></div>
+    <div class="mp-prog">
+      <div class="mp-bar"><div class="mp-fill" id="mp-fill" style="width:0%"></div></div>
+      <div class="mp-pt" id="mp-pt">0/0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+
+const SCENARIOS = [
+{
+  id:'canilla',
+  title:'La canilla gotea',
+  ico:'🚰',
+  totalSteps:8,
+  inventory:[
+    {id:'llave',icon:'🔧',name:'Llave inglesa'},
+    {id:'destornillador',icon:'🪛',name:'Destornillador'},
+    {id:'destPlano',icon:'🪛',name:'Dest. plano'},
+    {id:'arandela',icon:'⭕',name:'Arandela nueva'},
+    {id:'trapo',icon:'🧻',name:'Trapo/balde'},
+  ],
+  steps:[
+    {txt:'Cerrá la llave de paso bajo el lavabo',
+     tool:'llave',target:'valve',
+     tip:'La llave de paso corta el agua de esa canilla específica. Girá en sentido horario hasta que no gire más. Si no hay llave de paso, cerrá la llave general.',
+     wrongTool:'Necesitás la llave inglesa para girar la llave de paso.',
+     wrongTarget:'La llave de paso está abajo del lavabo, en la cañería.',
+     hintEl:'zone-valve'},
+    {txt:'Abrí la canilla para liberar la presión residual',
+     tool:null,target:'handle',
+     tip:'Aunque cortaste el agua, queda presión en la cañería. Al abrir la canilla, esa presión se libera y el agua que quedaba en la tubería sale. Así trabajás sin salpicaduras.',
+     wrongTarget:'Primero cortá el agua, después abrí la canilla.',
+     hintEl:'zone-handle'},
+    {txt:'Quitá la tapa decorativa y el tornillo del mango',
+     tool:'destornillador',target:'handle',
+     tip:'La mayoría de las canillas tiene una tapa plástica que esconde el tornillo central. Levantala con el destornillador plano, después desatornillá el tornillo Phillips de adentro.',
+     wrongTool:'Necesitás un destornillador para quitar el tornillo del mango.',
+     wrongTarget:'Hacé clic en el mango de la canilla para desmontarlo.',
+     hintEl:'zone-handle'},
+    {txt:'Extraé el cartucho/vástago de la canilla',
+     tool:null,target:'stem',
+     tip:'El cartucho es el mecanismo interno que controla el agua. En canillas viejas es un vástago con una arandela de goma. En canillas modernas es un cartucho cerámico de un solo bloque.',
+     wrongTarget:'Hacé clic en el cartucho expuesto para extraerlo.',
+     hintEl:'zone-stem'},
+    {txt:'Sacá la arandela vieja del cartucho',
+     tool:'destPlano',target:'washer',
+     tip:'La arandela de goma es lo que sella el agua. Con el tiempo se endurece, se aplana o se agrieta. Ese deterioro es la causa del 90% de las goteras en canillas viejas.',
+     wrongTool:'Usá el destornillador plano para hacer palanca y sacar la arandela.',
+     wrongTarget:'Hacé clic en la arandela vieja del cartucho para quitarla.',
+     hintEl:'zone-washer'},
+    {txt:'Colocá la arandela nueva',
+     tool:'arandela',target:'stem',
+     tip:'La arandela nueva tiene que ser del mismo tamaño que la vieja. Llevá la vieja al ferretería como muestra. Algunas canillas usan O-rings en vez de arandelas planas — son intercambiables si son del mismo diámetro.',
+     wrongTool:'Seleccioná la arandela nueva del inventario y colocala en el cartucho.',
+     wrongTarget:'Hacé clic en el cartucho para colocar la arandela nueva.',
+     hintEl:'zone-stem'},
+    {txt:'Volvé a armar la canilla',
+     tool:null,target:'faucet',
+     tip:'Al reensamblar: primero el cartucho, después la tuerca empaquetadora, después el mango, después el tornillo, después la tapa. El orden inverso al desarme.',
+     wrongTarget:'Hacé clic en la canilla para volver a armarla.',
+     hintEl:'zone-faucet'},
+    {txt:'Abrí la llave de paso y probá',
+     tool:'llave',target:'valve',
+     tip:'Abrí lentamente. Fijate si hay pérdida alrededor del cuerpo de la canilla al abrir el agua — si hay, la tuerca empaquetadora no está bien apretada. Si la canilla no gotea: ¡misión cumplida!',
+     wrongTool:'Usá la llave inglesa para abrir la llave de paso.',
+     wrongTarget:'Abrí la llave de paso debajo del lavabo.',
+     hintEl:'zone-valve'},
+  ],
+},
+{
+  id:'desague',
+  title:'Desagüe tapado',
+  ico:'🪠',
+  totalSteps:6,
+  inventory:[
+    {id:'ventosa',icon:'🪠',name:'Destapador'},
+    {id:'llave_sifon',icon:'🔧',name:'Llave sifón'},
+    {id:'limpiador',icon:'🧴',name:'Agua caliente'},
+    {id:'trapo',icon:'🧻',name:'Trapo'},
+  ],
+  steps:[
+    {txt:'Probá con agua muy caliente primero',
+     tool:'limpiador',target:'basin',
+     tip:'El 40% de los tapones son grasa acumulada. Agua hirviendo + detergente la disuelve sin romper nada. Siempre empezá por el método más simple antes de desarmar.',
+     wrongTool:'Seleccioná "Agua caliente" del inventario y aplicala al desagüe.',
+     wrongTarget:'Aplicá agua caliente directamente al desagüe del lavabo.',
+     hintEl:'zone-basin'},
+    {txt:'Usá el destapador con movimientos firmes',
+     tool:'ventosa',target:'drain',
+     tip:'El destapador crea presión y vacío alternativamente. Sellá bien el desagüe antes de bombear. Si el lavabo tiene rebosadero, taponalo con un trapo para que la presión vaya hacia el tapón.',
+     wrongTool:'Seleccioná el destapador y usalo en el desagüe.',
+     wrongTarget:'Usá el destapador en el orificio del desagüe.',
+     hintEl:'zone-drain'},
+    {txt:'Poné un balde bajo el sifón antes de abrirlo',
+     tool:'trapo',target:'bucket_area',
+     tip:'El sifón siempre tiene agua (es su función: forma un sello hidráulico que impide que suban los gases de la cañería). Al abrirlo, ese agua cae. El balde evita el desastre.',
+     wrongTool:'Colocá el trapo/balde bajo el sifón.',
+     wrongTarget:'Colocá el balde bajo el sifón.',
+     hintEl:'zone-bucket'},
+    {txt:'Desenroscá el sifón',
+     tool:'llave_sifon',target:'sifon',
+     tip:'En sifones de PVC podés girar a mano. En sifones de metal o muy viejos usás la llave. Girá en sentido antihorario. Si no cede: no fuerces — buscá la dirección correcta.',
+     wrongTool:'Usá la llave del sifón para abrirlo.',
+     wrongTarget:'Hacé clic en el sifón para desenroscarlo.',
+     hintEl:'zone-sifon'},
+    {txt:'Limpiá el sifón y la cañería',
+     tool:'trapo',target:'sifon',
+     tip:'El sifón acumula grasa, pelo y residuos. Limpialo con un trapo viejo. Si la obstrucción está más adentro en la cañería, usá un destapa-cañerías (espiral flexible) para alcanzarla.',
+     wrongTool:'Usá el trapo para limpiar el sifón.',
+     wrongTarget:'Limpiá el interior del sifón.',
+     hintEl:'zone-sifon'},
+    {txt:'Volvé a armar el sifón y probá',
+     tool:null,target:'sifon',
+     tip:'Apretá el sifón a mano + un cuarto de vuelta con la llave. No más — el PVC se puede craquear. Abrí el agua lentamente y mirá si hay pérdida en las uniones.',
+     wrongTarget:'Rosca el sifón de vuelta en su lugar.',
+     hintEl:'zone-sifon'},
+  ],
+},
+{
+  id:'emergencia',
+  title:'Llave general de paso',
+  ico:'🆘',
+  totalSteps:5,
+  inventory:[
+    {id:'llave',icon:'🔧',name:'Llave inglesa'},
+    {id:'linterna',icon:'🔦',name:'Linterna'},
+  ],
+  steps:[
+    {txt:'Localizá el medidor y la llave general',
+     tool:'linterna',target:'meter',
+     tip:'En edificios: sala de medidores en planta baja o subsuelo, o dentro del departamento en un armario. En casas: frente de la propiedad, bajo tierra, en una caja de la vereda. Buscá la tapa con el símbolo del agua.',
+     wrongTool:'Usá la linterna para iluminar y encontrar el medidor.',
+     wrongTarget:'Buscá el medidor de agua con la linterna.',
+     hintEl:'zone-meter'},
+    {txt:'Identificá la llave de paso principal',
+     tool:null,target:'main_valve',
+     tip:'Son dos tipos: a) mariposa/palanca → paralela a la cañería = abierta, perpendicular = cerrada. b) esfera/globo (rueda) → muchas vueltas hasta cerrar. Identificá cuál tenés.',
+     wrongTarget:'Identificá la llave de paso principal en el medidor.',
+     hintEl:'zone-main_valve'},
+    {txt:'Cerrá la llave general',
+     tool:'llave',target:'main_valve',
+     tip:'Palanca: girá 90° hasta quedar perpendicular a la cañería. Esfera/globo: girá en sentido horario hasta que no gire más. En emergencias de inundación: primero cerrás el agua, DESPUÉS buscás la causa.',
+     wrongTool:'Usá la llave inglesa para cerrar la llave general.',
+     wrongTarget:'Cerrá la llave principal de paso.',
+     hintEl:'zone-main_valve'},
+    {txt:'Verificá que no sale agua en ningún grifo',
+     tool:null,target:'test_tap',
+     tip:'Abrí una canilla en el punto más alto de la vivienda. Si sigue saliendo agua, la llave no cerró bien o hay otra entrada de agua. En edificios, el agua de los vecinos del piso superior puede seguir saliendo unos segundos.',
+     wrongTarget:'Probá abriendo una canilla para verificar que no hay agua.',
+     hintEl:'zone-test_tap'},
+    {txt:'Llamá al plomero o corregí el problema',
+     tool:null,target:'phone',
+     tip:'Con el agua cortada tenés tiempo para actuar sin pánico. Para emergencias 24h buscá un plomero de guardia. Para pérdidas menores podés esperar al día siguiente. Siempre anotá dónde está tu llave general — es info de emergencia.',
+     wrongTarget:'Hacé clic en el teléfono para llamar al plomero.',
+     hintEl:'zone-phone'},
+  ],
+},
+];
+
+const CRISIS = [
+  {q:'Abrí la canilla y no para de salir agua',
+   a:'La llave de paso no cerró bien o está rota.',
+   steps:['Cerrá la llave general de toda la casa','Si el problema persiste, cortá el agua en el medidor de la calle','Nunca dejes una canilla sin llave de paso — es un problema de diseño que hay que corregir']},
+  {q:'Hay agua en el piso y no sé de dónde viene',
+   a:'Las pérdidas lentas son las más peligrosas — deterioran la estructura.',
+   steps:['Tocá todas las uniones de tuberías visibles con papel absorbente','Mirá detrás del mueble del lavabo','Verificá la unión flexible (manguera) entre la llave de paso y la canilla','Si no lo encontrás: cerrá el agua y llamá a un plomero']},
+  {q:'Se cayó una llave de paso y no puedo cerrarla',
+   a:'Cerrá el agua más arriba en la cadena.',
+   steps:['Buscá la llave de paso anterior (puede ser en el baño anterior, o la general)','Cerrá esa','Ahora podés trabajar sin presión','Las llaves de paso baratas se rompen — reemplazalas por esféricas de bronce']},
+  {q:'El sifón larga agua al piso al limpiar',
+   a:'Hay una unión floja o un O-ring deteriorado.',
+   steps:['Seca bien y buscá exactamente de dónde sale','Si es del rosca del sifón: apretá más','Si es del empalme con la pared: usá cinta teflon en el rosca','O-rings de repuesto: se consiguen en cualquier ferretería por pesos']},
+];
+
+const TIPS = [
+  {tag:'CINTA TEFLON',txt:'La cinta de teflon va en las roscas de las uniones para evitar pérdidas. Se enrolla en el sentido de la rosca (para que no se desenrolle al atornillar). 2-3 vueltas son suficientes. Mito: más cinta = mejor sello. Realidad: más cinta = rosca que no entra.',acc:'#e8a030'},
+  {tag:'ANTES DE LLAMAR AL PLOMERO',txt:'El 60% de los problemas de plomería doméstica los podés resolver vos: canillas que gotean (arandela), desagüe tapado (sifón), mochila que pierde (flotante). Llamá al plomero para: pérdidas en paredes, cambio de cañería, instalaciones nuevas.',acc:'#44bb66'},
+  {tag:'HERRAMIENTAS BÁSICAS',txt:'Para emergencias caseras necesitás: llave inglesa ajustable, destapador ventosa, cinta teflon, 2-3 arandelas surtidas, O-rings, destornilladores plano y Phillips. Costo total: menos de $5000. Te salvan de llamar al plomero por tonterías.',acc:'#4488cc'},
+  {tag:'AGUA CALIENTE EN CANILLAS',txt:'Si al abrir la canilla de agua caliente sale fría por mucho tiempo: el termotanque puede estar lejos. Si el agua fría tiene presión pero la caliente no: el termotanque puede estar bajo de presión. Si no sale agua caliente de ninguna canilla: revisá el piloto del calefón/termotanque.',acc:'#cc4433'},
+];
+
+const FAQ = [
+  {q:'arandela',a:'La arandela es un disco de goma que sella el asiento de la canilla. Se deteriora con el tiempo y causa el goteo. Llevá la vieja a la ferretería para comprar la del mismo tamaño.'},
+  {q:'sifón',a:'El sifón es la curva en U bajo el lavabo. Retiene agua para hacer un sello hidráulico que impide que suban los gases de la cañería. Es desmontable para limpiar tapones.'},
+  {q:'teflon',a:'La cinta teflon se usa en roscas para hacer una unión estanca. Enrollala en el sentido de la rosca, 2-3 vueltas. Sin teflon las roscas pueden largar agua.'},
+  {q:'llave de paso',a:'La llave de paso corta el agua en un tramo específico. Siempre cerrala antes de trabajar en cualquier canilla. Si no hay, usá la llave general.'},
+  {q:'presión',a:'Si tenés poca presión de agua: verificá que la llave de paso esté completamente abierta, que no haya un filtro de sedimentos tapado, o que no haya una pérdida en algún punto.'},
+  {q:'tapón',a:'Para destapar: 1) agua hirviendo + detergente. 2) destapador ventosa. 3) abrir sifón y limpiar. 4) espiral destapadora. Nunca uses productos químicos agresivos seguidos — dañan los caños.'},
+];
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let scn=0, stp=0, sel=null, xp=0, mpTab='mis', chatMsgs=[], mpMin=false;
+
+// ══════════════════════════════════════════════
+// SCENE SVG
+// ══════════════════════════════════════════════
+
+function buildTiles(x,y,w,h,tw,th,c1,c2){
+  let s='';
+  for(let r=0;r*th<h;r++){
+    for(let c=0;c*tw<w;c++){
+      const fill=(r+c)%2===0?c1:c2;
+      s+=`<rect x="${x+c*tw}" y="${y+r*th}" width="${tw-1}" height="${th-1}" fill="${fill}" rx="1"/>`;
+    }
+  }
+  return s;
+}
+
+function sceneFaucet(state){
+  // state 0=dripping, 1=valve closed, 2=depressurized, 3=dismantled(handle off),
+  // 4=stem out, 5=new washer, 6=reassembled, 7=done(no drip)
+  const cx=420; // faucet center x
+  const wall=`
+    <rect x="0" y="0" width="900" height="185" fill="#1e2228"/>
+    ${buildTiles(0,0,900,185,60,50,'#1e2228','#22262e')}
+    <text x="780" y="30" fill="#2a3040" font-size="9" font-family="monospace" opacity=".5">BAÑO</text>`;
+
+  const counter=`
+    <rect x="0" y="182" width="900" height="4" fill="#38322c"/>
+    <rect x="0" y="186" width="900" height="94" fill="#2a2520"/>
+    <rect x="0" y="278" width="900" height="2" fill="#1a1510"/>`;
+
+  // sink basin
+  const basin=`
+    <rect x="180" y="175" width="340" height="12" rx="3" fill="#242018"/>
+    <rect x="190" y="187" width="320" height="35" fill="#141210" rx="2"/>
+    <ellipse cx="350" cy="224" rx="12" ry="4" fill="#0d0c0a"/>
+    <line x1="350" y1="224" x2="350" y2="236" stroke="#1a1614" stroke-width="3"/>`;
+
+  // under cabinet
+  const cabinet=`
+    <rect x="180" y="236" width="340" height="42" fill="#181412" rx="0 0 3 3"/>
+    <line x1="180" y1="236" x2="180" y2="278" stroke="#2a2520" stroke-width="1"/>
+    <line x1="520" y1="236" x2="520" y2="278" stroke="#2a2520" stroke-width="1"/>
+    <line x1="180" y1="278" x2="520" y2="278" stroke="#2a2520" stroke-width="1"/>`;
+
+  // pipes
+  const pipes=`
+    <rect x="305" y="228" width="10" height="50" fill="#6a7870" rx="2"/>
+    <rect x="395" y="228" width="10" height="38" fill="#78706a" rx="2"/>
+    <path d="M305 268 Q305 280 320 280 L390 280 Q400 280 400 268" fill="none" stroke="#6a7870" stroke-width="10" stroke-linecap="round"/>`;
+
+  // shutoff valve — open (T vertical) or closed (T horizontal)
+  const valveOpen=`
+    <g id="valve-group">
+      <rect x="398" y="242" width="10" height="16" fill="#8a9090" rx="2"/>
+      <rect x="393" y="248" width="20" height="5" rx="2" fill="#aababa"/>
+      <rect x="401" y="241" width="4" height="14" rx="1" fill="#ccdddd"/>
+    </g>`;
+  const valveClosed=`
+    <g id="valve-group">
+      <rect x="398" y="242" width="10" height="16" fill="#8a9090" rx="2"/>
+      <rect x="393" y="256" width="20" height="5" rx="2" fill="#aababa"/>
+      <rect x="393" y="253" width="20" height="4" rx="1" fill="#ccdddd" transform="rotate(90,403,255)"/>
+    </g>`;
+
+  // faucet base + neck + spout (always present when assembled)
+  const faucetBase=`
+    <rect x="${cx-28}" y="175" width="56" height="12" rx="3" fill="#8a9090"/>
+    <rect x="${cx-8}" y="115" width="16" height="62" fill="#9aacb0" rx="2"/>
+    <path d="M${cx-8} 130 Q${cx-30} 128 ${cx-45} 145 Q${cx-50} 150 ${cx-50} 158" fill="none" stroke="#9aacb0" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="${cx-50}" cy="160" r="6" fill="#8a9090"/>`;
+
+  // faucet handle (cross) — visible states 0,1,2,6,7
+  const handle=`
+    <rect x="${cx-16}" y="108" width="32" height="8" rx="3" fill="#b0c0c4"/>
+    <rect x="${cx-4}" y="99" width="8" height="26" rx="3" fill="#b0c0c4"/>
+    <circle cx="${cx}" cy="107" r="5" fill="#9aacb0"/>`;
+
+  // packing nut / stem top visible (state 6,7 or when dismantled 3+)
+  const packingNut=`
+    <rect x="${cx-6}" y="114" width="12" height="10" rx="2" fill="#7a8888"/>`;
+
+  // drip animation
+  const drip=`
+    <circle class="drip-1" cx="${cx-50}" cy="162" r="4" fill="#5599ee" opacity=".9"/>
+    <circle class="drip-2" cx="${cx-50}" cy="162" r="3.5" fill="#4488dd" opacity=".8"/>`;
+
+  // extracted stem (visible states 4-6, shown on counter right of faucet)
+  const stemOut=`
+    <g transform="translate(570,190)">
+      <text x="0" y="-6" fill="#a09080" font-size="8">Cartucho</text>
+      <rect x="-5" y="0" width="10" height="50" rx="3" fill="#8a9090"/>
+      <rect x="-8" y="5" width="16" height="8" rx="2" fill="#9aacb0"/>
+      ${state===4?`<circle cx="0" cy="48" r="7" fill="#c08030" opacity=".9" id="washer-old"/>
+        <text x="-12" y="64" fill="#cc8833" font-size="7">arandela vieja</text>`:''}
+      ${state>=5?`<circle cx="0" cy="48" r="7" fill="#44bb66" opacity=".9"/>
+        <text x="-14" y="64" fill="#44bb66" font-size="7">arandela nueva</text>`:''}
+    </g>`;
+
+  // click zones (invisible, hover tinted)
+  const zones=`
+    <rect class="clickzone" id="zone-valve" data-zone="valve" x="385" y="238" width="36" height="28" rx="3" onclick="clickZone('valve')" title="Llave de paso"/>
+    <rect class="clickzone" id="zone-handle" data-zone="handle" x="${cx-22}" y="97" width="44" height="38" rx="3" onclick="clickZone('handle')"/>
+    <rect class="clickzone" id="zone-stem" data-zone="stem" x="${cx-14}" y="110" width="28" height="30" rx="3" onclick="clickZone('stem')" style="display:${state>=3&&state<=6?'block':'none'}"/>
+    <rect class="clickzone" id="zone-washer" data-zone="washer" x="555" y="225" width="30" height="30" rx="15" onclick="clickZone('washer')" style="display:${state===4?'block':'none'}"/>
+    <rect class="clickzone" id="zone-faucet" data-zone="faucet" x="${cx-30}" y="155" width="60" height="28" rx="3" onclick="clickZone('faucet')" style="display:${state===6?'block':'none'}"/>`;
+
+  // state-dependent label
+  const stateLabel=`
+    <text x="10" y="275" fill="#4a5060" font-size="9" font-family="monospace">${
+      ['💧 Canilla goteando','✓ Agua cortada','Presión liberada','Mango desmontado','Cartucho extraído','Arandela nueva lista','Canilla armada','✓ Sin goteras — ¡listo!'][state]||''
+    }</text>`;
+
+  // success sparks
+  const success=state===7?`
+    <circle cx="${cx-50}" cy="162" r="3" fill="#44bb66" opacity=".8"/>
+    <text x="${cx-65}" y="158" fill="#44bb66" font-size="10">✓</text>
+    <text x="600" y="100" fill="#44bb66" font-size="20" opacity=".7">🎉</text>`:'';
+
+  return wall+counter+basin+cabinet+pipes+
+    (state>=1&&state<=6?valveClosed:valveOpen)+
+    (state<3||state>=6?faucetBase:'<rect x="'+( cx-28)+'" y="175" width="56" height="12" rx="3" fill="#8a9090"/><rect x="'+(cx-8)+'" y="115" width="16" height="62" fill="#9aacb0" rx="2"/>')+
+    (state<3||state>=6?handle:packingNut)+
+    (state===0?drip:'')+
+    (state>=4&&state<=6?stemOut:'')+
+    success+zones+stateLabel+
+    `<text x="${cx-18}" y="100" fill="rgba(232,160,48,.4)" font-size="8" font-family="monospace" style="display:${state<3||state>=6?'block':'none'}">${state===0?'gotea':''}</text>`;
+}
+
+function sceneDrain(state){
+  const wall=`<rect x="0" y="0" width="900" height="185" fill="#1e2228"/>
+    ${buildTiles(0,0,900,185,60,50,'#1e2228','#22262e')}`;
+  const counter=`<rect x="0" y="182" width="900" height="4" fill="#38322c"/>
+    <rect x="0" y="186" width="900" height="94" fill="#2a2520"/>`;
+  const basin=`
+    <rect x="150" y="175" width="400" height="12" rx="3" fill="#242018"/>
+    <rect x="160" y="187" width="380" height="40" fill="${state===0?'#1a1210':'#141210'}" rx="2"/>
+    ${state===0?`<ellipse cx="350" cy="220" rx="100" ry="12" fill="#1e1a2a" opacity=".6"/>
+      <text x="290" y="224" fill="#4466aa" font-size="9">agua estancada</text>`:''}
+    <ellipse cx="350" cy="227" rx="14" ry="5" fill="#0d0c0a"/>`;
+
+  const underSink=`
+    <rect x="150" y="236" width="400" height="42" fill="#181412"/>
+    <rect x="340" y="228" width="12" height="12" fill="#6a7870" rx="1"/>`;
+
+  // sifon states
+  const sifonNormal=`
+    <path d="M346 240 L346 258 Q346 274 360 274 L386 274 Q400 274 400 258 L400 240" fill="none" stroke="#6a7870" stroke-width="10" stroke-linecap="round"/>
+    <text x="340" y="285" fill="#505850" font-size="8">sifón</text>`;
+  const sifonOpen=`
+    <path d="M346 240 L346 252" fill="none" stroke="#6a7870" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="346" cy="264" r="8" fill="#3a4840" stroke="#6a7870" stroke-width="2"/>
+    <text x="340" y="285" fill="#505850" font-size="8">sifón abierto</text>`;
+  const sifonClean=`
+    <path d="M346 240 L346 258 Q346 274 360 274 L386 274 Q400 274 400 258 L400 240" fill="none" stroke="#6a9070" stroke-width="10" stroke-linecap="round"/>
+    <text x="340" y="285" fill="#44bb66" font-size="8">sifón limpio ✓</text>`;
+
+  // balde
+  const bucket=state>=2?`
+    <rect x="260" y="252" width="28" height="22" rx="3" fill="#2a3848" stroke="#3a5060" stroke-width="1"/>
+    <text x="262" y="268" fill="#4a7090" font-size="8">balde</text>`:'';
+
+  // click zones
+  const zones=`
+    <rect class="clickzone" id="zone-basin" data-zone="basin" x="160" y="187" width="380" height="40" onclick="clickZone('basin')" style="display:${state===0?'block':'none'}"/>
+    <rect class="clickzone" id="zone-drain" data-zone="drain" x="330" y="215" width="40" height="18" onclick="clickZone('drain')" style="display:${state===1?'block':'none'}"/>
+    <rect class="clickzone" id="zone-bucket" data-zone="bucket_area" x="240" y="240" width="70" height="38" onclick="clickZone('bucket_area')" style="display:${state===2?'block':'none'}"/>
+    <rect class="clickzone" id="zone-sifon" data-zone="sifon" x="330" y="236" width="82" height="50" onclick="clickZone('sifon')" style="display:${state>=3?'block':'none'}"/>`;
+
+  const stateLabel=`<text x="10" y="275" fill="#4a5060" font-size="9" font-family="monospace">${
+    ['Desagüe tapado','Agua caliente aplicada','Ventosa usada','Balde colocado','Sifón abierto','Sifón limpio','✓ Desagüe libre'][state]||''
+  }</text>`;
+
+  return wall+counter+basin+underSink+
+    (state>=5?sifonClean:state>=3?sifonOpen:sifonNormal)+
+    bucket+zones+stateLabel;
+}
+
+function sceneEmergency(state){
+  const bg=`<rect x="0" y="0" width="900" height="280" fill="#181614"/>
+    ${buildTiles(50,40,350,180,50,45,'#1a1816','#1e1c18')}
+    <text x="160" y="30" fill="#2a2620" font-size="11" font-family="monospace">ENTRADA</text>`;
+
+  const wall=`<rect x="50" y="40" width="350" height="180" fill="none" stroke="#2a2620" stroke-width="1"/>`;
+
+  const floor=`<rect x="0" y="220" width="900" height="60" fill="#201e1a"/>
+    <line x1="0" y1="220" x2="900" y2="220" stroke="#2a2620" stroke-width="1"/>`;
+
+  const meterBox=`
+    <rect x="80" y="80" width="90" height="100" rx="4" fill="#1e1c18" stroke="#3a3628" stroke-width="1.5"/>
+    <text x="88" y="98" fill="#504840" font-size="8" font-family="monospace">MEDIDOR</text>
+    <rect x="90" y="103" width="70" height="40" rx="2" fill="#141210"/>
+    <text x="100" y="128" fill="#6a5030" font-size="14" font-family="monospace">${state>=0?'0423.7':'----'}</text>
+    ${state>=1?`<rect x="88" y="150" width="74" height="20" rx="2" fill="rgba(232,160,48,.1)" stroke="rgba(232,160,48,.4)" stroke-width="1"/>
+    <text x="98" y="163" fill="#e8a030" font-size="8">llave encontrada ✓</text>`:''}`;
+
+  // main valve — different states
+  const mainValveOff=state===2||state===3||state===4?`
+    <rect x="200" y="140" width="70" height="12" rx="3" fill="#5a6060"/>
+    <rect x="228" y="128" width="14" height="36" rx="3" fill="#8a9090"/>
+    <rect x="220" y="155" width="30" height="8" rx="2" fill="#aababa" transform="rotate(-90,235,159)"/>
+    <text x="195" y="178" fill="#44bb66" font-size="8">CERRADA ✓</text>`:`
+    <rect x="200" y="140" width="70" height="12" rx="3" fill="#5a6060"/>
+    <rect x="228" y="128" width="14" height="36" rx="3" fill="#8a9090"/>
+    <rect x="222" y="130" width="26" height="8" rx="2" fill="#aababa"/>
+    <text x="200" y="178" fill="#6a7878" font-size="8">ABIERTA</text>`;
+
+  const testTap=state>=3?`
+    <g transform="translate(600,100)">
+      <rect x="0" y="0" width="80" height="60" rx="4" fill="#1e1c18" stroke="#2a2620" stroke-width="1"/>
+      <text x="8" y="16" fill="#504840" font-size="8" font-family="monospace">COCINA</text>
+      <rect x="30" y="20" width="6" height="30" fill="#6a7870" rx="2"/>
+      <rect x="22" y="22" width="22" height="6" fill="#7a8880" rx="3"/>
+      <text x="8" y="54" fill="${state===4?'#44bb66':'#cc4433'}" font-size="8">${state===4?'sin agua ✓':'abrí la canilla'}</text>
+    </g>`:'';
+
+  const phone=state>=4?`
+    <g transform="translate(600,180)">
+      <rect x="0" y="0" width="80" height="50" rx="6" fill="#1e1c18" stroke="#3a3028" stroke-width="1"/>
+      <text x="14" y="20" fill="#504840" font-size="18">📱</text>
+      <text x="8" y="42" fill="#cc4433" font-size="8" font-family="monospace">PLOMERO</text>
+    </g>`:'';
+
+  const zones=`
+    <rect class="clickzone" id="zone-meter" data-zone="meter" x="76" y="76" width="98" height="108" onclick="clickZone('meter')" style="display:${state===0?'block':'none'}"/>
+    <rect class="clickzone" id="zone-main_valve" data-zone="main_valve" x="192" y="122" width="90" height="62" onclick="clickZone('main_valve')" style="display:${state>=1&&state<=2?'block':'none'}"/>
+    <rect class="clickzone" id="zone-test_tap" data-zone="test_tap" x="592" y="92" width="96" height="76" onclick="clickZone('test_tap')" style="display:${state===3?'block':'none'}"/>
+    <rect class="clickzone" id="zone-phone" data-zone="phone" x="592" y="172" width="96" height="58" onclick="clickZone('phone')" style="display:${state===4?'block':'none'}"/>`;
+
+  const stateLabel=`<text x="10" y="270" fill="#4a5060" font-size="9" font-family="monospace">${
+    ['Buscar medidor','Medidor localizado','Identificar llave','Llave cerrada','Verificar canillas','✓ Emergencia controlada'][state]||''
+  }</text>`;
+
+  return bg+wall+floor+meterBox+mainValveOff+testTap+phone+zones+stateLabel;
+}
+
+function renderScene(){
+  const svg=document.getElementById('scene-svg');
+  const sc=SCENARIOS[scn];
+  if(scn===0)      svg.innerHTML=sceneFaucet(stp);
+  else if(scn===1) svg.innerHTML=sceneDrain(stp);
+  else             svg.innerHTML=sceneEmergency(stp);
+}
+
+// ══════════════════════════════════════════════
+// INVENTORY
+// ══════════════════════════════════════════════
+function renderInventory(){
+  const sc=SCENARIOS[scn];
+  const bar=document.getElementById('inv-bar');
+  bar.innerHTML=`<span class="inv-lbl">🧰 Herramientas</span>`;
+  sc.inventory.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='inv-item'+(sel===it.id?' sel':'');
+    d.id='inv-'+it.id;
+    d.innerHTML=`<span class="inv-icon">${it.icon}</span><span class="inv-name">${it.name}</span>`;
+    d.onclick=()=>selectTool(it.id);
+    bar.appendChild(d);
+  });
+  if(sel){
+    const btn=document.createElement('div');
+    btn.className='inv-deselect';
+    btn.style.display='block';
+    btn.textContent='✕ Soltar';
+    btn.onclick=()=>selectTool(null);
+    bar.appendChild(btn);
+  }
+  const cur=document.getElementById('tool-cursor');
+  if(sel){
+    const it=sc.inventory.find(i=>i.id===sel);
+    cur.textContent=it?it.icon:'';
+    cur.style.display='block';
+    document.onmousemove=e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';};
+  } else {
+    cur.style.display='none';
+    document.onmousemove=null;
+  }
+}
+
+function selectTool(id){
+  sel=id===sel?null:id;
+  renderInventory();
+  if(sel){
+    const it=SCENARIOS[scn].inventory.find(i=>i.id===sel);
+    toast(`Seleccionado: ${it.icon} ${it.name} — ahora hacé clic en el elemento correcto`,0);
+  } else {
+    clearToast();
+  }
+}
+
+// ══════════════════════════════════════════════
+// INTERACTION
+// ══════════════════════════════════════════════
+function clickZone(zone){
+  const sc=SCENARIOS[scn];
+  if(stp>=sc.steps.length) return;
+  const step=sc.steps[stp];
+
+  // Check if correct zone
+  if(zone!==step.target){
+    toast(step.wrongTarget||'Eso no es lo que necesitás ahora. Revisá el paso actual.','err');
+    return;
+  }
+
+  // Check if correct tool (if required)
+  if(step.tool&&sel!==step.tool){
+    toast(step.wrongTool||`Necesitás usar la herramienta correcta primero.`,'err');
+    return;
+  }
+
+  // Advance
+  stp++;
+  sel=null;
+  flash();
+  xpPop(25,'Paso completado');
+
+  if(stp>=sc.steps.length){
+    // Scenario complete
+    xp+=sc.totalSteps*25+100;
+    xpPop(100,'¡Escenario completado!');
+    toast(`¡Excelente! Completaste "${sc.title}". +${sc.totalSteps*25+100} XP total`,'ok');
+    setTimeout(()=>{
+      renderScene();
+      renderMP();
+    },400);
+  } else {
+    renderScene();
+    renderInventory();
+    renderMP();
+    toast(step.tip,'tip');
+  }
+}
+
+// ══════════════════════════════════════════════
+// MISSION PANEL
+// ══════════════════════════════════════════════
+function renderMP(){
+  const sc=SCENARIOS[scn];
+  const done=stp>=sc.steps.length;
+  document.getElementById('mp-ico').textContent=done?'✅':sc.ico;
+  document.getElementById('mp-t').textContent=done?sc.title+' — COMPLETADO':sc.title;
+  document.getElementById('mp-xp').textContent=xp+' XP';
+  document.getElementById('mp-fill').style.width=(Math.min(stp,sc.totalSteps)/sc.totalSteps*100)+'%';
+  document.getElementById('mp-pt').textContent=Math.min(stp,sc.totalSteps)+'/'+sc.totalSteps;
+  if(mpTab==='mis') renderMisTab();
+  else if(mpTab==='cri') renderCriTab();
+  else if(mpTab==='tip') renderTipTab();
+  else renderChatTab();
+}
+
+function renderMisTab(){
+  const sc=SCENARIOS[scn];
+  const body=document.getElementById('mp-body');
+  if(stp>=sc.steps.length){
+    body.innerHTML=`<div style="text-align:center;padding:14px 8px">
+      <div style="font-size:26px;margin-bottom:6px">🏆</div>
+      <div style="font-size:14px;color:var(--acc);letter-spacing:2px;font-family:var(--ui);font-weight:700">COMPLETADO</div>
+      <div style="font-size:8px;color:var(--txt3);margin-top:5px">XP: <span style="color:var(--acc)">${xp}</span></div>
+      <button class="mp-btn ok" style="margin-top:12px" onclick="loadScenario(${(scn+1)%SCENARIOS.length})">Siguiente escenario →</button>
+    </div>`;
+    return;
+  }
+  const step=sc.steps[stp];
+  const stepsHtml=sc.steps.map((s,i)=>{
+    const done=i<stp, cur=i===stp;
+    return `<li class="mp-step ${done?'done':cur?'cur':''}">
+      <span class="mp-step-ic">${done?'✓':'·'}</span>
+      <span>${s.txt}</span>
+    </li>`;
+  }).join('');
+
+  body.innerHTML=`
+    <div class="mp-obj">${step.txt}${step.tool?` — <span style="color:var(--acc)">Herramienta: ${SCENARIOS[scn].inventory.find(i=>i.id===step.tool)?.icon||''} ${SCENARIOS[scn].inventory.find(i=>i.id===step.tool)?.name||''}</span>`:''}</div>
+    <ul class="mp-steps">${stepsHtml}</ul>
+    <div class="mp-actions">
+      ${stp>0?`<button class="mp-btn skip" onclick="prevStep()">← Ant.</button>`:''}
+      <button class="mp-btn hint" onclick="doHint()" style="animation:hintBlink 1.4s ease-in-out infinite">💡 Hint</button>
+      <button class="mp-btn skip" onclick="nextStep()">Saltar →</button>
+    </div>`;
+}
+
+function renderCriTab(){
+  document.getElementById('mp-body').innerHTML=`<div>${
+    CRISIS.map(c=>`<div class="crisis-item">
+      <div class="crisis-q">⚠ ${c.q}</div>
+      <div class="crisis-a">${c.a}</div>
+      <ul class="crisis-steps">${c.steps.map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>`).join('')
+  }</div>`;
+}
+
+function renderTipTab(){
+  document.getElementById('mp-body').innerHTML=`<div>${
+    TIPS.map(t=>`<div class="tip-item" style="border-left-color:${t.acc}">
+      <div class="tip-tag" style="color:${t.acc}">${t.tag}</div>
+      <div class="tip-txt">${t.txt}</div>
+    </div>`).join('')
+  }</div>`;
+}
+
+// ══════════════════════════════════════════════
+// CHAT
+// ══════════════════════════════════════════════
+function renderChatTab(){
+  if(!chatMsgs.length){
+    chatMsgs=[{r:'bot',t:'¡Hola! Soy tu asistente de plomería. Preguntame sobre canillas, sifones, presión de agua, herramientas o cualquier duda de instalaciones.'}];
+  }
+  const chips=['¿Qué es un sifón?','¿Para qué sirve el teflon?','¿Cómo destapo un caño?','Poca presión de agua'];
+  document.getElementById('mp-body').innerHTML=`
+    <div class="chat-wrap">
+      <div class="chat-chips">${chips.map(c=>`<span class="chat-chip" onclick="chatQuick(this)">${c}</span>`).join('')}</div>
+      <div class="chat-msgs" id="chat-msgs">${chatMsgs.map(m=>`<div class="chat-msg ${m.r}">${m.t}</div>`).join('')}</div>
+      <div class="chat-row">
+        <input class="chat-input" id="chat-inp" placeholder="Preguntá sobre plomería..." onkeydown="if(event.key==='Enter')chatSend()">
+        <button class="chat-send" onclick="chatSend()">▶</button>
+      </div>
+    </div>`;
+  const msgs=document.getElementById('chat-msgs');
+  if(msgs) msgs.scrollTop=msgs.scrollHeight;
+}
+
+function chatQuick(el){
+  const inp=document.getElementById('chat-inp');
+  if(inp){inp.value=el.textContent;chatSend();}
+}
+
+async function chatSend(){
+  const inp=document.getElementById('chat-inp');if(!inp)return;
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';
+  chatMsgs.push({r:'user',t:txt});
+  chatMsgs.push({r:'bot typing',t:'...'});
+  renderChatTab();
+  const lower=txt.toLowerCase();
+  const hit=FAQ.find(f=>lower.includes(f.q));
+  if(hit){
+    chatMsgs.pop();chatMsgs.push({r:'bot',t:hit.a});renderChatTab();return;
+  }
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,program:'hogar'})});
+    const data=await res.json();
+    chatMsgs.pop();
+    chatMsgs.push({r:'bot',t:data.reply||'No pude responder. Intentá de nuevo.'});
+  }catch(e){
+    chatMsgs.pop();
+    chatMsgs.push({r:'bot',t:'Sin conexión a la API. Pero puedo responder preguntas básicas — probá con las sugerencias.'});
+  }
+  renderChatTab();
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function loadScenario(i){
+  scn=i;stp=0;sel=null;chatMsgs=[];
+  ['0','1','2'].forEach(n=>document.getElementById('sctab-'+n)?.classList.toggle('on',+n===i));
+  renderScene();renderInventory();renderMP();
+}
+
+function prevStep(){if(stp>0){stp--;renderScene();renderInventory();renderMP();}}
+function nextStep(){
+  const sc=SCENARIOS[scn];
+  if(stp<sc.steps.length){stp++;renderScene();renderInventory();renderMP();}
+}
+
+function setTab(t){
+  mpTab=t;['mis','cri','tip','ast'].forEach(id=>document.getElementById('tab-'+id)?.classList.toggle('on',id===t));
+  renderMP();
+}
+
+function toggleMP(){
+  mpMin=!mpMin;
+  document.getElementById('bottom').style.maxHeight=mpMin?'62px':'260px';
+  document.getElementById('mp-tog').textContent=mpMin?'▲':'▼';
+}
+
+function doHint(){
+  const sc=SCENARIOS[scn];
+  if(stp>=sc.steps.length)return;
+  const step=sc.steps[stp];
+  if(step.hintEl){
+    const el=document.getElementById(step.hintEl);
+    if(el){el.classList.remove('hint-pulse');void el.offsetWidth;el.classList.add('hint-pulse');setTimeout(()=>el.classList.remove('hint-pulse'),4000);}
+  }
+  if(step.tool){
+    const invEl=document.getElementById('inv-'+step.tool);
+    if(invEl){invEl.classList.remove('hint-pulse');void invEl.offsetWidth;invEl.classList.add('hint-pulse');setTimeout(()=>invEl.classList.remove('hint-pulse'),4000);}
+  }
+  toast(step.tip,'tip');
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+let fbTimer=null;
+function toast(msg,type='tip'){
+  const el=document.getElementById('fb');
+  el.textContent=msg;
+  el.className='show '+(type==='err'?'err':type==='ok'?'ok':'tip');
+  clearTimeout(fbTimer);
+  fbTimer=setTimeout(()=>{el.className='';},3800);
+}
+function clearToast(){document.getElementById('fb').className='';}
+
+function xpPop(n,r){
+  if(!n)return;
+  xp+=n;
+  const el=document.getElementById('xpp');
+  el.textContent=`+${n} XP — ${r}`;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+  document.getElementById('mp-xp').textContent=xp+' XP';
+}
+function flash(){
+  const f=document.getElementById('fl');f.classList.add('on');
+  setTimeout(()=>f.classList.remove('on'),280);
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+loadScenario(0);
+</script>
+</body>
+</html>
