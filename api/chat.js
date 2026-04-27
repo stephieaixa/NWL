@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS para que funcione desde cualquier origen
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -14,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Falta el campo message' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'API key no configurada' });
   }
@@ -36,30 +35,34 @@ Si te preguntan algo que no es de MagicQ o iluminación, redirigí amablemente.
 No uses listas largas — respondé directo, conversacional.`;
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: 'user', parts: [{ text: message }] }],
-          generationConfig: { maxOutputTokens: 200, temperature: 0.7 }
-        })
-      }
-    );
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
+        max_tokens: 220,
+        temperature: 0.7
+      })
+    });
 
-    const data = await geminiRes.json();
+    const data = await groqRes.json();
 
-    if (!geminiRes.ok) {
-      const errMsg = data?.error?.message || 'Error en Gemini API';
-      console.error('Gemini error:', errMsg);
+    if (!groqRes.ok) {
+      const errMsg = data?.error?.message || 'Error en Groq API';
+      console.error('Groq error:', errMsg);
       return res.status(502).json({ error: errMsg });
     }
 
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const reply = data?.choices?.[0]?.message?.content?.trim();
     if (!reply) {
-      return res.status(502).json({ error: 'Respuesta vacía de Gemini' });
+      return res.status(502).json({ error: 'Respuesta vacía de Groq' });
     }
 
     return res.status(200).json({ reply });
