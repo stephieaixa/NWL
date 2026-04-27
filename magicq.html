@@ -1757,32 +1757,42 @@ function makeMsgEl(m){
   return el;
 }
 
-function astSend(text){
+async function astSend(text){
   const inp=document.getElementById('ast-inp');
   const q=(text||inp?.value||'').trim();
   if(!q) return;
   if(inp) inp.value='';
 
   AST_HISTORY.push({role:'user',text:q});
-  const ans=astAnswer(q);
-  AST_HISTORY.push({role:'bot',text:ans});
-
   const msgs=document.getElementById('ast-msgs');
   if(msgs){
     msgs.appendChild(makeMsgEl({role:'user',text:q}));
-    msgs.appendChild(makeMsgEl({role:'bot',text:ans}));
-    setTimeout(()=>{ msgs.scrollTop=msgs.scrollHeight; },30);
+    const ld=document.createElement('div');
+    ld.className='chat-msg bot';ld.id='ast-loading';
+    ld.innerHTML='<span style="opacity:.4;letter-spacing:3px">...</span>';
+    msgs.appendChild(ld);
+    msgs.scrollTop=msgs.scrollHeight;
   }
+
+  let ans;
+  try{
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})});
+    ans=r.ok?(await r.json()).reply||astFallback(q):astFallback(q);
+  }catch{ ans=astFallback(q); }
+
+  document.getElementById('ast-loading')?.remove();
+  AST_HISTORY.push({role:'bot',text:ans});
+  if(msgs){ msgs.appendChild(makeMsgEl({role:'bot',text:ans})); msgs.scrollTop=msgs.scrollHeight; }
 }
 
-function astAnswer(q){
+function astFallback(q){
   const lq=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   for(const entry of AST_FAQ){
     if(entry.keys.some(k=>lq.includes(k.normalize('NFD').replace(/[\u0300-\u036f]/g,'')))){
       return entry.ans;
     }
   }
-  return 'No encontré una respuesta exacta para eso. Intentá preguntarme sobre: <strong>fixtures, colores, posiciones, cues, faders, FX, Programmer, BLIND, playbacks</strong> o volvé al tab MISIÓN para el tutorial paso a paso.';
+  return 'No encontré una respuesta exacta. Preguntame sobre: <strong>fixtures, colores, posiciones, cues, faders, FX, Programmer, BLIND, playbacks</strong> o volvé al tab MISIÓN.';
 }
 
 // CLOCK
