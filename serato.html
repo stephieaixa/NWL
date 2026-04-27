@@ -6,8 +6,8 @@
 <title>Serato DJ Pro — SkillForge</title>
 <style>
 :root{
-  --bg:#07080b;--sur:#0d0f14;--sur2:#111318;--brd:#1a1e28;--brd2:#222840;
-  --a:#ff6600;--b:#0088ff;--txt:#99aabb;--txt2:#556677;--txt3:#2a3545;
+  --bg:#0f1219;--sur:#161a24;--sur2:#1d2130;--brd:#272d3e;--brd2:#333d58;
+  --a:#ff6600;--b:#0099ff;--txt:#c8d8ec;--txt2:#7a90a8;--txt3:#506070;
   --grn:#22cc66;--yel:#ddaa00;--red:#cc2233;--pur:#aa44ee;
   --mono:'Courier New',monospace;--ui:'Segoe UI',sans-serif;
 }
@@ -204,8 +204,9 @@ body{background:var(--bg);color:var(--txt);font-family:var(--mono);overflow-x:hi
 .mp-btn.ok:hover{background:var(--grn);color:#000;}
 .mp-btn.skip{border-color:#1e2230;color:var(--txt3);background:transparent;}
 .mp-btn.skip:hover{color:var(--txt2);border-color:#334;}
-.mp-btn.hint{border-color:#554400;color:#998800;background:rgba(160,130,0,.07);}
-.mp-btn.hint:hover{background:rgba(180,150,0,.18);color:#ddbb00;}
+.mp-btn.hint{border-color:#886600;color:#ffcc00;background:rgba(200,160,0,.12);box-shadow:0 0 8px rgba(255,200,0,.15);animation:hintBtnPulse 2s ease-in-out infinite;}
+.mp-btn.hint:hover{background:rgba(220,180,0,.25);color:#ffe44d;box-shadow:0 0 14px rgba(255,200,0,.35);}
+@keyframes hintBtnPulse{0%,100%{box-shadow:0 0 6px rgba(255,200,0,.15);}50%{box-shadow:0 0 14px rgba(255,200,0,.45),0 0 4px rgba(255,200,0,.6);}}
 .mp-prog{border-top:1px solid var(--brd);padding:4px 12px;display:flex;align-items:center;gap:8px;}
 .mp-bar{flex:1;height:2px;background:#0c1020;border-radius:2px;overflow:hidden;}
 .mp-fill{height:100%;background:linear-gradient(90deg,var(--a),#ff9900);transition:width .5s;}
@@ -1047,6 +1048,8 @@ document.addEventListener('touchmove',e=>{
   S[chDrag].vol=Math.max(0,Math.min(100,Math.round(chV0+dy*1.2)));
   updateChFader(chDrag);checkM();e.preventDefault();
 },{passive:false});
+document.addEventListener('mouseup',()=>{chDrag=null;});
+document.addEventListener('touchend',()=>{chDrag=null;});
 
 function updateChFader(d){
   const v=S[d].vol;
@@ -1133,6 +1136,14 @@ document.addEventListener('touchmove',e=>{
 },{passive:false});
 document.addEventListener('mouseup',()=>{xfDrag=false;});
 document.addEventListener('touchend',()=>{xfDrag=false;});
+
+// ── SAFETY: clear ALL drags if window loses focus or mouse leaves ──
+function clearAllDrags(){
+  pitchDrag=null; jogDrag=null; chDrag=null; knobDrag=null; xfDrag=false;
+  ['a','b'].forEach(d=>document.getElementById('jog-'+d)?.classList.remove('active'));
+}
+window.addEventListener('blur',clearAllDrags);
+document.addEventListener('mouseleave',clearAllDrags);
 
 function updateXFUI(){
   const v=S.xfade;
