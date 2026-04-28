@@ -861,7 +861,8 @@ function renderMisTab(){
     const d=i<simStep,c=i===simStep;
     return `<li class="mp-step ${d?'done':c?'cur':''}"><span class="mp-step-ic">${d?'✓':'·'}</span><span>${s.txt}</span></li>`;
   }).join('');
-  const toolInfo=step.tool?` <span style="color:var(--acc)">${sc.tools?.find(t=>t.id===step.tool)?.icon||''} ${sc.tools?.find(t=>t.id===step.tool)?.name||''}</span>`:'';
+  const toolKey=Array.isArray(step.tool)?step.tool[0]:step.tool;
+  const toolInfo=step.tool?` <span style="color:var(--acc)">${sc.tools?.find(t=>t.id===toolKey)?.icon||''} ${sc.tools?.find(t=>t.id===toolKey)?.name||''}</span>`:'';
   body.innerHTML=`
     <div class="mp-obj">${step.txt}${toolInfo}</div>
     <ul class="mp-steps">${stepsHtml}</ul>

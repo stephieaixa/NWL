@@ -170,6 +170,30 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 .chat-send{padding:3px 9px;border-radius:3px;cursor:pointer;font-size:9px;font-weight:700;background:rgba(124,108,255,.12);border:1px solid #332266;color:var(--acc);transition:all .15s;}
 .chat-send:hover{background:rgba(124,108,255,.22);}
 
+/* GUÍA */
+.gui-sec{margin-bottom:14px;}
+.gui-sec-hdr{font-size:10px;font-weight:700;color:var(--acc);margin-bottom:8px;display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--brd);padding-bottom:4px;letter-spacing:.3px;}
+.gui-compare{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;}
+.gui-col{border-radius:3px;padding:6px;border:1px solid;}
+.gui-col-title{font-size:8px;font-weight:800;margin-bottom:5px;text-align:center;letter-spacing:.5px;}
+.gui-col-li{font-size:7px;color:var(--txt2);padding:1.5px 0;display:flex;gap:3px;line-height:1.4;}
+.gui-col-li::before{content:'→';flex-shrink:0;opacity:.5;}
+.gui-blk{margin-bottom:7px;}
+.gui-lbl{font-size:8px;font-weight:700;color:var(--txt);margin-bottom:2px;}
+.gui-txt{font-size:8px;color:var(--txt2);line-height:1.6;}
+.gui-alloc{width:100%;border-collapse:collapse;margin-bottom:8px;}
+.gui-alloc th{font-size:7px;color:var(--txt3);letter-spacing:.5px;padding:2px 4px;text-align:left;border-bottom:1px solid var(--brd);}
+.gui-alloc td{font-size:8px;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;}
+.gui-signal{display:flex;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.gui-signal:last-child{border-bottom:none;}
+.gui-sig-ico{font-size:14px;flex-shrink:0;line-height:1;}
+.gui-sig-body{flex:1;}
+.gui-sig-lbl{font-size:9px;font-weight:700;margin-bottom:1px;}
+.gui-sig-txt{font-size:8px;color:var(--txt2);line-height:1.5;}
+.gui-err{background:var(--sur2);border-radius:3px;padding:5px 7px;margin-bottom:4px;border-left:2px solid var(--brd2);}
+.gui-err-lbl{font-size:8px;font-weight:700;color:#e08040;margin-bottom:1px;}
+.gui-err-txt{font-size:7px;color:var(--txt2);line-height:1.5;}
+
 @keyframes hintBlink{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.9);}50%{box-shadow:0 0 0 8px rgba(124,108,255,0);}}
 @keyframes flashUp{0%{background:rgba(38,166,154,.08);}100%{background:transparent;}}
 @keyframes flashDn{0%{background:rgba(239,83,80,.08);}100%{background:transparent;}}
@@ -271,7 +295,8 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
   </div>
   <div class="mp-tabs">
     <div class="mp-tab on" id="tab-mis" onclick="setTab('mis')">MISIONES</div>
-    <div class="mp-tab" id="tab-glo" onclick="setTab('glo')">📖 GLOSARIO</div>
+    <div class="mp-tab" id="tab-gui" onclick="setTab('gui')">📚 GUÍA</div>
+    <div class="mp-tab" id="tab-glo" onclick="setTab('glo')">GLOSARIO</div>
     <div class="mp-tab" id="tab-rsk" onclick="setTab('rsk')">⚠ RIESGO</div>
     <div class="mp-tab" id="tab-ast" onclick="setTab('ast')">🤖 CHAT</div>
   </div>
@@ -350,11 +375,64 @@ const GLOSARIO = [
 ];
 
 const RISK_RULES = [
-  {rule:'Nunca arriesgues más del 1-2% del capital por operación',why:'Si arriesgás 2% y hacés 10 operaciones malas seguidas = perdés 20% del capital. Si arriesgás 10% por operación = 3 operaciones malas = 30% de pérdida. El position sizing determina tu supervivencia.'},
-  {rule:'Siempre usá stop-loss',why:'Sin stop-loss, una mala operación puede destruir tu cuenta. El mercado puede ir en tu contra más tiempo del que vos podés aguantar. Un stop-loss es tu contrato con vos mismo de cuánto estás dispuesto a perder.'},
-  {rule:'Nunca inviertas lo que no podés perder',why:'El estrés financiero toma pésimas decisiones. Si el dinero que usás es el alquiler del mes, vas a vender en el peor momento y comprar en el peor momento. Solo operá con capital de riesgo.'},
-  {rule:'No hagas FOMO (Fear Of Missing Out)',why:'El FOMO es comprar porque el precio ya subió mucho y "no querés perderte la suba". Es el error más común y más caro. Si te perdiste el movimiento, esperá el próximo — siempre habrá otro.'},
-  {rule:'No promedies pérdidas (no hagas "martingala")',why:'Comprar más de algo que está bajando para "bajar el precio promedio" parece lógico pero en trading es peligroso. Significa que seguís apostando a que algo que está fallando cambie de dirección.'},
+  {rule:'Máximo 1-2% del capital por operación',why:'Si arriesgás 2% y hacés 10 operaciones malas seguidas → perdés 20%. Si arriesgás 10% → 3 operaciones malas → 30% de pérdida. El position sizing determina tu supervivencia a largo plazo.'},
+  {rule:'Siempre usá stop-loss, sin excepciones',why:'Sin stop-loss, una mala operación puede destruir tu cuenta. El mercado puede ir en tu contra más tiempo del que vos podés aguantar. Un SL es tu contrato con vos mismo de cuánto estás dispuesto a perder.'},
+  {rule:'Ratio riesgo/recompensa mínimo 1:2',why:'Si tu stop-loss arriesga $50, tu take-profit debe apuntar a $100. Con esta proporción sos rentable aunque solo ganes el 40% de las operaciones. Es la base matemática del trading profesional.'},
+  {rule:'¿Cuándo salís? 5 señales concretas',why:'(1) SL activado. (2) TP alcanzado. (3) RSI > 80 con posición larga. (4) Precio cruza SMA50 hacia abajo. (5) La razón por la que compraste ya no aplica. Cualquiera de estas = salida. Sin negociar.'},
+  {rule:'Nunca inviertas lo que no podés perder',why:'El estrés financiero toma pésimas decisiones. Si el dinero que usás es el alquiler del mes, vas a vender en el peor momento. Solo operá con capital que podés perder sin que cambie tu vida.'},
+  {rule:'No hagas FOMO (Fear Of Missing Out)',why:'FOMO = comprar porque ya subió mucho. Es el error más caro: estás comprando en el techo, de lo que acaba de subir. Si te perdiste el movimiento, esperá el próximo — siempre habrá otro.'},
+  {rule:'No promedies pérdidas',why:'Comprar más de algo que baja "para bajar el promedio" parece lógico pero es peligroso. Significa seguir apostando a algo que está fallando. Si el activo bajó a tu stop: salí. No comprés más.'},
+];
+
+const GUIA = [
+  {
+    title:'Cripto vs Acciones', icon:'⚖️',
+    blocks:[
+      {type:'compare',
+       left:{title:'CRIPTO',color:'#f7931a',items:['Volatilidad ±5-20% por día','Mercado 24/7, sin feriados','Sin regulación central','Sin dividendos, solo precio','Alta correlación entre criptos','BTC = "oro digital" / ETH = plataforma']},
+       right:{title:'ACCIONES',color:'#4488cc',items:['Volatilidad ±0.5-3% por día','Horario 9-16hs NY (días hábiles)','Reguladas: más protección legal','Dividendos posibles','Correlación con economía real','SPY = 500 empresas más grandes EE.UU.']}
+      },
+      {type:'text',label:'¿Cuándo preferir cripto?',text:'Cuando tu tolerancia al riesgo es alta y buscás retornos mayores. BTC y ETH tienen track-record sólido. Altcoins como SOL o BNB tienen más riesgo y más potencial de subida (y de caída).'},
+      {type:'text',label:'¿Cuándo preferir acciones?',text:'Para menor volatilidad y exposición a la economía real. SPY históricamente sube ~10% anual promedio. NVDA/AAPL si creés en tech. Son más predecibles y menos propensas a caídas de 80% en meses.'},
+    ]
+  },
+  {
+    title:'¿Cómo combinarlos?', icon:'🧩',
+    blocks:[
+      {type:'alloc',rows:[
+        {perfil:'Conservador',sto:'70–80%',cry:'20–30%',nota:'SPY como base + BTC/ETH como especulación'},
+        {perfil:'Moderado',sto:'50%',cry:'50%',nota:'Equilibrio estabilidad/crecimiento'},
+        {perfil:'Agresivo',sto:'20–30%',cry:'70–80%',nota:'Alta tolerancia al riesgo, horizonte corto'},
+      ]},
+      {type:'text',label:'Por qué funciona la combinación',text:'Cripto y acciones tienen correlación baja: no siempre se mueven juntos. Cuando los mercados tradicionales corrigen, BTC a veces se mantiene (o viceversa). La diversificación reduce la volatilidad total del portfolio.'},
+      {type:'text',label:'Regla práctica de allocation',text:'Nunca más del 5% del portfolio en una sola altcoin. BTC y ETH pueden ser 20-25% cada una. SPY es el ancla: crece lento pero absorbe shocks. Revisá y rebalanceá cada mes.'},
+    ]
+  },
+  {
+    title:'¿Cuándo salir?', icon:'🚪',
+    blocks:[
+      {type:'signals',signals:[
+        {icon:'⛔',color:'#ef5350',label:'Stop-Loss activado',text:'Tu salida predefinida. Respetala siempre — nunca la muevas hacia abajo "para darle más espacio". Eso destruye la gestión de riesgo.'},
+        {icon:'✅',color:'#26a69a',label:'Take-Profit alcanzado',text:'Objetivo cumplido. Podés salir parcialmente y mover el stop al precio de entrada → riesgo cero para el resto.'},
+        {icon:'📊',color:'#aa88ff',label:'RSI > 80 (sobrecompra extrema)',text:'El activo puede estar muy extendido. Señal para salida parcial o ajustar el stop más arriba para proteger ganancias.'},
+        {icon:'📉',color:'#ff9800',label:'Precio cruza SMA50 hacia abajo',text:'Cambio de tendencia media. Especialmente fuerte si la SMA20 también empieza a bajar. Hora de evaluar salida.'},
+        {icon:'💭',color:'#888888',label:'La tesis de inversión cambió',text:'El motivo por el que compraste ya no existe (noticia negativa, cambio regulatorio, quiebra). Salí sin importar el precio actual.'},
+        {icon:'⏰',color:'#4488cc',label:'Tiempo objetivo superado',text:'Esperabas un movimiento en X días y no pasó. La tesis puede estar equivocada. El costo de oportunidad también es un costo.'},
+      ]}
+    ]
+  },
+  {
+    title:'Errores que arruinan cuentas', icon:'🧠',
+    blocks:[
+      {type:'errors',errors:[
+        {label:'FOMO',text:'Comprar porque ya subió mucho. Estás comprando el techo. Esperá la corrección.'},
+        {label:'Revenge trading',text:'Operar más para recuperar pérdidas. Después de una mala operación: pará. Las emociones no son buenas asesoras.'},
+        {label:'Mover el stop-loss',text:'Moverlo hacia abajo cuando se acerca "para darle más espacio". Destruye toda la gestión de riesgo.'},
+        {label:'Over-trading',text:'Operar por aburrimiento. Cada entrada debe tener tesis clara. Sin setup, sin operación.'},
+        {label:'Apalancamiento sin experiencia',text:'El apalancamiento multiplica ganancias Y pérdidas. Con 10x, un movimiento del 10% en tu contra = cuenta a cero.'},
+      ]}
+    ]
+  }
 ];
 
 // ══════════════════════════════════════════════
@@ -928,6 +1006,7 @@ function renderMPHeader(){
 
 function renderMP(){
   if(mpTab==='mis') renderMisTab();
+  else if(mpTab==='gui') renderGuiTab();
   else if(mpTab==='glo') renderGloTab();
   else if(mpTab==='rsk') renderRskTab();
   else renderChatTab();
@@ -964,6 +1043,56 @@ function renderMisTab(){
   }).join('');
 }
 
+function renderGuiTab(){
+  const body=document.getElementById('mp-body');
+  body.innerHTML=GUIA.map(sec=>`
+    <div class="gui-sec">
+      <div class="gui-sec-hdr">${sec.icon} ${sec.title}</div>
+      ${sec.blocks.map(b=>{
+        if(b.type==='compare') return `
+          <div class="gui-compare">
+            <div class="gui-col" style="border-color:rgba(247,147,26,.3);background:rgba(247,147,26,.04)">
+              <div class="gui-col-title" style="color:#f7931a">${b.left.title}</div>
+              ${b.left.items.map(i=>`<div class="gui-col-li">${i}</div>`).join('')}
+            </div>
+            <div class="gui-col" style="border-color:rgba(68,136,204,.3);background:rgba(68,136,204,.04)">
+              <div class="gui-col-title" style="color:#4488cc">${b.right.title}</div>
+              ${b.right.items.map(i=>`<div class="gui-col-li">${i}</div>`).join('')}
+            </div>
+          </div>`;
+        if(b.type==='text') return `
+          <div class="gui-blk">
+            <div class="gui-lbl">${b.label}</div>
+            <div class="gui-txt">${b.text}</div>
+          </div>`;
+        if(b.type==='alloc') return `
+          <table class="gui-alloc">
+            <tr><th>PERFIL</th><th>ACCIONES</th><th>CRIPTO</th><th>EJEMPLO</th></tr>
+            ${b.rows.map(r=>`<tr>
+              <td style="font-weight:700;color:var(--txt)">${r.perfil}</td>
+              <td style="color:#4488cc">${r.sto}</td>
+              <td style="color:#f7931a">${r.cry}</td>
+              <td style="color:var(--txt3);font-size:7px">${r.nota}</td>
+            </tr>`).join('')}
+          </table>`;
+        if(b.type==='signals') return b.signals.map(s=>`
+          <div class="gui-signal">
+            <div class="gui-sig-ico">${s.icon}</div>
+            <div class="gui-sig-body">
+              <div class="gui-sig-lbl" style="color:${s.color}">${s.label}</div>
+              <div class="gui-sig-txt">${s.text}</div>
+            </div>
+          </div>`).join('');
+        if(b.type==='errors') return b.errors.map(e=>`
+          <div class="gui-err">
+            <div class="gui-err-lbl">${e.label}</div>
+            <div class="gui-err-txt">${e.text}</div>
+          </div>`).join('');
+        return '';
+      }).join('')}
+    </div>`).join('');
+}
+
 function renderGloTab(){
   document.getElementById('mp-body').innerHTML=GLOSARIO.map(g=>`
     <div class="glos-item">
@@ -983,19 +1112,22 @@ function renderRskTab(){
 
 // Chat
 const TRADING_FAQ=[
-  {q:'stop loss',a:'El stop-loss es una orden que vende automáticamente tu posición si el precio baja a un nivel que vos elegís. Limita tu pérdida máxima por operación. Siempre colocalo.'},
-  {q:'rsi',a:'El RSI (Índice de Fuerza Relativa) mide la velocidad de los cambios de precio. RSI < 30 = sobrevendido (posible rebote). RSI > 70 = sobrecomprado (posible corrección). Es una señal de contexto, no una garantía.'},
-  {q:'vela',a:'Una vela japonesa muestra apertura, máximo, mínimo y cierre en un período. Cuerpo verde = cerró más alto. Cuerpo rojo = cerró más bajo. La mecha = rango extremo del período.'},
-  {q:'sma',a:'La SMA (media móvil simple) suaviza el precio promediando los últimos N cierres. SMA20 (azul) = tendencia corta. SMA50 (naranja) = tendencia media. Precio por encima de la SMA = tendencia alcista.'},
-  {q:'diversif',a:'Diversificar es no poner todo en un solo activo. Reducís el riesgo: si BTC cae 20% pero tenés también acciones y otras criptos, el impacto en tu portfolio total es menor.'},
-  {q:'cripto',a:'Las criptomonedas son activos digitales de alta volatilidad. BTC y ETH son las más establecidas. Las altcoins (SOL, BNB, etc.) tienen más riesgo y más potencial de retorno.'},
-  {q:'acciones',a:'Las acciones son fracciones de propiedad de una empresa. Son menos volátiles que las criptos. AAPL y NVDA son tech, SPY es un ETF que sigue el índice S&P 500 (las 500 empresas más grandes de EE.UU.).'},
-  {q:'fomo',a:'FOMO (Fear Of Missing Out) = comprar porque el precio ya subió mucho y "no te querés perder la suba". Es el error más caro. Cuando todos hablan de que algo "solo puede subir", suele ser el techo.'},
+  {q:'stop loss',a:'El stop-loss vende automáticamente si el precio baja a un nivel que vos definís. Tu pérdida máxima por operación queda fijada antes de entrar. Nunca operes sin él.'},
+  {q:'take profit',a:'El take-profit vende automáticamente cuando el precio sube a tu objetivo. Asegura la ganancia sin que tengas que estar mirando el mercado. Combinado con el SL define tu ratio riesgo/recompensa.'},
+  {q:'rsi',a:'El RSI oscila 0-100. RSI < 30 = sobrevendido (posible rebote). RSI > 70 = sobrecomprado (posible corrección). RSI > 80 con posición abierta = señal de salida parcial.'},
+  {q:'cuando salir',a:'Hay 5 señales: (1) SL activado, (2) TP alcanzado, (3) RSI > 80 con long, (4) precio cruza SMA50 hacia abajo, (5) la razón por la que compraste ya no existe. Cualquiera de estas = salida.'},
+  {q:'ratio',a:'El ratio riesgo/recompensa es la relación entre cuánto podés perder y cuánto querés ganar. Mínimo 1:2: si arriesgás $50 (SL), apuntá a ganar $100 (TP). Con ese ratio, ganás dinero aunque solo aciertes el 40% de las operaciones.'},
+  {q:'sma',a:'La SMA promedia los últimos N cierres. SMA20 (azul) = tendencia corta. SMA50 (naranja) = tendencia media. Cuando el precio cae por debajo de la SMA50, es señal de tendencia bajista.'},
+  {q:'cripto vs acciones',a:'Cripto: mayor volatilidad (±5-20%/día), 24/7, más riesgo y más potencial. Acciones: menor volatilidad (±1-3%/día), reguladas, ligadas a economía real. Combinarlas baja el riesgo total por baja correlación.'},
+  {q:'combinar',a:'Estrategia conservadora: 70-80% acciones (SPY como base) + 20-30% cripto (BTC/ETH). Moderada: 50/50. Agresiva: 70% cripto. La combinación funciona porque cripto y acciones no siempre se mueven juntos.'},
+  {q:'diversif',a:'Diversificar = no poner todo en un activo. Si BTC cae 30% pero tenés también SPY y NVDA, el golpe en el portfolio total es mucho menor. Máximo 5% en una sola altcoin.'},
+  {q:'fomo',a:'FOMO = comprar porque ya subió mucho. Estás comprando el techo. Si te perdiste el movimiento, esperá el próximo. Siempre habrá otro. El peor momento para entrar es cuando todos hablan del activo.'},
+  {q:'vela',a:'Una vela japonesa muestra O (apertura), H (máximo), L (mínimo), C (cierre). Cuerpo verde: cerró más arriba que abrió. Rojo: cerró más abajo. La mecha = rangos extremos del período.'},
 ];
 
 function renderChatTab(){
   if(!chatMsgs.length)chatMsgs=[{r:'bot',t:'Hola. Soy tu asistente de trading. Preguntame sobre candlesticks, RSI, stop-loss, estrategias o cómo interpretar el mercado.'}];
-  const chips=['¿Qué es un stop-loss?','¿Cómo leo el RSI?','¿Qué es diversificar?','Cripto vs acciones'];
+  const chips=['Cripto vs acciones','¿Cuándo salir?','¿Cómo leo el RSI?','Ratio riesgo/recompensa'];
   document.getElementById('mp-body').innerHTML=`
     <div class="chat-wrap">
       <div class="chat-chips">${chips.map(c=>`<span class="chat-chip" onclick="chatQ(this)">${c}</span>`).join('')}</div>
@@ -1025,7 +1157,7 @@ async function chatSend(){
 }
 
 function setTab(t){
-  mpTab=t;['mis','glo','rsk','ast'].forEach(id=>document.getElementById('tab-'+id)?.classList.toggle('on',id===t));
+  mpTab=t;['mis','gui','glo','rsk','ast'].forEach(id=>document.getElementById('tab-'+id)?.classList.toggle('on',id===t));
   renderMP();
 }
 function toggleMP(){
