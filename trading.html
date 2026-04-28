@@ -193,6 +193,37 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 .gui-err{background:var(--sur2);border-radius:3px;padding:5px 7px;margin-bottom:4px;border-left:2px solid var(--brd2);}
 .gui-err-lbl{font-size:8px;font-weight:700;color:#e08040;margin-bottom:1px;}
 .gui-err-txt{font-size:7px;color:var(--txt2);line-height:1.5;}
+.gui-invest-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.gui-invest-item:last-child{border-bottom:none;}
+.gui-invest-meta{min-width:115px;flex-shrink:0;}
+.gui-invest-name{font-size:9px;font-weight:700;margin-bottom:2px;}
+.gui-invest-badges{display:flex;flex-direction:column;gap:1px;}
+.gui-invest-badge{font-size:7px;color:var(--txt3);}
+.gui-invest-when{font-size:8px;color:var(--txt2);line-height:1.55;}
+
+/* TUTORIAL */
+.tut-card{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:950;background:#0b0b16;border:2px solid var(--acc);border-radius:8px;padding:16px;width:min(340px,calc(100vw - 20px));box-shadow:0 0 50px rgba(124,108,255,.25),0 10px 40px rgba(0,0,0,.7);pointer-events:all;}
+.tut-step-lbl{font-size:8px;color:var(--acc);letter-spacing:1.5px;font-family:var(--mono);margin-bottom:6px;}
+.tut-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;line-height:1.3;}
+.tut-text{font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:12px;}
+.tut-text b{color:var(--txt);}
+.tut-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;}
+.tut-btn-main{padding:7px 16px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;border:1px solid var(--acc);color:var(--acc);background:rgba(124,108,255,.12);transition:all .15s;}
+.tut-btn-main:hover{background:rgba(124,108,255,.25);}
+.tut-btn-skip{padding:5px 10px;border-radius:4px;cursor:pointer;font-size:9px;border:1px solid var(--brd);color:var(--txt3);background:transparent;transition:all .12s;}
+.tut-btn-skip:hover{color:var(--txt2);}
+.tut-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:940;pointer-events:none;}
+.tut-highlight{outline:2px solid var(--acc) !important;outline-offset:3px;z-index:941;position:relative;animation:tutGlow 1.4s ease-in-out infinite;}
+@keyframes tutGlow{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.5);}50%{box-shadow:0 0 0 8px rgba(124,108,255,0);}}
+
+/* HINT FAB */
+.hint-fab{position:fixed;bottom:268px;right:10px;width:38px;height:38px;border-radius:50%;background:rgba(124,108,255,.18);border:1px solid var(--acc);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:180;font-size:17px;transition:all .2s;animation:hintFabPulse 2.5s ease-in-out infinite;}
+.hint-fab:hover{background:rgba(124,108,255,.32);transform:scale(1.08);}
+@keyframes hintFabPulse{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.5);}60%{box-shadow:0 0 0 10px rgba(124,108,255,0);}}
+.hint-panel{position:fixed;bottom:310px;right:54px;width:250px;background:#0c0c18;border:1px solid var(--acc);border-radius:6px;padding:12px;z-index:180;font-size:9px;line-height:1.65;color:var(--txt2);box-shadow:0 4px 24px rgba(0,0,0,.5);display:none;}
+.hint-panel.show{display:block;}
+.hint-panel-title{font-size:10px;font-weight:700;color:var(--acc);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.hint-panel-close{margin-left:auto;cursor:pointer;color:var(--txt3);font-size:12px;}
 
 @keyframes hintBlink{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.9);}50%{box-shadow:0 0 0 8px rgba(124,108,255,0);}}
 @keyframes flashUp{0%{background:rgba(38,166,154,.08);}100%{background:transparent;}}
@@ -204,6 +235,12 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 <div id="xpp"></div>
 <div class="flash" id="fl"></div>
 <div id="fb"></div>
+<div class="tut-overlay" id="tut-overlay" style="display:none"></div>
+<div class="hint-fab" id="hint-fab" onclick="toggleHint()" title="Hint — consejo contextual">💡</div>
+<div class="hint-panel" id="hint-panel">
+  <div class="hint-panel-title">💡 HINT <span class="hint-panel-close" onclick="toggleHint()">✕</span></div>
+  <div id="hint-text"></div>
+</div>
 
 <!-- HEADER -->
 <div class="hdr">
@@ -422,6 +459,21 @@ const GUIA = [
     ]
   },
   {
+    title:'Tipos de inversión — panorama completo', icon:'🌍',
+    blocks:[
+      {type:'invest', items:[
+        {name:'ETFs (SPY, QQQ...)',color:'#4488cc',risk:'Bajo',retorno:'8-12%/año hist.',when:'La base de cualquier portfolio. SPY = las 500 empresas más grandes de EE.UU. Diversificación automática. Ideal para largo plazo (5+ años) sin necesidad de analizar empresa por empresa.'},
+        {name:'Acciones individuales',color:'#88aadd',risk:'Medio',retorno:'Variable',when:'Si creés en una empresa específica. NVDA (IA/semiconductores), AAPL (ecosistema tech), TSLA (EV/energía). Más retorno potencial que ETF pero más riesgo si la empresa decepciona.'},
+        {name:'Bitcoin / Ethereum',color:'#f7931a',risk:'Alto',retorno:'-80% a +400%',when:'Activos digitales establecidos. BTC = reserva de valor digital (escasez programada de 21M). ETH = plataforma de contratos inteligentes. Para quien tolera alta volatilidad y cree en el largo plazo.'},
+        {name:'Altcoins (SOL, BNB...)',color:'#9945ff',risk:'Muy alto',retorno:'Extremo (o 0)',when:'Solo si entendés el proyecto. Nunca más del 3-5% del portfolio por altcoin. Historia: la mayoría de altcoins de 2017-2021 perdieron 90-99%. Las que sobrevivieron (SOL, BNB) dieron retornos extraordinarios.'},
+        {name:'Bonos / Renta Fija',color:'#44bb66',risk:'Bajo',retorno:'4-10% anual',when:'Capital que no podés perder. El Estado o empresa te paga interés fijo. En Argentina: Lecaps, ON de empresas. Protege el capital pero pierde contra inflación alta. Ideal para fondo de emergencia o capital reservado.'},
+        {name:'Oro / Commodities',color:'#ffd700',risk:'Bajo-Medio',retorno:'Preservación',when:'Refugio en crisis y cobertura de inflación. El oro históricamente sube cuando los mercados caen. No genera ingresos pasivos. Útil como 5-15% del portfolio como protección, no como inversión principal.'},
+        {name:'FCI (Fondos Comunes)',color:'#e8a030',risk:'Variable',retorno:'Variable',when:'Gestión profesional sin hacerlo vos mismo. En Argentina: Money Market (liquidez diaria), Renta Fija (estabilidad), Renta Variable (acciones). Accesibles desde homebanking desde $1000. Ideal para empezar.'},
+        {name:'Real Estate / Crowdfunding',color:'#cc8844',risk:'Medio',retorno:'6-15% anual',when:'Inversión en inmuebles sin comprar un departamento. Plataformas de crowdfunding inmobiliario fraccionan propiedades. Baja liquidez (no podés vender de un día para otro) pero retornos estables por alquileres.'},
+      ]}
+    ]
+  },
+  {
     title:'Errores que arruinan cuentas', icon:'🧠',
     blocks:[
       {type:'errors',errors:[
@@ -434,6 +486,162 @@ const GUIA = [
     ]
   }
 ];
+
+// ══════════════════════════════════════════════
+// TUTORIAL
+// ══════════════════════════════════════════════
+const TUTORIAL = [
+  {id:'welcome',pos:'center',
+   title:'Bienvenido al Simulador de Trading',
+   text:'Tenés <b>$10,000 virtuales</b> para invertir en cripto y acciones reales simuladas.\n\nVas a aprender a leer gráficos de velas, ejecutar órdenes, gestionar el riesgo con stop-loss y take-profit, y entender cuándo conviene cada tipo de activo.\n\nTodo es simulado — podés equivocarte y aprender sin riesgo real.',
+   btn:'Empezar el tour →'},
+  {id:'assets',target:'asset-bar',pos:'below',
+   title:'Los 8 activos del mercado',
+   text:'Arriba ves los activos disponibles. Tenés:\n🔶 <b>4 criptomonedas:</b> BTC, ETH, SOL, BNB — alta volatilidad, mercado 24/7\n🔷 <b>4 activos tradicionales:</b> AAPL, TSLA, NVDA, SPY — menor volatilidad\n\nCada tab muestra el <b>precio actual</b> y el <b>% de cambio</b>. Fijate la diferencia: BTC puede moverse ±3% en horas, SPY rara vez supera ±0.5% por día.',
+   btn:'Siguiente →'},
+  {id:'candles',target:'chart-cv',pos:'overlay',
+   title:'El gráfico de velas japonesas (OHLC)',
+   text:'Cada barra vertical es una "vela". El cuerpo ancho va del precio de apertura al cierre:\n🟢 <b style="color:#26a69a">Verde</b>: cerró más alto que abrió (período alcista)\n🔴 <b style="color:#ef5350">Roja</b>: cerró más bajo (período bajista)\nLas líneas finas (mechas) = máximo y mínimo del período.\n\nLeer velas es la habilidad base de cualquier trader.',
+   btn:'Siguiente →'},
+  {id:'sma',target:'chart-cv',pos:'overlay',
+   title:'Medias Móviles: SMA20 y SMA50',
+   text:'Las líneas superpuestas al gráfico son medias móviles:\n<b style="color:#4488cc">Línea azul = SMA20</b>: promedio de los últimos 20 períodos (tendencia corta)\n<b style="color:#ff9800">Línea naranja = SMA50</b>: promedio de los últimos 50 (tendencia media)\n\nRegla clave:\n✅ Precio <b>encima</b> de ambas SMA = tendencia alcista\n⚠️ Precio <b>debajo</b> de ambas = tendencia bajista\n📍 SMA20 cruza SMA50 hacia arriba = señal clásica de compra',
+   btn:'Siguiente →'},
+  {id:'rsi',target:'chart-cv',pos:'overlay',
+   title:'RSI — Índice de Fuerza Relativa',
+   text:'El panel morado debajo del gráfico es el RSI. Oscila entre 0 y 100.\n\n<b style="color:#26a69a">RSI &lt; 30</b> → sobrevendido → posible rebote 📈\n<b style="color:#ef5350">RSI &gt; 70</b> → sobrecomprado → posible corrección 📉\n<b style="color:#aa88ff">RSI 40-60</b> → zona neutral, sin señal clara\n\nEl RSI no predice el futuro, da contexto. Combinado con las SMA es más fiable. <b>Nunca uses solo un indicador.</b>',
+   btn:'Siguiente →'},
+  {id:'order',target:'side-buy',pos:'overlay',
+   title:'Formulario de órdenes',
+   text:'Acá ejecutás las operaciones:\n\n<b>COMPRAR / VENDER</b>: dirección de la operación\n<b>Monto en USD</b>: cuánto capital asignar\n<b>MERCADO</b>: ejecuta inmediatamente al precio actual\n<b>LÍMITE</b>: ejecuta solo si el precio llega a un nivel que vos elegís (mejor precio de entrada, pero no siempre se ejecuta)\n\nLos botones <b>10% / 25% / 50% / MAX</b> calculan el porcentaje de tu capital disponible.',
+   btn:'Siguiente →'},
+  {id:'sl-tp',target:'sl-inp',pos:'overlay',
+   title:'Stop-Loss y Take-Profit — los más importantes',
+   text:'<b>STOP-LOSS</b>: si el precio baja a este nivel → la posición se cierra automáticamente limitando tu pérdida.\n<b>TAKE-PROFIT</b>: si el precio sube a este nivel → se cierra asegurando tu ganancia.\n\n<b style="color:var(--acc)">Regla del ratio 1:2:</b>\nSi tu SL arriesga $100 (3% de pérdida), tu TP debe apuntar a $200 de ganancia (6% arriba).\nCon esta proporción ganás dinero aunque solo aciertes el <b>40% de las operaciones</b>.\n\n⚠️ Nunca abras una posición sin stop-loss.',
+   btn:'Siguiente →'},
+  {id:'first-trade',target:'submit-btn',pos:'overlay',
+   title:'Hacemos la primera operación juntos',
+   text:'Compremos <b>BTC</b> con <b>$500</b>. Hacé exactamente esto:\n\n1️⃣ Verificá que <b>BTC</b> esté seleccionado en el tab de arriba\n2️⃣ Poné <b>500</b> en el campo Monto\n3️⃣ <b>Stop-Loss:</b> mirá el precio actual y restale 3% (ej: si BTC = $67,000 → SL = $64,990)\n4️⃣ <b>Take-Profit:</b> precio actual + 6% (ej: $71,020) — ratio 1:2\n5️⃣ Presioná <b>COMPRAR</b>\n\nCuando hayas ejecutado la orden, presioná "Listo →"',
+   btn:'Listo →'},
+  {id:'positions',target:'port-body',pos:'overlay',
+   title:'Tu posición abierta — seguimiento en vivo',
+   text:'Acá ves tus posiciones abiertas. El <b>P&L cambia cada 2 segundos</b> con cada nueva vela.\n\nVas a ver:\n• Precio de entrada (lo que pagaste)\n• Valor actual (precio × cantidad)\n• Ganancia/pérdida en $ y %\n• Niveles de SL/TP configurados\n\nPodés cerrar manualmente con "Cerrar" en cualquier momento. Tu SL se ejecuta automáticamente si el precio baja.',
+   btn:'Siguiente →'},
+  {id:'tabs',target:'mp',pos:'overlay',
+   title:'Los tabs de aprendizaje',
+   text:'El panel de abajo tiene 5 tabs para seguir aprendiendo:\n\n📋 <b>MISIONES</b>: objetivos que guían tu aprendizaje con XP\n📚 <b>GUÍA</b>: cripto vs acciones, cuándo salir, todos los tipos de inversión\n📖 <b>GLOSARIO</b>: todos los términos técnicos explicados\n⚠️ <b>RIESGO</b>: reglas de gestión del riesgo que separan a los rentables\n🤖 <b>CHAT</b>: haceme cualquier pregunta\n\nY el botón <b>💡 (derecha)</b> te da consejos contextuales según tu situación actual.',
+   btn:'Siguiente →'},
+  {id:'done',pos:'center',
+   title:'¡Listo para operar!',
+   text:'Ya sabés lo básico. Las reglas de oro:\n\n✅ <b>Siempre stop-loss</b> en cada operación\n✅ <b>Ratio 1:2</b>: gana el doble de lo que arriesgás\n✅ <b>Máximo 2%</b> del capital por operación\n✅ <b>Diversificá</b>: no pongas todo en un activo\n✅ <b>No hagas FOMO</b>: si lo perdiste, esperá el próximo\n\nCuando te sientas listo, el trading real funciona igual — pero con dinero de verdad.\n<b>Empezá con montos pequeños. Aprendé antes de escalar.</b>',
+   btn:'¡Operar!'},
+];
+
+let tutStep = -1;
+
+function startTutorial(){
+  tutStep = 0;
+  document.getElementById('tut-overlay').style.display = 'block';
+  renderTutorial();
+}
+function endTutorial(){
+  tutStep = -1;
+  clearTutHighlight();
+  const card = document.getElementById('tut-card');
+  if(card) card.remove();
+  document.getElementById('tut-overlay').style.display = 'none';
+  localStorage.setItem('nwlx_tut_done', '1');
+  toast('Tutorial completado. ¡A operar!', 'ok');
+}
+function nextTutStep(){
+  clearTutHighlight();
+  tutStep++;
+  if(tutStep >= TUTORIAL.length){ endTutorial(); return; }
+  renderTutorial();
+}
+function clearTutHighlight(){
+  document.querySelectorAll('.tut-highlight').forEach(el=>el.classList.remove('tut-highlight'));
+}
+function renderTutorial(){
+  const t = TUTORIAL[tutStep];
+  if(!t) return;
+  let card = document.getElementById('tut-card');
+  if(!card){
+    card = document.createElement('div');
+    card.id = 'tut-card';
+    card.className = 'tut-card';
+    document.body.appendChild(card);
+  }
+  clearTutHighlight();
+  if(t.target){
+    const el = document.getElementById(t.target);
+    if(el) el.classList.add('tut-highlight');
+  }
+  card.innerHTML = `
+    <div class="tut-step-lbl">PASO ${tutStep+1} DE ${TUTORIAL.length}</div>
+    <div class="tut-title">${t.title}</div>
+    <div class="tut-text">${t.text.replace(/\n/g,'<br>')}</div>
+    <div class="tut-actions">
+      <button class="tut-btn-skip" onclick="endTutorial()">Saltar tutorial</button>
+      <button class="tut-btn-main" onclick="nextTutStep()">${t.btn}</button>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// HINT (consejo contextual)
+// ══════════════════════════════════════════════
+let hintVisible = false;
+function toggleHint(){
+  hintVisible = !hintVisible;
+  const panel = document.getElementById('hint-panel');
+  if(hintVisible){
+    const h = getHint();
+    document.getElementById('hint-text').innerHTML = '<b style="display:block;color:var(--txt);margin-bottom:5px">'+h.title+'</b>'+h.text.replace(/\n/g,'<br>');
+    panel.classList.add('show');
+  } else {
+    panel.classList.remove('show');
+  }
+}
+function getHint(){
+  const rsiArr = calcRSI(assetData[currentAsset].candles.map(c=>c.close), 14);
+  const rsi = rsiArr.filter(v=>v!==null).pop();
+  const pos = getPosition(currentAsset);
+  const tv = getTotalPortfolioValue();
+  const pnlPct = (tv/10000-1)*100;
+  const candles = assetData[currentAsset].candles;
+  const closes = candles.map(c=>c.close);
+  const sma50 = calcSMA(closes,50);
+  const lastSMA50 = sma50.filter(v=>v!==null).pop();
+  const price = getCurrentPrice(currentAsset);
+  const aboveSMA50 = lastSMA50 && price > lastSMA50;
+
+  const posWithoutSL = portfolio.positions.find(p=>!p.stopLoss);
+  if(posWithoutSL){
+    return {title:`⚠️ Posición sin Stop-Loss: ${posWithoutSL.sym}`,text:`Tu posición en ${posWithoutSL.sym} no tiene stop-loss. Si el mercado cae fuerte podés perder mucho más de lo aceptable.\n\nCerrá y volvé a abrir con SL configurado (precio de entrada − 3% como mínimo). Un SL no es opcional.`};
+  }
+  if(portfolio.positions.length === 0){
+    if(rsi && rsi < 32){
+      return {title:`RSI de ${currentAsset}: ${rsi.toFixed(1)} — Zona sobrevendida`,text:`RSI por debajo de 32 indica posible agotamiento bajista. Históricamente es zona de rebote.\n\nSi la tendencia general es alcista (precio encima de SMA50), considerá una entrada pequeña:\n• Stop-Loss: precio − 3%\n• Take-Profit: precio + 6%\n• Monto: no más del 10% del capital`};
+    }
+    if(!aboveSMA50){
+      return {title:`${currentAsset} está debajo de la SMA50`,text:`El precio de ${currentAsset} está por debajo de su media de 50 períodos. Eso indica tendencia bajista.\n\nMirá otros activos — buscá uno que esté por encima de la SMA50 y con RSI entre 35-55. Esa es la zona ideal para buscar entradas.`};
+    }
+    return {title:`Sin posiciones — ¿Cómo entrar?`,text:`Para buscar una buena entrada:\n1. Buscá un activo con RSI entre 35-50\n2. Verificá que el precio esté encima de la SMA50\n3. Configurá SL (−3%) y TP (+6%) antes de comprar\n4. Poné no más del 10-15% del capital en una sola operación\n\nNo entrés solo porque "parece que va a subir". Necesitás un motivo técnico.`};
+  }
+  if(rsi && rsi > 76 && pos){
+    return {title:`RSI de ${currentAsset}: ${rsi.toFixed(1)} — Sobrecomprado`,text:`El RSI en zona de sobrecompra extrema. Si tenés posición con ganancia, considerá:\n• Subir el SL al precio de entrada (riesgo cero para las ganancias existentes)\n• Tomar ganancias parciales ahora\n• No agregar más a esta posición hasta que el RSI corrija`};
+  }
+  if(pnlPct > 5){
+    return {title:`Portfolio +${pnlPct.toFixed(1)}% — Protegé las ganancias`,text:`Buen trabajo. Cuando ganás, el objetivo es no perder lo ganado.\n\nEstrategia "trailing stop":\nSubí el stop-loss de tus posiciones ganadoras al precio de entrada o más arriba. Así, aunque el mercado revierta, no perdés el capital inicial.\n\nSi alguna posición está +8% o más, considerá tomar la mitad de la ganancia.`};
+  }
+  if(pnlPct < -5){
+    return {title:`Portfolio −${Math.abs(pnlPct).toFixed(1)}% — Revisá la estrategia`,text:`Tu portfolio está en pérdida. Preguntas importantes:\n• ¿Tus posiciones tienen stop-loss?\n• ¿Compraste contra la tendencia (precio debajo de SMA50)?\n• ¿Estás diversificado o todo en un activo?\n\nEn pérdida es más importante proteger el capital restante que recuperar rápido. Si no tenés SL configurado, considerá salir.`};
+  }
+  if(getUniqueAssets() < 2 && portfolio.positions.length > 0){
+    return {title:`Todo concentrado en ${portfolio.positions[0]?.sym}`,text:`Tenés todo el capital en un solo activo. Si cae, todo cae.\n\nConsiderá diversificar: si tenés solo cripto, agregá un ETF o acción. Si tenés solo una acción, agregá BTC o ETH. La baja correlación entre activos reduce el riesgo total del portfolio.`};
+  }
+  return {title:`Revisá el mercado`,text:`Mirá los 8 activos y buscá oportunidades:\n• RSI < 40 + precio encima SMA50 = zona de entrada potencial\n• RSI > 75 con posición abierta = zona de salida parcial\n• Cruces de SMA20 sobre SMA50 = señal de tendencia\n\nRecordá: ratio 1:2, stop-loss siempre, máximo 2% por operación.`};
+}
 
 // ══════════════════════════════════════════════
 // PRICE ENGINE
@@ -856,27 +1064,32 @@ function setOT(type){
   ['market','limit'].forEach(t=>document.getElementById('ot-'+t)?.classList.toggle('on',t===type));
 }
 
-function setPct(pct){
-  const available = orderSide==='buy' ? portfolio.cash :
-    (getPosition(currentAsset)?.qty||0)*getCurrentPrice(currentAsset);
-  const amt = Math.floor(available*pct*100)/100;
-  document.getElementById('amt-inp').value = Math.max(1, amt);
-  updateOrderPreview();
-}
-
 function updateOrderPreview(){
   const amt=parseFloat(document.getElementById('amt-inp').value)||0;
   const price=getCurrentPrice(currentAsset);
   const qty=amt/price;
+  const sl=parseFloat(document.getElementById('sl-inp').value)||null;
+  const tp=parseFloat(document.getElementById('tp-inp').value)||null;
   const el=document.getElementById('order-preview');
   if(amt>0 && price>0){
-    el.textContent=`≈ ${qty.toFixed(6)} ${currentAsset} @ ${fmtP(price,currentAsset)}`;
+    let html=`≈ ${qty.toFixed(6)} ${currentAsset} @ ${fmtP(price,currentAsset)}`;
+    if(sl && tp && orderSide==='buy'){
+      const risk=amt*(price-sl)/price;
+      const reward=amt*(tp-price)/price;
+      const ratio=reward/risk;
+      const ratioColor=ratio>=1.8?'#26a69a':ratio>=1?'#ffd700':'#ef5350';
+      html+=` &nbsp;<span style="color:${ratioColor};font-size:8px">R/R 1:${ratio.toFixed(1)} ${ratio>=2?'✅':ratio>=1.5?'⚠':'❌'}</span>`;
+    } else if(sl && orderSide==='buy' && !tp){
+      const riskPct=((price-sl)/price*100);
+      html+=` &nbsp;<span style="color:#ffd700;font-size:8px">SL −${riskPct.toFixed(1)}% → Ponés TP?</span>`;
+    }
+    el.innerHTML=html;
     el.style.color=orderSide==='buy'?'#26a69a':'#ef5350';
   } else el.textContent='';
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('amt-inp').addEventListener('input',updateOrderPreview);
+  ['amt-inp','sl-inp','tp-inp'].forEach(id=>document.getElementById(id)?.addEventListener('input',updateOrderPreview));
 });
 
 function setPct(pct){
@@ -1016,14 +1229,20 @@ function renderMP(){
 function renderMisTab(){
   const body=document.getElementById('mp-body');
   const allDone=missionsDone.size>=MISSIONS.length;
+  const tutBtn=`<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--brd)">
+    <button onclick="startTutorial()" style="width:100%;padding:7px;border-radius:4px;cursor:pointer;font-size:9px;font-weight:700;border:1px solid var(--acc);color:var(--acc);background:rgba(124,108,255,.1);letter-spacing:.5px;transition:all .15s" onmouseover="this.style.background='rgba(124,108,255,.2)'" onmouseout="this.style.background='rgba(124,108,255,.1)'">
+      🎓 INICIAR TUTORIAL PASO A PASO
+    </button>
+    <div style="font-size:8px;color:var(--txt3);text-align:center;margin-top:3px">Aprende cada elemento del simulador interactivamente</div>
+  </div>`;
   if(allDone){
-    body.innerHTML=`<div style="text-align:center;padding:14px">
+    body.innerHTML=tutBtn+`<div style="text-align:center;padding:14px">
       <div style="font-size:26px;margin-bottom:6px">🏆</div>
       <div style="color:var(--acc);font-size:14px;font-weight:700;letter-spacing:2px">COMPLETADO</div>
       <div style="font-size:8px;color:var(--txt3);margin-top:5px">XP Total: <span style="color:var(--acc)">${xpTotal}</span></div>
     </div>`;return;
   }
-  body.innerHTML=MISSIONS.map((m,i)=>{
+  body.innerHTML=tutBtn+MISSIONS.map((m,i)=>{
     const done=missionsDone.has(i);
     const cur=!done && (i===0||missionsDone.has(i-1));
     const stepsHtml=m.steps.map(s=>{
@@ -1087,6 +1306,17 @@ function renderGuiTab(){
           <div class="gui-err">
             <div class="gui-err-lbl">${e.label}</div>
             <div class="gui-err-txt">${e.text}</div>
+          </div>`).join('');
+        if(b.type==='invest') return b.items.map(inv=>`
+          <div class="gui-invest-item">
+            <div class="gui-invest-meta">
+              <div class="gui-invest-name" style="color:${inv.color}">${inv.name}</div>
+              <div class="gui-invest-badges">
+                <div class="gui-invest-badge">Riesgo: ${inv.risk}</div>
+                <div class="gui-invest-badge">Retorno: ${inv.retorno}</div>
+              </div>
+            </div>
+            <div class="gui-invest-when">${inv.when}</div>
           </div>`).join('');
         return '';
       }).join('')}
@@ -1208,7 +1438,11 @@ initAssets();
 renderAll();
 renderMP();
 drawChart();
-setInterval(tick, 2000); // new candle every 2 seconds
+setInterval(tick, 2000);
+// Auto-start tutorial for first-time visitors
+if(!localStorage.getItem('nwlx_tut_done')){
+  setTimeout(startTutorial, 600);
+}
 window.addEventListener('resize',()=>drawChart());
 </script>
 </body>
