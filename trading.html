@@ -220,10 +220,8 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 .hint-fab{position:fixed;bottom:268px;right:10px;width:38px;height:38px;border-radius:50%;background:rgba(124,108,255,.18);border:1px solid var(--acc);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:180;font-size:17px;transition:all .2s;animation:hintFabPulse 2.5s ease-in-out infinite;}
 .hint-fab:hover{background:rgba(124,108,255,.32);transform:scale(1.08);}
 @keyframes hintFabPulse{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.5);}60%{box-shadow:0 0 0 10px rgba(124,108,255,0);}}
-.hint-panel{position:fixed;bottom:310px;right:54px;width:250px;background:#0c0c18;border:1px solid var(--acc);border-radius:6px;padding:12px;z-index:180;font-size:9px;line-height:1.65;color:var(--txt2);box-shadow:0 4px 24px rgba(0,0,0,.5);display:none;}
-.hint-panel.show{display:block;}
-.hint-panel-title{font-size:10px;font-weight:700;color:var(--acc);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
-.hint-panel-close{margin-left:auto;cursor:pointer;color:var(--txt3);font-size:12px;}
+.hint-panel-close{cursor:pointer;color:var(--txt3);font-size:11px;padding:2px 6px;border:1px solid var(--brd);border-radius:3px;transition:all .12s;}
+.hint-panel-close:hover{color:var(--txt2);}
 .hint-glow{outline:2px solid var(--acc) !important;outline-offset:3px;animation:hintGlow 1.2s ease-in-out infinite;position:relative;z-index:181;}
 @keyframes hintGlow{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.6);}50%{box-shadow:0 0 0 10px rgba(124,108,255,0);}}
 @keyframes hintArrowBlink{0%,100%{opacity:1;transform:translateY(0);}50%{opacity:.5;transform:translateY(-3px);}}
@@ -240,10 +238,6 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 <div id="fb"></div>
 <div class="tut-overlay" id="tut-overlay" style="display:none"></div>
 <div class="hint-fab" id="hint-fab" onclick="toggleHint()" title="Hint — consejo contextual">💡</div>
-<div class="hint-panel" id="hint-panel">
-  <div class="hint-panel-title">💡 HINT <span class="hint-panel-close" onclick="toggleHint()">✕</span></div>
-  <div id="hint-text"></div>
-</div>
 
 <!-- HEADER -->
 <div class="hdr">
@@ -620,17 +614,20 @@ function applyHintHighlight(targetId){
 }
 function toggleHint(){
   hintVisible = !hintVisible;
-  const panel = document.getElementById('hint-panel');
   if(hintVisible){
     const h = getHint();
-    document.getElementById('hint-text').innerHTML =
-      '<b style="display:block;color:var(--txt);margin-bottom:5px">'+h.title+'</b>'+
-      h.text.replace(/\n/g,'<br>');
-    panel.classList.add('show');
     applyHintHighlight(h.target);
+    if(mpMinimized) toggleMP(); // expand panel if collapsed
+    document.getElementById('mp-body').innerHTML=`
+      <div style="border-bottom:1px solid var(--brd);padding-bottom:8px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--acc);font-weight:700">💡 HINT</span>
+        <span style="margin-left:auto"><button class="hint-panel-close" onclick="toggleHint()">✕ cerrar</button></span>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--txt);margin-bottom:7px;line-height:1.4">${h.title}</div>
+      <div style="font-size:9px;color:var(--txt2);line-height:1.75">${h.text.replace(/\n/g,'<br>')}</div>`;
   } else {
-    panel.classList.remove('show');
     clearHintHighlight();
+    renderMP();
   }
 }
 function getHint(){
@@ -1224,7 +1221,7 @@ function togglePortTab(){
 function selectAsset(sym){
   currentAsset=sym;
   // refresh hint if open so target and advice update for new asset
-  if(hintVisible){ clearHintHighlight(); const h=getHint(); document.getElementById('hint-text').innerHTML='<b style="display:block;color:var(--txt);margin-bottom:5px">'+h.title+'</b>'+h.text.replace(/\n/g,'<br>'); applyHintHighlight(h.target); }
+  if(hintVisible){ clearHintHighlight(); const h=getHint(); applyHintHighlight(h.target); document.getElementById('mp-body').innerHTML='<div style="border-bottom:1px solid var(--brd);padding-bottom:8px;margin-bottom:8px;display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--acc);font-weight:700">💡 HINT</span><span style="margin-left:auto"><button class="hint-panel-close" onclick="toggleHint()">✕ cerrar</button></span></div><div style="font-size:10px;font-weight:700;color:var(--txt);margin-bottom:7px;line-height:1.4">'+h.title+'</div><div style="font-size:9px;color:var(--txt2);line-height:1.75">'+h.text.replace(/\n/g,'<br>')+'</div>'; }
   renderAll();
   drawChart();
 }
