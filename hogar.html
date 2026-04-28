@@ -199,7 +199,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
   <a href="index.html" class="hdr-back">← NWLx</a>
   <span class="hdr-logo">NWL<span>x</span></span>
   <span class="hdr-sep">/</span>
-  <span class="hdr-section" id="hdr-section">Hogar</span>
+  <span class="hdr-section" id="hdr-section" onclick="showHub()" style="cursor:pointer">Hogar</span>
   <span class="hdr-sep" id="hdr-sep2" style="display:none">/</span>
   <span class="hdr-bc" id="hdr-cat-bc" style="display:none" onclick="showList()"></span>
   <div class="hdr-r">
@@ -493,6 +493,7 @@ function showList(cat){
   document.getElementById('hdr-sep2').style.display='inline';
   document.getElementById('hdr-cat-bc').style.display='inline';
   document.getElementById('hdr-cat-bc').textContent=c.name;
+  document.getElementById('hdr-cat-bc').onclick=()=>showList(cat);
   document.getElementById('list-icon').textContent=c.icon;
   document.getElementById('list-title').textContent=c.name;
   renderScenarioGrid();
