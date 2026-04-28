@@ -322,7 +322,7 @@ const SCENARIOS = {
        {txt:'Identificá el problema',tool:'mano',target:'interior',tip:'Si el nivel de agua está muy alto y rebosa hacia el sifón → el flotante está alto. Si el agua cae a la taza aunque el nivel sea normal → la válvula de descarga tiene sarro o está gastada.',wrongTool:'Mirá el interior de la mochila para diagnosticar.',wrongTarget:'Hacé clic en el interior de la mochila para inspeccionarlo.'},
        {txt:'Cerrá la llave de paso del inodoro',tool:'llave',target:'wc-valve',tip:'La llave de paso del inodoro está generalmente a la izquierda, en la pared o en el piso cerca del inodoro. Si no tiene, cerrá la llave general.',wrongTool:'Usá la llave inglesa para cerrar la llave de paso.',wrongTarget:'La llave de paso está cerca del pie del inodoro.'},
        {txt:'Descargá para vaciar la mochila',tool:'mano',target:'button',tip:'Tirá la cadena o apretá el botón para vaciar el agua de la mochila. Así podés trabajar en seco.',wrongTool:'Accioná el mecanismo de descarga a mano.',wrongTarget:'Apretá el botón o tirá la cadena para vaciar.'},
-       {txt:'Reemplazá la válvula/flotante',tool:sel==='flotante'?'flotante':'valvula',target:'mechanism',tip:'Flotante de boya: regulá la altura con la varilla (baja = menos agua). Flotante de válvula: reemplazá la unidad completa si está desgastada. Válvula de descarga: limpiala de sarro o reemplazala.',wrongTool:'Seleccioná la pieza correcta del inventario para reemplazar.',wrongTarget:'Hacé clic en el mecanismo interno para reemplazarlo.'},
+       {txt:'Reemplazá la válvula/flotante',tool:['flotante','valvula'],target:'mechanism',tip:'Flotante de boya: regulá la altura con la varilla (baja = menos agua). Flotante de válvula: reemplazá la unidad completa si está desgastada. Válvula de descarga: limpiala de sarro o reemplazala.',wrongTool:'Seleccioná la pieza correcta del inventario para reemplazar.',wrongTarget:'Hacé clic en el mecanismo interno para reemplazarlo.'},
        {txt:'Abrí el agua y verificá',tool:'llave',target:'wc-valve',tip:'El nivel debe quedar 2-3 cm por debajo del tubo de rebose (el caño largo interno). Si sube más: ajustá el flotante hacia abajo.',wrongTool:'Usá la llave inglesa para abrir el agua.',wrongTarget:'Abrí la llave de paso del inodoro.'},
      ]},
     {id:'desague',icon:'🪠',title:'Desagüe tapado',diff:'⭐',type:'interactive',
@@ -781,7 +781,7 @@ function clickZone(zone){
   if(simStep>=sc.steps.length)return;
   const step=sc.steps[simStep];
   if(zone!==step.target){toast(step.wrongTarget||'Revisá el paso actual.','err');return;}
-  if(step.tool&&sel!==step.tool){toast(step.wrongTool||'Necesitás usar la herramienta correcta.','err');return;}
+  if(step.tool){const ok=Array.isArray(step.tool)?step.tool.includes(sel):sel===step.tool;if(!ok){toast(step.wrongTool||'Necesitás usar la herramienta correcta.','err');return;}}
   // advance
   simStep++; sel=null;
   flash(); xpPop(20,'Paso completado');

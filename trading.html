@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trading — NWLx</title>
+<style>
+:root{
+  --bg:#0d0d10;--sur:#12121a;--sur2:#18181f;--sur3:#1e1e28;
+  --brd:#252535;--brd2:#323248;
+  --txt:#d8d8e8;--txt2:#8888a8;--txt3:#484860;
+  --up:#26a69a;--dn:#ef5350;
+  --acc:#7c6cff;--yel:#ffd700;--ora:#ff9800;--blu:#4488cc;
+  --mono:'Courier New',monospace;--ui:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;min-height:100vh;padding-bottom:260px;}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;height:36px;background:#09090e;border-bottom:1px solid var(--brd);padding:0 10px;gap:6px;flex-wrap:wrap;}
+.hdr-back{font-size:11px;color:var(--txt3);text-decoration:none;padding:2px 8px;border-radius:3px;border:1px solid var(--brd);transition:all .15s;white-space:nowrap;}
+.hdr-back:hover{color:var(--txt2);}
+.hdr-logo{font-size:12px;font-weight:800;color:var(--txt3);letter-spacing:.5px;}
+.hdr-logo span{color:var(--acc);}
+.hdr-sep{color:var(--brd2);}
+.hdr-title{font-size:12px;font-weight:700;color:var(--txt2);}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.port-summary{display:flex;align-items:center;gap:12px;}
+.port-val{font-size:12px;font-weight:700;font-family:var(--mono);}
+.port-pnl{font-size:10px;font-family:var(--mono);font-weight:700;}
+.port-pnl.up{color:var(--up);}
+.port-pnl.dn{color:var(--dn);}
+.hdr-xp{font-size:10px;color:var(--acc);font-family:var(--mono);}
+
+/* ASSET TABS */
+.asset-bar{display:flex;align-items:center;gap:0;background:#09090e;border-bottom:1px solid var(--brd);overflow-x:auto;padding:0 4px;}
+.asset-tab{display:flex;flex-direction:column;align-items:flex-start;padding:5px 12px;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0;min-width:80px;}
+.asset-tab.on{border-bottom-color:var(--acc);}
+.asset-tab:hover{background:var(--sur2);}
+.at-name{font-size:10px;font-weight:700;letter-spacing:.5px;}
+.at-price{font-size:9px;font-family:var(--mono);}
+.at-chg{font-size:8px;font-family:var(--mono);font-weight:700;}
+.at-chg.up{color:var(--up);}
+.at-chg.dn{color:var(--dn);}
+
+/* CHART */
+.chart-wrap{position:relative;background:#0d0d10;}
+#chart-cv{display:block;width:100%;}
+.chart-overlay{position:absolute;top:6px;right:80px;display:flex;gap:8px;align-items:center;pointer-events:none;}
+.ci-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ci-lbl{font-size:8px;font-family:var(--mono);}
+#ohlc-tip{position:absolute;top:6px;left:76px;background:rgba(10,10,16,.9);border:1px solid var(--brd2);border-radius:3px;padding:4px 8px;font-size:8px;font-family:var(--mono);pointer-events:none;display:none;line-height:1.7;}
+
+/* PANELS ROW */
+.panels-row{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:4px 6px;background:var(--bg);}
+@media(max-width:600px){.panels-row{grid-template-columns:1fr;}}
+
+.panel{background:var(--sur);border:1px solid var(--brd);border-radius:4px;overflow:hidden;}
+.panel-hdr{padding:6px 10px;background:var(--sur2);border-bottom:1px solid var(--brd);font-size:10px;font-weight:700;color:var(--txt2);letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
+.panel-body{padding:8px 10px;}
+
+/* ORDER FORM */
+.side-btns{display:flex;gap:4px;margin-bottom:8px;}
+.side-btn{flex:1;padding:6px;text-align:center;border-radius:3px;cursor:pointer;font-size:11px;font-weight:700;border:1px solid;transition:all .15s;letter-spacing:.5px;}
+.side-btn.buy{border-color:rgba(38,166,154,.4);color:var(--up);background:rgba(38,166,154,.06);}
+.side-btn.buy.on{background:rgba(38,166,154,.18);border-color:var(--up);}
+.side-btn.sell{border-color:rgba(239,83,80,.4);color:var(--dn);background:rgba(239,83,80,.06);}
+.side-btn.sell.on{background:rgba(239,83,80,.18);border-color:var(--dn);}
+.order-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.order-lbl{font-size:9px;color:var(--txt3);min-width:70px;}
+.order-inp{flex:1;background:#0d0d14;border:1px solid var(--brd);border-radius:3px;color:var(--txt);font-size:11px;padding:4px 7px;font-family:var(--mono);outline:none;min-width:0;}
+.order-inp:focus{border-color:var(--acc);}
+.order-inp.disabled{opacity:.4;pointer-events:none;}
+.pct-row{display:flex;gap:3px;margin-bottom:8px;}
+.pct-btn{flex:1;padding:3px;text-align:center;border-radius:2px;cursor:pointer;font-size:8px;border:1px solid var(--brd);color:var(--txt3);transition:all .12s;}
+.pct-btn:hover{border-color:var(--brd2);color:var(--txt2);}
+.order-type-row{display:flex;gap:3px;margin-bottom:8px;}
+.ot-btn{flex:1;padding:3px 4px;text-align:center;border-radius:2px;cursor:pointer;font-size:8px;border:1px solid var(--brd);color:var(--txt3);transition:all .12s;letter-spacing:.3px;}
+.ot-btn.on{border-color:var(--acc);color:var(--acc);background:rgba(124,108,255,.08);}
+.sl-tp-row{display:flex;gap:4px;margin-bottom:6px;}
+.sl-inp-wrap{flex:1;display:flex;flex-direction:column;gap:2px;}
+.sl-lbl{font-size:8px;font-weight:700;}
+.sl-lbl.sl{color:var(--dn);}
+.sl-lbl.tp{color:var(--up);}
+.submit-btn{width:100%;padding:8px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;text-align:center;border:1px solid;transition:all .15s;letter-spacing:.5px;margin-top:4px;}
+.submit-btn.buy{border-color:var(--up);color:var(--up);background:rgba(38,166,154,.1);}
+.submit-btn.buy:hover{background:rgba(38,166,154,.22);}
+.submit-btn.sell{border-color:var(--dn);color:var(--dn);background:rgba(239,83,80,.1);}
+.submit-btn.sell:hover{background:rgba(239,83,80,.22);}
+.bal-row{display:flex;justify-content:space-between;margin-bottom:10px;font-size:9px;}
+.bal-lbl{color:var(--txt3);}
+.bal-val{font-family:var(--mono);color:var(--txt2);}
+
+/* PORTFOLIO */
+.pos-item{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--brd);gap:6px;}
+.pos-item:last-child{border-bottom:none;}
+.pos-name{font-size:10px;font-weight:700;min-width:40px;}
+.pos-detail{font-size:8px;color:var(--txt3);font-family:var(--mono);flex:1;}
+.pos-pnl{font-size:10px;font-weight:700;font-family:var(--mono);text-align:right;}
+.pos-pnl.up{color:var(--up);}
+.pos-pnl.dn{color:var(--dn);}
+.pos-close{padding:2px 7px;border-radius:2px;cursor:pointer;font-size:8px;border:1px solid var(--brd2);color:var(--txt3);transition:all .12s;flex-shrink:0;}
+.pos-close:hover{border-color:var(--dn);color:var(--dn);}
+.empty-msg{font-size:9px;color:var(--txt3);padding:8px 0;text-align:center;}
+.hist-item{display:flex;justify-content:space-between;padding:3px 0;font-size:8px;border-bottom:1px solid var(--brd);color:var(--txt3);}
+.hist-item:last-child{border-bottom:none;}
+.hist-side{font-weight:700;}
+.hist-side.b{color:var(--up);}
+.hist-side.s{color:var(--dn);}
+
+/* FLASH / XP / TOAST */
+#xpp{position:fixed;top:46px;left:50%;transform:translateX(-50%) translateY(-8px);background:#0e0a1a;border:1px solid var(--acc);border-radius:4px;padding:5px 16px;font-size:11px;color:var(--acc);opacity:0;transition:all .35s;z-index:500;pointer-events:none;}
+#xpp.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:400;opacity:0;transition:opacity .28s;}
+.flash.on{opacity:1;}
+#fb{position:fixed;top:44px;left:50%;transform:translateX(-50%);padding:6px 16px;border-radius:4px;font-size:10px;opacity:0;transition:all .3s;z-index:600;pointer-events:none;text-align:center;max-width:85vw;border:1px solid;}
+#fb.show{opacity:1;}
+#fb.ok{background:#081a10;border-color:var(--up);color:#88ee99;}
+#fb.err{background:#1a0808;border-color:var(--dn);color:#ff9988;}
+#fb.tip{background:#0e0a1a;border-color:var(--acc);color:#c0b8ff;}
+
+/* MISSION PANEL */
+#mp{position:fixed;bottom:0;left:0;right:0;background:#0e0e16;border-top:2px solid var(--brd2);z-index:200;max-height:255px;transition:max-height .3s;display:flex;flex-direction:column;}
+#mp.min{max-height:36px;}
+.mp-head{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--sur2);border-bottom:1px solid var(--brd);cursor:pointer;flex-shrink:0;}
+.mp-ico{font-size:13px;}
+.mp-title{font-size:11px;font-weight:700;color:#fff;flex:1;}
+.mp-xp2{font-size:10px;color:var(--acc);font-weight:700;}
+.mp-tog{font-size:10px;color:var(--txt3);}
+.mp-tabs{display:flex;border-bottom:1px solid var(--brd);flex-shrink:0;}
+.mp-tab{flex:1;padding:4px;text-align:center;cursor:pointer;font-size:9px;letter-spacing:.5px;color:var(--txt3);border-bottom:2px solid transparent;transition:all .15s;}
+.mp-tab.on{color:#fff;border-bottom-color:var(--acc);}
+.mp-body{flex:1;overflow-y:auto;padding:8px 12px;font-size:9px;line-height:1.5;}
+.mp-obj{color:var(--txt2);margin-bottom:6px;}
+.mp-steps{list-style:none;margin-bottom:6px;}
+.mp-step{display:flex;gap:6px;padding:2px 0;color:var(--txt3);}
+.mp-step.cur{color:#fff;}
+.mp-step.done{color:var(--up);text-decoration:line-through;}
+.mp-tip{font-size:8px;color:#7080a8;border-left:2px solid #303060;padding:4px 8px;margin-bottom:6px;line-height:1.5;font-style:italic;}
+.mp-actions{display:flex;gap:6px;margin-top:4px;}
+.mp-btn{padding:4px 10px;border-radius:3px;cursor:pointer;font-size:9px;border:1px solid;transition:all .15s;letter-spacing:.5px;}
+.mp-btn.skip{border-color:#333;color:var(--txt3);}
+.mp-btn.hint{border-color:#443366;color:#9977cc;animation:hintBlink 1.4s ease-in-out infinite;}
+.mp-prog{border-top:1px solid var(--brd);padding:3px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.mp-bar{flex:1;height:2px;background:#1a1a28;border-radius:2px;overflow:hidden;}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--acc),#aa99ff);transition:width .5s;}
+.mp-pt{font-size:8px;color:var(--txt3);}
+
+/* GLOSARIO */
+.glos-item{border-left:2px solid var(--acc);padding:5px 8px;margin-bottom:5px;}
+.glos-term{font-size:9px;font-weight:700;color:var(--acc);letter-spacing:.5px;margin-bottom:2px;}
+.glos-def{font-size:8px;color:var(--txt2);line-height:1.5;}
+.risk-item{background:var(--sur2);border:1px solid var(--brd);border-radius:3px;padding:8px;margin-bottom:5px;}
+.risk-rule{font-size:9px;font-weight:700;color:var(--dn);margin-bottom:2px;}
+.risk-why{font-size:8px;color:var(--txt2);line-height:1.5;}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:145px;}
+.chat-chips{display:flex;flex-wrap:wrap;gap:3px;padding:4px 8px;}
+.chat-chip{padding:2px 7px;border-radius:10px;font-size:8px;cursor:pointer;border:1px solid var(--brd);color:var(--txt3);transition:all .12s;}
+.chat-chip:hover{border-color:var(--acc);color:var(--acc);}
+.chat-msgs{flex:1;overflow-y:auto;padding:4px 8px;display:flex;flex-direction:column;gap:3px;}
+.chat-msg{max-width:90%;padding:4px 7px;border-radius:4px;font-size:9px;line-height:1.5;word-break:break-word;}
+.chat-msg.bot{background:#14182a;color:#a0b0d8;align-self:flex-start;border:1px solid #253060;}
+.chat-msg.user{background:#141a10;color:#a0c870;align-self:flex-end;border:1px solid #253020;}
+.chat-msg.typing{color:#5a6888;font-style:italic;}
+.chat-row{display:flex;gap:4px;padding:4px 8px;border-top:1px solid var(--brd);}
+.chat-input{flex:1;background:#0d0d14;border:1px solid var(--brd);border-radius:3px;color:var(--txt);font-size:9px;padding:3px 6px;font-family:var(--ui);outline:none;}
+.chat-input:focus{border-color:var(--acc);}
+.chat-send{padding:3px 9px;border-radius:3px;cursor:pointer;font-size:9px;font-weight:700;background:rgba(124,108,255,.12);border:1px solid #332266;color:var(--acc);transition:all .15s;}
+.chat-send:hover{background:rgba(124,108,255,.22);}
+
+@keyframes hintBlink{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.9);}50%{box-shadow:0 0 0 8px rgba(124,108,255,0);}}
+@keyframes flashUp{0%{background:rgba(38,166,154,.08);}100%{background:transparent;}}
+@keyframes flashDn{0%{background:rgba(239,83,80,.08);}100%{background:transparent;}}
+</style>
+</head>
+<body>
+
+<div id="xpp"></div>
+<div class="flash" id="fl"></div>
+<div id="fb"></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <a href="index.html" class="hdr-back">← NWLx</a>
+  <span class="hdr-logo">NWL<span>x</span></span>
+  <span class="hdr-sep">/</span>
+  <span class="hdr-title">Trading</span>
+  <div class="hdr-r">
+    <div class="port-summary">
+      <span style="font-size:9px;color:var(--txt3)">Portfolio</span>
+      <span class="port-val" id="hdr-port">$10,000.00</span>
+      <span class="port-pnl" id="hdr-pnl">+$0.00 (0.00%)</span>
+    </div>
+    <span class="hdr-xp" id="hdr-xp">0 XP</span>
+  </div>
+</div>
+
+<!-- ASSET TABS -->
+<div class="asset-bar" id="asset-bar"></div>
+
+<!-- CHART -->
+<div class="chart-wrap">
+  <canvas id="chart-cv"></canvas>
+  <div class="chart-overlay" id="chart-legend"></div>
+  <div id="ohlc-tip"></div>
+</div>
+
+<!-- PANELS -->
+<div class="panels-row">
+  <!-- ORDER FORM -->
+  <div class="panel">
+    <div class="panel-hdr">📋 Orden</div>
+    <div class="panel-body">
+      <div class="side-btns">
+        <div class="side-btn buy on" id="side-buy" onclick="setSide('buy')">COMPRAR</div>
+        <div class="side-btn sell" id="side-sell" onclick="setSide('sell')">VENDER</div>
+      </div>
+      <div class="bal-row">
+        <span class="bal-lbl">Disponible</span>
+        <span class="bal-val" id="avail-bal">$10,000.00</span>
+      </div>
+      <div class="order-row">
+        <span class="order-lbl">Monto (USD)</span>
+        <input class="order-inp" id="amt-inp" type="number" min="1" placeholder="100" value="100">
+      </div>
+      <div class="pct-row">
+        <div class="pct-btn" onclick="setPct(.1)">10%</div>
+        <div class="pct-btn" onclick="setPct(.25)">25%</div>
+        <div class="pct-btn" onclick="setPct(.5)">50%</div>
+        <div class="pct-btn" onclick="setPct(1)">MAX</div>
+      </div>
+      <div style="font-size:8px;color:var(--txt3);margin-bottom:4px;letter-spacing:.5px">TIPO DE ORDEN</div>
+      <div class="order-type-row">
+        <div class="ot-btn on" id="ot-market" onclick="setOT('market')">MERCADO</div>
+        <div class="ot-btn" id="ot-limit" onclick="setOT('limit')">LÍMITE</div>
+      </div>
+      <div class="sl-tp-row">
+        <div class="sl-inp-wrap">
+          <span class="sl-lbl sl">Stop-Loss</span>
+          <input class="order-inp" id="sl-inp" type="number" placeholder="opcional" step="0.01">
+        </div>
+        <div class="sl-inp-wrap">
+          <span class="sl-lbl tp">Take-Profit</span>
+          <input class="order-inp" id="tp-inp" type="number" placeholder="opcional" step="0.01">
+        </div>
+      </div>
+      <div id="order-preview" style="font-size:8px;color:var(--txt3);margin-bottom:6px;font-family:var(--mono);min-height:14px;"></div>
+      <div class="submit-btn buy" id="submit-btn" onclick="submitOrder()">COMPRAR</div>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO / POSITIONS -->
+  <div class="panel">
+    <div class="panel-hdr">
+      💼 Posiciones
+      <span style="margin-left:auto;font-size:8px;cursor:pointer;color:var(--txt3)" id="port-tab-switch" onclick="togglePortTab()">Ver historial</span>
+    </div>
+    <div class="panel-body" id="port-body"></div>
+  </div>
+</div>
+
+<!-- MISSION PANEL -->
+<div id="mp">
+  <div class="mp-head" onclick="toggleMP()">
+    <span class="mp-ico" id="mp-ico">📈</span>
+    <span class="mp-title" id="mp-t">Cargando...</span>
+    <span class="mp-xp2" id="mp-xp2">0 XP</span>
+    <span class="mp-tog" id="mp-tog">▼</span>
+  </div>
+  <div class="mp-tabs">
+    <div class="mp-tab on" id="tab-mis" onclick="setTab('mis')">MISIONES</div>
+    <div class="mp-tab" id="tab-glo" onclick="setTab('glo')">📖 GLOSARIO</div>
+    <div class="mp-tab" id="tab-rsk" onclick="setTab('rsk')">⚠ RIESGO</div>
+    <div class="mp-tab" id="tab-ast" onclick="setTab('ast')">🤖 CHAT</div>
+  </div>
+  <div class="mp-body" id="mp-body"></div>
+  <div class="mp-prog">
+    <div class="mp-bar"><div class="mp-fill" id="mp-fill" style="width:0%"></div></div>
+    <div class="mp-pt" id="mp-pt">0/6</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// ASSETS CONFIG
+// ══════════════════════════════════════════════
+const ASSETS = {
+  BTC:{name:'Bitcoin',   sym:'BTC',icon:'₿', base:67400, vol:.022, color:'#f7931a', prec:2, cat:'crypto'},
+  ETH:{name:'Ethereum',  sym:'ETH',icon:'Ξ', base:3480,  vol:.028, color:'#627eea', prec:2, cat:'crypto'},
+  SOL:{name:'Solana',    sym:'SOL',icon:'◎', base:178,   vol:.035, color:'#9945ff', prec:3, cat:'crypto'},
+  BNB:{name:'BNB',       sym:'BNB',icon:'B', base:612,   vol:.025, color:'#f3ba2f', prec:2, cat:'crypto'},
+  AAPL:{name:'Apple',    sym:'AAPL',icon:'', base:185,   vol:.008, color:'#aaaaaa', prec:2, cat:'stock'},
+  TSLA:{name:'Tesla',    sym:'TSLA',icon:'', base:248,   vol:.030, color:'#cc4433', prec:2, cat:'stock'},
+  NVDA:{name:'NVIDIA',   sym:'NVDA',icon:'', base:875,   vol:.022, color:'#76b900', prec:2, cat:'stock'},
+  SPY:{name:'S&P 500',   sym:'SPY', icon:'', base:538,   vol:.006, color:'#4488cc', prec:2, cat:'stock'},
+};
+
+// ══════════════════════════════════════════════
+// MISSIONS
+// ══════════════════════════════════════════════
+const MISSIONS = [
+  {ico:'🎯',t:'Tu primera operación',xp:50,
+   obj:'Comprá cualquier activo del mercado. Seleccioná uno de los tabs de arriba, ingresá un monto y presioná COMPRAR.',
+   steps:[{txt:'Comprar cualquier activo (mínimo $100)',chk:()=>S.totalTrades>=1}],
+   tip:'Una orden de mercado se ejecuta inmediatamente al precio actual. Es la forma más directa de entrar al mercado.'},
+  {ico:'📉',t:'Gestioná el riesgo: Stop-Loss',xp:80,
+   obj:'Abrí una posición y colocale un Stop-Loss. Es el precio al que salís automáticamente para limitar pérdidas.',
+   steps:[
+     {txt:'Comprar un activo',chk:()=>S.totalTrades>=1},
+     {txt:'Colocar un Stop-Loss en esa operación',chk:()=>S.usedStopLoss},
+   ],
+   tip:'Regla de oro: nunca operes sin stop-loss. Si el precio baja a ese nivel, vendés automáticamente. Limita el daño máximo por operación.'},
+  {ico:'💰',t:'Cerrá con ganancia',xp:100,
+   obj:'Vendé una posición que esté en ganancia (P&L positivo). Podés vender manualmente desde el panel de Posiciones.',
+   steps:[{txt:'Cerrar una posición con ganancia (P&L > 0)',chk:()=>S.profitableTrades>=1}],
+   tip:'"Dejar correr las ganancias, cortar rápido las pérdidas." No vendas por pánico cuando baja, pero tampoco te quedes esperando que una ganancia se convierta en pérdida.'},
+  {ico:'📊',t:'Lee el RSI',xp:75,
+   obj:'El RSI mide si un activo está sobrecomprado (>70) o sobrevendido (<30). Comprá cuando el RSI esté por debajo de 35.',
+   steps:[{txt:'Comprar cuando el RSI del activo es < 35',chk:()=>S.boughtOnLowRSI}],
+   tip:'RSI < 30 = posible piso (sobrevendido). RSI > 70 = posible techo (sobrecomprado). No es infalible pero es una señal de contexto muy usada.'},
+  {ico:'🌐',t:'Diversificá el portfolio',xp:100,
+   obj:'Tenés que tener posiciones en al menos 3 activos diferentes al mismo tiempo.',
+   steps:[{txt:'Mantener 3 o más activos distintos simultáneamente',chk:()=>getUniqueAssets()>=3}],
+   tip:'No pongas todos los huevos en una canasta. Un portfolio diversificado mezcla activos con distinta correlación: cripto + acciones, o BTC + altcoins de diferente sector.'},
+  {ico:'🏆',t:'Trader profesional',xp:200,
+   obj:'Completá las 5 misiones anteriores y alcanzá un P&L total positivo (portfolio > $10,000).',
+   steps:[
+     {txt:'Completar las 5 misiones anteriores',chk:()=>S.missionsCompleted>=5},
+     {txt:'Portfolio total > $10,000 (ganancia neta)',chk:()=>getTotalPortfolioValue()>10000},
+   ],
+   tip:'El trading profesional no es apostar — es gestión de probabilidades. Sin stop-loss, sin diversificación y sin disciplina no es trading: es casino.'},
+];
+
+// ══════════════════════════════════════════════
+// GLOSARIO & RIESGO
+// ══════════════════════════════════════════════
+const GLOSARIO = [
+  {term:'Vela japonesa (candlestick)',def:'Representa el precio en un período. El cuerpo = apertura/cierre. Las mechas = máximo/mínimo. Verde = cerró más alto que abrió. Roja = cerró más bajo.'},
+  {term:'SMA (Media móvil simple)',def:'Promedio del precio en los últimos N períodos. SMA20 (azul) = tendencia corta. SMA50 (naranja) = tendencia media. Cuando el precio cruza la SMA hacia arriba = señal alcista.'},
+  {term:'RSI (Índice de fuerza relativa)',def:'Oscila entre 0 y 100. Por encima de 70: activo sobrecomprado (puede bajar). Por debajo de 30: sobrevendido (puede subir). Es una señal de contexto, no de predicción.'},
+  {term:'Stop-Loss',def:'Orden automática de venta si el precio baja a cierto nivel. Limita pérdidas. Ej: comprás BTC a $67,000, ponés SL a $64,000 = máximo 4.5% de pérdida por esa operación.'},
+  {term:'Take-Profit',def:'Orden automática de venta si el precio sube a cierto nivel. Asegura ganancias. Ej: comprás a $67,000, ponés TP a $70,000 = salís automáticamente con 4.5% de ganancia.'},
+  {term:'P&L (Profit & Loss)',def:'Ganancia/pérdida de una posición. P&L = (Precio actual − Precio entrada) × Cantidad. Si compraste a $100 y ahora vale $110, tu P&L es +$10 (o +10%).'},
+  {term:'Posición larga (long)',def:'Comprás un activo esperando que suba. La forma más común de operar. Tu ganancia = precio subida.'},
+  {term:'Volatilidad',def:'Qué tan rápido y cuánto varía el precio. BTC puede moverse ±5% en un día. SPY (S&P 500) suele moverse ±1%. Alta volatilidad = más riesgo y más oportunidad.'},
+  {term:'Soporte y resistencia',def:'Soporte: nivel de precio donde históricamente el activo rebotó hacia arriba. Resistencia: nivel donde históricamente fue rechazado. Son zonas de decisión para muchos traders.'},
+  {term:'Orden de mercado vs límite',def:'Mercado: ejecuta inmediatamente al precio actual. Límite: ejecuta solo cuando el precio llega a un nivel que vos elegís. Límite te da control del precio de entrada.'},
+];
+
+const RISK_RULES = [
+  {rule:'Nunca arriesgues más del 1-2% del capital por operación',why:'Si arriesgás 2% y hacés 10 operaciones malas seguidas = perdés 20% del capital. Si arriesgás 10% por operación = 3 operaciones malas = 30% de pérdida. El position sizing determina tu supervivencia.'},
+  {rule:'Siempre usá stop-loss',why:'Sin stop-loss, una mala operación puede destruir tu cuenta. El mercado puede ir en tu contra más tiempo del que vos podés aguantar. Un stop-loss es tu contrato con vos mismo de cuánto estás dispuesto a perder.'},
+  {rule:'Nunca inviertas lo que no podés perder',why:'El estrés financiero toma pésimas decisiones. Si el dinero que usás es el alquiler del mes, vas a vender en el peor momento y comprar en el peor momento. Solo operá con capital de riesgo.'},
+  {rule:'No hagas FOMO (Fear Of Missing Out)',why:'El FOMO es comprar porque el precio ya subió mucho y "no querés perderte la suba". Es el error más común y más caro. Si te perdiste el movimiento, esperá el próximo — siempre habrá otro.'},
+  {rule:'No promedies pérdidas (no hagas "martingala")',why:'Comprar más de algo que está bajando para "bajar el precio promedio" parece lógico pero en trading es peligroso. Significa que seguís apostando a que algo que está fallando cambie de dirección.'},
+];
+
+// ══════════════════════════════════════════════
+// PRICE ENGINE
+// ══════════════════════════════════════════════
+const assetData = {};
+let currentAsset = 'BTC';
+
+function boxMuller(){
+  let u=0,v=0;
+  while(u===0)u=Math.random();
+  while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+function genCandle(prevClose, vol, drift=0.0001){
+  const change = prevClose * (drift + vol * boxMuller());
+  const open = prevClose;
+  const close = Math.max(prevClose * 0.5, prevClose + change);
+  const bodyH = Math.abs(close - open);
+  const high = Math.max(open,close) + bodyH * Math.random() * 0.6;
+  const low  = Math.min(open,close) - bodyH * Math.random() * 0.6;
+  const volume = (Math.random()*0.8+0.2) * prevClose * vol * 50000;
+  return {open, high, low, close, volume};
+}
+
+function initAssets(){
+  Object.keys(ASSETS).forEach(sym=>{
+    const a = ASSETS[sym];
+    const candles = [];
+    let price = a.base;
+    // generate 200 historical candles
+    for(let i=0;i<200;i++){
+      const c = genCandle(price, a.vol);
+      candles.push(c);
+      price = c.close;
+    }
+    assetData[sym] = {candles, lastUpdate: Date.now()};
+  });
+}
+
+function addCandle(sym){
+  const a = ASSETS[sym];
+  const candles = assetData[sym].candles;
+  const last = candles[candles.length-1];
+  const c = genCandle(last.close, a.vol);
+  candles.push(c);
+  if(candles.length > 300) candles.shift();
+  // check stop-loss / take-profit
+  checkOrders(sym, c.close);
+  // check missions
+  checkMissions();
+}
+
+function getCurrentPrice(sym){
+  const c = assetData[sym].candles;
+  return c[c.length-1].close;
+}
+
+function get24hChange(sym){
+  const c = assetData[sym].candles;
+  if(c.length < 24) return 0;
+  const now = c[c.length-1].close;
+  const ago = c[c.length-24].open;
+  return (now - ago) / ago * 100;
+}
+
+// ══════════════════════════════════════════════
+// CHART RENDERER
+// ══════════════════════════════════════════════
+let hoverX = -1;
+
+function calcSMA(closes, period){
+  const sma = [];
+  for(let i=0;i<closes.length;i++){
+    if(i < period-1){sma.push(null);continue;}
+    const slice = closes.slice(i-period+1, i+1);
+    sma.push(slice.reduce((a,b)=>a+b)/period);
+  }
+  return sma;
+}
+function calcRSI(closes, period=14){
+  const rsi = new Array(closes.length).fill(null);
+  if(closes.length < period+1) return rsi;
+  let gains=0, losses=0;
+  for(let i=1;i<=period;i++){
+    const d=closes[i]-closes[i-1];
+    if(d>0)gains+=d; else losses-=d;
+  }
+  let avgG=gains/period, avgL=losses/period;
+  rsi[period]= avgL===0 ? 100 : 100-100/(1+avgG/avgL);
+  for(let i=period+1;i<closes.length;i++){
+    const d=closes[i]-closes[i-1];
+    const g=d>0?d:0, l=d<0?-d:0;
+    avgG=(avgG*(period-1)+g)/period;
+    avgL=(avgL*(period-1)+l)/period;
+    rsi[i]=avgL===0?100:100-100/(1+avgG/avgL);
+  }
+  return rsi;
+}
+
+function fmtP(price, sym){
+  const p = ASSETS[sym]?.prec||2;
+  if(price >= 1000) return '$'+price.toLocaleString('en-US',{minimumFractionDigits:p,maximumFractionDigits:p});
+  return '$'+price.toFixed(p>2?3:2);
+}
+
+function drawChart(){
+  const cv = document.getElementById('chart-cv');
+  const W = cv.offsetWidth;
+  if(!W) return;
+  const H = 320;
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  const LM=72, RM=8, BM=18;
+  const CH=Math.round(H*0.66);  // price chart height
+  const VH=Math.round(H*0.13);  // volume height
+  const RSIH=H-CH-VH-BM-6;     // RSI height
+  const VT=CH+3, RT=VT+VH+3;
+  const CW=W-LM-RM;
+
+  ctx.fillStyle='#0d0d10'; ctx.fillRect(0,0,W,H);
+
+  const candles = assetData[currentAsset].candles;
+  const closes = candles.map(c=>c.close);
+  const sma20 = calcSMA(closes,20);
+  const sma50 = calcSMA(closes,50);
+  const rsiArr = calcRSI(closes,14);
+
+  const cW=8, gap=2;
+  const maxVis = Math.floor(CW/(cW+gap));
+  const vis = candles.slice(-maxVis);
+  const offset = candles.length - vis.length;
+
+  const hArr = vis.map(c=>c.high), lArr = vis.map(c=>c.low);
+  const maxP = Math.max(...hArr)*1.003, minP = Math.min(...lArr)*0.997;
+  const pRange = maxP - minP;
+  const pToY = p => CH - ((p-minP)/pRange)*CH;
+
+  // Grid lines
+  for(let i=0;i<=5;i++){
+    const y = Math.round(CH/5*i);
+    ctx.strokeStyle='#18182a'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(LM,y); ctx.lineTo(W-RM,y); ctx.stroke();
+    const p = maxP - pRange/5*i;
+    ctx.fillStyle='#505070'; ctx.font='8px monospace'; ctx.textAlign='right';
+    ctx.fillText(fmtP(p,currentAsset), LM-3, y+3);
+  }
+
+  // Volume
+  const maxVol = Math.max(...vis.map(c=>c.volume))||1;
+  vis.forEach((c,i)=>{
+    const x = LM + i*(cW+gap);
+    const vh = Math.round((c.volume/maxVol)*VH);
+    ctx.fillStyle = c.close>=c.open?'rgba(38,166,154,.35)':'rgba(239,83,80,.35)';
+    ctx.fillRect(x, VT+VH-vh, cW, vh);
+  });
+
+  // RSI background
+  ctx.fillStyle='#10101a'; ctx.fillRect(LM, RT, CW, RSIH);
+  const r30y=RT+(1-0.3)*RSIH, r70y=RT+(1-0.7)*RSIH;
+  ctx.fillStyle='rgba(239,83,80,.05)'; ctx.fillRect(LM, RT, CW, r70y-RT);
+  ctx.fillStyle='rgba(38,166,154,.05)'; ctx.fillRect(LM, r30y, CW, RSIH-(r30y-RT));
+  ctx.strokeStyle='#252538'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(LM,r30y); ctx.lineTo(W-RM,r30y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(LM,r70y); ctx.lineTo(W-RM,r70y); ctx.stroke();
+  ctx.fillStyle='#404058'; ctx.font='7px monospace'; ctx.textAlign='right';
+  ctx.fillText('70',LM-3,r70y+3); ctx.fillText('30',LM-3,r30y+3);
+  ctx.fillText('RSI14',LM-3,RT+8);
+
+  // SMA lines
+  [['sma20',sma20,'#4488cc'],['sma50',sma50,'#ff9800']].forEach(([,arr,col])=>{
+    const visArr = arr.slice(-maxVis);
+    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath(); let started=false;
+    visArr.forEach((v,i)=>{
+      if(v===null)return;
+      const x=LM+i*(cW+gap)+cW/2, y=pToY(v);
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  });
+
+  // Candlesticks
+  vis.forEach((c,i)=>{
+    const x=LM+i*(cW+gap);
+    const isUp=c.close>=c.open;
+    const col=isUp?'#26a69a':'#ef5350';
+    const oY=pToY(c.open), cY=pToY(c.close);
+    const hY=pToY(c.high), lY=pToY(c.low);
+    ctx.strokeStyle=col; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x+cW/2,hY); ctx.lineTo(x+cW/2,Math.min(oY,cY)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+cW/2,Math.max(oY,cY)); ctx.lineTo(x+cW/2,lY); ctx.stroke();
+    ctx.fillStyle=col;
+    ctx.fillRect(x, Math.min(oY,cY), cW, Math.max(1,Math.abs(cY-oY)));
+  });
+
+  // RSI line
+  const visRSI = rsiArr.slice(-maxVis);
+  ctx.strokeStyle='#aa88ff'; ctx.lineWidth=1.5; ctx.beginPath(); let rsiStarted=false;
+  visRSI.forEach((v,i)=>{
+    if(v===null)return;
+    const x=LM+i*(cW+gap)+cW/2, y=RT+(1-v/100)*RSIH;
+    if(!rsiStarted){ctx.moveTo(x,y);rsiStarted=true;}else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  const curRSI = visRSI.filter(v=>v!==null).pop();
+  if(curRSI!=null){
+    const rsiColor = curRSI>70?'#ef5350':curRSI<30?'#26a69a':'#aa88ff';
+    ctx.fillStyle=rsiColor; ctx.font='bold 8px monospace'; ctx.textAlign='right';
+    ctx.fillText(curRSI.toFixed(1), LM-3, RT+(1-curRSI/100)*RSIH+3);
+  }
+
+  // Current price dashed line
+  const lastClose = vis[vis.length-1].close;
+  const cpY = pToY(lastClose);
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(LM,cpY); ctx.lineTo(W-RM,cpY); ctx.stroke();
+  ctx.setLineDash([]);
+  // price label on right
+  const priceColor = lastClose >= vis[0].open ? '#26a69a' : '#ef5350';
+  ctx.fillStyle=priceColor; ctx.font='bold 9px monospace'; ctx.textAlign='left';
+  ctx.fillText(fmtP(lastClose,currentAsset), LM+CW-55, cpY-2);
+
+  // Position levels
+  const pos = getPosition(currentAsset);
+  ctx.setLineDash([3,4]);
+  if(pos){
+    const ey=pToY(pos.entryPrice);
+    ctx.strokeStyle='rgba(255,215,0,.5)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(LM,ey); ctx.lineTo(W-RM,ey); ctx.stroke();
+    ctx.fillStyle='#ffd700'; ctx.font='7px monospace'; ctx.textAlign='right';
+    ctx.fillText('ENTRADA '+fmtP(pos.entryPrice,currentAsset), LM-2, ey-1);
+    if(pos.stopLoss){
+      const sy=pToY(pos.stopLoss);
+      ctx.strokeStyle='rgba(239,83,80,.6)';
+      ctx.beginPath(); ctx.moveTo(LM,sy); ctx.lineTo(W-RM,sy); ctx.stroke();
+      ctx.fillStyle='#ef5350'; ctx.fillText('SL '+fmtP(pos.stopLoss,currentAsset),LM-2,sy-1);
+    }
+    if(pos.takeProfit){
+      const ty=pToY(pos.takeProfit);
+      ctx.strokeStyle='rgba(38,166,154,.6)';
+      ctx.beginPath(); ctx.moveTo(LM,ty); ctx.lineTo(W-RM,ty); ctx.stroke();
+      ctx.fillStyle='#26a69a'; ctx.fillText('TP '+fmtP(pos.takeProfit,currentAsset),LM-2,ty-1);
+    }
+  }
+  ctx.setLineDash([]);
+
+  // Hover crosshair
+  if(hoverX >= LM && hoverX <= W-RM){
+    ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(hoverX,0); ctx.lineTo(hoverX,CH); ctx.stroke();
+    const idx = Math.floor((hoverX-LM)/(cW+gap));
+    if(idx>=0 && idx<vis.length){
+      const c=vis[idx];
+      const tip=document.getElementById('ohlc-tip');
+      const chg=((c.close-c.open)/c.open*100);
+      tip.style.display='block';
+      tip.style.left=(hoverX+8)+'px';
+      tip.innerHTML=`<span style="color:${c.close>=c.open?'#26a69a':'#ef5350'}">●</span> O:${fmtP(c.open,currentAsset)} H:${fmtP(c.high,currentAsset)} L:${fmtP(c.low,currentAsset)} C:${fmtP(c.close,currentAsset)} <span style="color:${chg>=0?'#26a69a':'#ef5350'}">${chg>=0?'+':''}${chg.toFixed(2)}%</span>`;
+    }
+  } else {
+    document.getElementById('ohlc-tip').style.display='none';
+  }
+}
+
+// Mouse hover on chart
+document.addEventListener('DOMContentLoaded',()=>{
+  const cv=document.getElementById('chart-cv');
+  cv.addEventListener('mousemove',e=>{
+    const r=cv.getBoundingClientRect();
+    hoverX=e.clientX-r.left;
+    drawChart();
+  });
+  cv.addEventListener('mouseleave',()=>{hoverX=-1;drawChart();});
+});
+
+// ══════════════════════════════════════════════
+// PORTFOLIO & ORDERS
+// ══════════════════════════════════════════════
+const portfolio = {
+  cash: 10000,
+  positions: [],  // {id,sym,qty,entryPrice,stopLoss,takeProfit,timestamp}
+  history: [],    // {type,sym,qty,price,total,pnl,timestamp}
+};
+
+const S = {
+  totalTrades:0, profitableTrades:0, usedStopLoss:false,
+  boughtOnLowRSI:false, missionsCompleted:0,
+};
+
+let xpTotal=0, mpTab='mis', chatMsgs=[], orderSide='buy', orderType='market';
+let mpMinimized=false, portTab='positions';
+let missionsDone=new Set();
+
+function getPosition(sym){
+  return portfolio.positions.find(p=>p.sym===sym);
+}
+function getUniqueAssets(){
+  return new Set(portfolio.positions.map(p=>p.sym)).size;
+}
+function getTotalPortfolioValue(){
+  let v=portfolio.cash;
+  portfolio.positions.forEach(p=>{
+    v += p.qty * getCurrentPrice(p.sym);
+  });
+  return v;
+}
+function getUnrealizedPnL(){
+  let pnl=0;
+  portfolio.positions.forEach(p=>{
+    pnl += (getCurrentPrice(p.sym) - p.entryPrice) * p.qty;
+  });
+  return pnl;
+}
+
+function submitOrder(){
+  const amt = parseFloat(document.getElementById('amt-inp').value)||0;
+  if(amt < 1){toast('Ingresá un monto válido','err');return;}
+  const price = getCurrentPrice(currentAsset);
+  const slVal = parseFloat(document.getElementById('sl-inp').value)||null;
+  const tpVal = parseFloat(document.getElementById('tp-inp').value)||null;
+
+  if(orderSide==='buy'){
+    if(amt > portfolio.cash){toast('Saldo insuficiente','err');return;}
+    const qty = amt / price;
+    const existing = getPosition(currentAsset);
+    if(existing){
+      // average up/down
+      const totalQty = existing.qty + qty;
+      existing.entryPrice = (existing.entryPrice*existing.qty + price*qty)/totalQty;
+      existing.qty = totalQty;
+      if(slVal) existing.stopLoss=slVal;
+      if(tpVal) existing.takeProfit=tpVal;
+    } else {
+      portfolio.positions.push({
+        id: Date.now(), sym:currentAsset, qty, entryPrice:price,
+        stopLoss:slVal, takeProfit:tpVal, timestamp:Date.now()
+      });
+    }
+    portfolio.cash -= amt;
+    portfolio.history.unshift({type:'BUY',sym:currentAsset,qty,price,total:amt,pnl:0,timestamp:Date.now()});
+    S.totalTrades++;
+    if(slVal) S.usedStopLoss=true;
+    // check RSI mission
+    const rsiArr=calcRSI(assetData[currentAsset].candles.map(c=>c.close),14);
+    const curRSI=rsiArr.filter(v=>v!==null).pop();
+    if(curRSI && curRSI<35) S.boughtOnLowRSI=true;
+    toast(`Compra ejecutada: ${qty.toFixed(6)} ${currentAsset} @ ${fmtP(price,currentAsset)}`,'ok');
+    flash('up');
+    xpPop(5,'Operación ejecutada');
+  } else {
+    const pos = getPosition(currentAsset);
+    if(!pos){toast('No tenés posición en '+currentAsset,'err');return;}
+    const saleAmt = Math.min(amt, pos.qty*price);
+    const qty = saleAmt/price;
+    const pnl = (price - pos.entryPrice)*qty;
+    if(pnl>0) S.profitableTrades++;
+    closePartialPosition(currentAsset, qty, price, pnl);
+    toast(`Venta ejecutada: ${qty.toFixed(6)} ${currentAsset} @ ${fmtP(price,currentAsset)} | P&L: ${pnl>=0?'+':''}${fmtP(Math.abs(pnl),'SPY')}`,(pnl>=0?'ok':'err'));
+    flash(pnl>=0?'up':'dn');
+    if(pnl>0) xpPop(10,'Cerrado con ganancia');
+  }
+  checkMissions();
+  renderAll();
+}
+
+function closePartialPosition(sym, qty, price, pnl){
+  const pos = getPosition(sym);
+  if(!pos) return;
+  portfolio.cash += qty * price;
+  portfolio.history.unshift({type:'SELL',sym,qty,price,total:qty*price,pnl,timestamp:Date.now()});
+  pos.qty -= qty;
+  if(pos.qty <= 0.000001){
+    portfolio.positions = portfolio.positions.filter(p=>p.sym!==sym);
+  }
+}
+
+function closePosition(sym){
+  const pos = getPosition(sym);
+  if(!pos) return;
+  const price = getCurrentPrice(sym);
+  const pnl = (price - pos.entryPrice)*pos.qty;
+  if(pnl>0) S.profitableTrades++;
+  closePartialPosition(sym, pos.qty, price, pnl);
+  toast(`Posición cerrada: ${sym} | P&L: ${pnl>=0?'+':''}$${Math.abs(pnl).toFixed(2)}`,(pnl>=0?'ok':'err'));
+  flash(pnl>=0?'up':'dn');
+  checkMissions();
+  renderAll();
+}
+
+function checkOrders(sym, price){
+  const pos = portfolio.positions.find(p=>p.sym===sym);
+  if(!pos) return;
+  if(pos.stopLoss && price <= pos.stopLoss){
+    const pnl = (price - pos.entryPrice)*pos.qty;
+    closePartialPosition(sym, pos.qty, price, pnl);
+    toast(`⛔ Stop-Loss activado: ${sym} @ ${fmtP(price,sym)} | P&L: $${pnl.toFixed(2)}`,'err');
+    checkMissions(); renderAll();
+  } else if(pos.takeProfit && price >= pos.takeProfit){
+    const pnl = (price - pos.entryPrice)*pos.qty;
+    S.profitableTrades++;
+    closePartialPosition(sym, pos.qty, price, pnl);
+    toast(`✅ Take-Profit activado: ${sym} @ ${fmtP(price,sym)} | P&L: +$${pnl.toFixed(2)}`,'ok');
+    checkMissions(); renderAll();
+  }
+}
+
+function setSide(side){
+  orderSide=side;
+  document.getElementById('side-buy').classList.toggle('on',side==='buy');
+  document.getElementById('side-sell').classList.toggle('on',side==='sell');
+  const btn=document.getElementById('submit-btn');
+  btn.className='submit-btn '+side;
+  btn.textContent=side==='buy'?'COMPRAR':'VENDER';
+  updateOrderPreview();
+}
+
+function setOT(type){
+  orderType=type;
+  ['market','limit'].forEach(t=>document.getElementById('ot-'+t)?.classList.toggle('on',t===type));
+}
+
+function setPct(pct){
+  const available = orderSide==='buy' ? portfolio.cash :
+    (getPosition(currentAsset)?.qty||0)*getCurrentPrice(currentAsset);
+  const amt = Math.floor(available*pct*100)/100;
+  document.getElementById('amt-inp').value = Math.max(1, amt);
+  updateOrderPreview();
+}
+
+function updateOrderPreview(){
+  const amt=parseFloat(document.getElementById('amt-inp').value)||0;
+  const price=getCurrentPrice(currentAsset);
+  const qty=amt/price;
+  const el=document.getElementById('order-preview');
+  if(amt>0 && price>0){
+    el.textContent=`≈ ${qty.toFixed(6)} ${currentAsset} @ ${fmtP(price,currentAsset)}`;
+    el.style.color=orderSide==='buy'?'#26a69a':'#ef5350';
+  } else el.textContent='';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('amt-inp').addEventListener('input',updateOrderPreview);
+});
+
+function setPct(pct){
+  const available = orderSide==='buy' ? portfolio.cash :
+    (getPosition(currentAsset)?.qty||0)*getCurrentPrice(currentAsset);
+  const amt = Math.max(1, Math.floor(available*pct*100)/100);
+  document.getElementById('amt-inp').value = amt;
+  updateOrderPreview();
+}
+
+// ══════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════════
+function renderAll(){
+  renderAssetBar();
+  renderPortfolio();
+  renderMPHeader();
+  updateOrderPreview();
+  document.getElementById('avail-bal').textContent='$'+portfolio.cash.toFixed(2);
+}
+
+function renderAssetBar(){
+  const bar = document.getElementById('asset-bar');
+  bar.innerHTML = Object.entries(ASSETS).map(([sym,a])=>{
+    const price=getCurrentPrice(sym);
+    const chg=get24hChange(sym);
+    const on=sym===currentAsset?' on':'';
+    return `<div class="asset-tab${on}" onclick="selectAsset('${sym}')">
+      <span class="at-name" style="color:${a.color}">${sym}</span>
+      <span class="at-price">${fmtP(price,sym)}</span>
+      <span class="at-chg ${chg>=0?'up':'dn'}">${chg>=0?'+':''}${chg.toFixed(2)}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPortfolio(){
+  const body=document.getElementById('port-body');
+  const tv=getTotalPortfolioValue();
+  const pnl=tv-10000;
+  const pnlPct=(pnl/10000*100);
+  document.getElementById('hdr-port').textContent='$'+tv.toFixed(2);
+  document.getElementById('hdr-port').style.color=pnl>=0?'#26a69a':'#ef5350';
+  const pnlEl=document.getElementById('hdr-pnl');
+  pnlEl.textContent=(pnl>=0?'+':'')+'$'+pnl.toFixed(2)+' ('+(pnlPct>=0?'+':'')+pnlPct.toFixed(2)+'%)';
+  pnlEl.className='port-pnl '+(pnl>=0?'up':'dn');
+
+  if(portTab==='positions'){
+    if(!portfolio.positions.length){
+      body.innerHTML='<div class="empty-msg">Sin posiciones abiertas.<br>Comprá un activo para empezar.</div>';
+      return;
+    }
+    body.innerHTML=portfolio.positions.map(p=>{
+      const cur=getCurrentPrice(p.sym);
+      const posVal=p.qty*cur;
+      const posPnl=(cur-p.entryPrice)*p.qty;
+      const pnlPct=(cur-p.entryPrice)/p.entryPrice*100;
+      return `<div class="pos-item">
+        <span class="pos-name" style="color:${ASSETS[p.sym]?.color||'#fff'}">${p.sym}</span>
+        <div class="pos-detail">
+          ${p.qty.toFixed(4)} u.<br>
+          Entrada: ${fmtP(p.entryPrice,p.sym)}<br>
+          Valor: $${posVal.toFixed(2)}
+          ${p.stopLoss?`<br><span style="color:#ef5350">SL:${fmtP(p.stopLoss,p.sym)}</span>`:''}
+          ${p.takeProfit?`<br><span style="color:#26a69a">TP:${fmtP(p.takeProfit,p.sym)}</span>`:''}
+        </div>
+        <div style="text-align:right">
+          <div class="pos-pnl ${posPnl>=0?'up':'dn'}">${posPnl>=0?'+':''}$${posPnl.toFixed(2)}</div>
+          <div style="font-size:7px;color:${posPnl>=0?'#26a69a':'#ef5350'};font-family:var(--mono)">${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%</div>
+          <div class="pos-close" onclick="closePosition('${p.sym}')">Cerrar</div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    if(!portfolio.history.length){
+      body.innerHTML='<div class="empty-msg">Sin operaciones aún.</div>';
+      return;
+    }
+    body.innerHTML=portfolio.history.slice(0,15).map(h=>`
+      <div class="hist-item">
+        <span class="hist-side ${h.type==='BUY'?'b':'s'}">${h.type}</span>
+        <span>${h.sym} ${h.qty.toFixed(4)}</span>
+        <span>${fmtP(h.price,h.sym)}</span>
+        <span style="color:${h.pnl>=0?'#26a69a':'#ef5350'}">${h.pnl!==0?(h.pnl>=0?'+':'')+h.pnl.toFixed(2):''}</span>
+      </div>`).join('');
+  }
+}
+
+function togglePortTab(){
+  portTab = portTab==='positions'?'history':'positions';
+  document.getElementById('port-tab-switch').textContent=portTab==='positions'?'Ver historial':'Ver posiciones';
+  renderPortfolio();
+}
+
+function selectAsset(sym){
+  currentAsset=sym;
+  renderAll();
+  drawChart();
+}
+
+// ══════════════════════════════════════════════
+// MISSIONS
+// ══════════════════════════════════════════════
+function checkMissions(){
+  let newlyDone=0;
+  MISSIONS.forEach((m,i)=>{
+    if(!missionsDone.has(i) && m.steps.every(s=>s.chk())){
+      missionsDone.add(i); newlyDone++;
+      S.missionsCompleted++;
+      xpPop(m.xp, m.t+' ✓');
+      flash('up');
+    }
+  });
+  if(newlyDone) renderMP();
+  renderMPHeader();
+}
+
+function renderMPHeader(){
+  const cur=MISSIONS.findIndex((_,i)=>!missionsDone.has(i));
+  const m=cur>=0?MISSIONS[cur]:null;
+  document.getElementById('mp-ico').textContent=m?m.ico:'🏆';
+  document.getElementById('mp-t').textContent=m?m.t:'TODAS COMPLETADAS';
+  document.getElementById('mp-xp2').textContent=xpTotal+' XP';
+  document.getElementById('mp-fill').style.width=(missionsDone.size/MISSIONS.length*100)+'%';
+  document.getElementById('mp-pt').textContent=missionsDone.size+'/'+MISSIONS.length;
+  document.getElementById('hdr-xp').textContent=xpTotal+' XP';
+}
+
+function renderMP(){
+  if(mpTab==='mis') renderMisTab();
+  else if(mpTab==='glo') renderGloTab();
+  else if(mpTab==='rsk') renderRskTab();
+  else renderChatTab();
+  renderMPHeader();
+}
+
+function renderMisTab(){
+  const body=document.getElementById('mp-body');
+  const allDone=missionsDone.size>=MISSIONS.length;
+  if(allDone){
+    body.innerHTML=`<div style="text-align:center;padding:14px">
+      <div style="font-size:26px;margin-bottom:6px">🏆</div>
+      <div style="color:var(--acc);font-size:14px;font-weight:700;letter-spacing:2px">COMPLETADO</div>
+      <div style="font-size:8px;color:var(--txt3);margin-top:5px">XP Total: <span style="color:var(--acc)">${xpTotal}</span></div>
+    </div>`;return;
+  }
+  body.innerHTML=MISSIONS.map((m,i)=>{
+    const done=missionsDone.has(i);
+    const cur=!done && (i===0||missionsDone.has(i-1));
+    const stepsHtml=m.steps.map(s=>{
+      const sd=s.chk();
+      return `<li class="mp-step ${sd?'done':cur?'cur':''}"><span style="width:12px;display:inline-block">${sd?'✓':'·'}</span>${s.txt}</li>`;
+    }).join('');
+    return `<div style="margin-bottom:10px;${!cur&&!done?'opacity:.45':''}">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <span style="font-size:12px">${done?'✅':m.ico}</span>
+        <span style="font-size:10px;font-weight:700;color:${done?'#26a69a':cur?'#fff':'var(--txt3)'}">${m.t}</span>
+        <span style="margin-left:auto;font-size:9px;color:var(--acc);font-family:var(--mono)">+${m.xp} XP</span>
+      </div>
+      ${cur?`<div class="mp-obj">${m.obj}</div>`:''}
+      <ul class="mp-steps">${stepsHtml}</ul>
+      ${cur&&m.tip?`<div class="mp-tip">${m.tip}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderGloTab(){
+  document.getElementById('mp-body').innerHTML=GLOSARIO.map(g=>`
+    <div class="glos-item">
+      <div class="glos-term">${g.term}</div>
+      <div class="glos-def">${g.def}</div>
+    </div>`).join('');
+}
+
+function renderRskTab(){
+  document.getElementById('mp-body').innerHTML=`
+    <div style="font-size:9px;color:#e05050;margin-bottom:8px;font-weight:700;">⚠ Reglas de gestión de riesgo — léelas antes de operar con dinero real</div>
+    ${RISK_RULES.map(r=>`<div class="risk-item">
+      <div class="risk-rule">📌 ${r.rule}</div>
+      <div class="risk-why">${r.why}</div>
+    </div>`).join('')}`;
+}
+
+// Chat
+const TRADING_FAQ=[
+  {q:'stop loss',a:'El stop-loss es una orden que vende automáticamente tu posición si el precio baja a un nivel que vos elegís. Limita tu pérdida máxima por operación. Siempre colocalo.'},
+  {q:'rsi',a:'El RSI (Índice de Fuerza Relativa) mide la velocidad de los cambios de precio. RSI < 30 = sobrevendido (posible rebote). RSI > 70 = sobrecomprado (posible corrección). Es una señal de contexto, no una garantía.'},
+  {q:'vela',a:'Una vela japonesa muestra apertura, máximo, mínimo y cierre en un período. Cuerpo verde = cerró más alto. Cuerpo rojo = cerró más bajo. La mecha = rango extremo del período.'},
+  {q:'sma',a:'La SMA (media móvil simple) suaviza el precio promediando los últimos N cierres. SMA20 (azul) = tendencia corta. SMA50 (naranja) = tendencia media. Precio por encima de la SMA = tendencia alcista.'},
+  {q:'diversif',a:'Diversificar es no poner todo en un solo activo. Reducís el riesgo: si BTC cae 20% pero tenés también acciones y otras criptos, el impacto en tu portfolio total es menor.'},
+  {q:'cripto',a:'Las criptomonedas son activos digitales de alta volatilidad. BTC y ETH son las más establecidas. Las altcoins (SOL, BNB, etc.) tienen más riesgo y más potencial de retorno.'},
+  {q:'acciones',a:'Las acciones son fracciones de propiedad de una empresa. Son menos volátiles que las criptos. AAPL y NVDA son tech, SPY es un ETF que sigue el índice S&P 500 (las 500 empresas más grandes de EE.UU.).'},
+  {q:'fomo',a:'FOMO (Fear Of Missing Out) = comprar porque el precio ya subió mucho y "no te querés perder la suba". Es el error más caro. Cuando todos hablan de que algo "solo puede subir", suele ser el techo.'},
+];
+
+function renderChatTab(){
+  if(!chatMsgs.length)chatMsgs=[{r:'bot',t:'Hola. Soy tu asistente de trading. Preguntame sobre candlesticks, RSI, stop-loss, estrategias o cómo interpretar el mercado.'}];
+  const chips=['¿Qué es un stop-loss?','¿Cómo leo el RSI?','¿Qué es diversificar?','Cripto vs acciones'];
+  document.getElementById('mp-body').innerHTML=`
+    <div class="chat-wrap">
+      <div class="chat-chips">${chips.map(c=>`<span class="chat-chip" onclick="chatQ(this)">${c}</span>`).join('')}</div>
+      <div class="chat-msgs" id="chat-msgs">${chatMsgs.map(m=>`<div class="chat-msg ${m.r}">${m.t}</div>`).join('')}</div>
+      <div class="chat-row">
+        <input class="chat-input" id="chat-inp" placeholder="Preguntá sobre trading..." onkeydown="if(event.key==='Enter')chatSend()">
+        <button class="chat-send" onclick="chatSend()">▶</button>
+      </div>
+    </div>`;
+  const el=document.getElementById('chat-msgs');if(el)el.scrollTop=el.scrollHeight;
+}
+function chatQ(el){const i=document.getElementById('chat-inp');if(i){i.value=el.textContent;chatSend();}}
+async function chatSend(){
+  const inp=document.getElementById('chat-inp');if(!inp)return;
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';
+  chatMsgs.push({r:'user',t:txt});chatMsgs.push({r:'bot typing',t:'...'});renderChatTab();
+  const lower=txt.toLowerCase();
+  const hit=TRADING_FAQ.find(f=>lower.includes(f.q));
+  if(hit){chatMsgs.pop();chatMsgs.push({r:'bot',t:hit.a});renderChatTab();return;}
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,program:'trading'})});
+    const data=await res.json();
+    chatMsgs.pop();chatMsgs.push({r:'bot',t:data.reply||'No pude responder.'});
+  }catch(e){chatMsgs.pop();chatMsgs.push({r:'bot',t:'Sin conexión. Probá las sugerencias.'});}
+  renderChatTab();
+}
+
+function setTab(t){
+  mpTab=t;['mis','glo','rsk','ast'].forEach(id=>document.getElementById('tab-'+id)?.classList.toggle('on',id===t));
+  renderMP();
+}
+function toggleMP(){
+  mpMinimized=!mpMinimized;
+  document.getElementById('mp').classList.toggle('min',mpMinimized);
+  document.getElementById('mp-tog').textContent=mpMinimized?'▲':'▼';
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+let fbT=null;
+function toast(msg,type='tip'){
+  const el=document.getElementById('fb');
+  el.textContent=msg;el.className='show '+(type==='err'?'err':type==='ok'?'ok':'tip');
+  clearTimeout(fbT);fbT=setTimeout(()=>{el.className='';},3500);
+}
+function flash(dir){
+  const f=document.getElementById('fl');
+  f.style.background=dir==='up'?'rgba(38,166,154,.08)':'rgba(239,83,80,.08)';
+  f.classList.add('on');setTimeout(()=>f.classList.remove('on'),280);
+}
+function xpPop(n,r){
+  if(!n)return;xpTotal+=n;
+  const el=document.getElementById('xpp');
+  el.textContent=`+${n} XP — ${r}`;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+  document.getElementById('hdr-xp').textContent=xpTotal+' XP';
+}
+
+// ══════════════════════════════════════════════
+// MAIN LOOP
+// ══════════════════════════════════════════════
+let tickCount=0;
+function tick(){
+  // advance candles for all assets
+  Object.keys(ASSETS).forEach(sym=>addCandle(sym));
+  tickCount++;
+  drawChart();
+  renderAssetBar();
+  if(portfolio.positions.length) renderPortfolio();
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+initAssets();
+renderAll();
+renderMP();
+drawChart();
+setInterval(tick, 2000); // new candle every 2 seconds
+window.addEventListener('resize',()=>drawChart());
+</script>
+</body>
+</html>
