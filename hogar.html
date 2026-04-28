@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hogar — NWLx</title>
+<style>
+:root{
+  --bg:#181614;--sur:#201e1b;--sur2:#272420;--sur3:#2e2b26;
+  --brd:#3a3630;--brd2:#4a4640;
+  --txt:#e0d8cc;--txt2:#a09080;--txt3:#706050;
+  --acc:#e8a030;--grn:#44bb66;--red:#cc4433;--blu:#4488cc;--yel:#ddcc00;
+  --mono:'Courier New',monospace;--ui:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;min-height:100vh;}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;height:38px;background:#100e0c;border-bottom:1px solid var(--brd);padding:0 12px;gap:8px;}
+.hdr-back{font-size:11px;color:var(--txt3);text-decoration:none;padding:3px 8px;border-radius:3px;border:1px solid var(--brd);transition:all .15s;white-space:nowrap;}
+.hdr-back:hover{color:var(--txt2);border-color:var(--brd2);}
+.hdr-logo{font-size:13px;font-weight:700;color:var(--txt3);}
+.hdr-logo span{color:var(--acc);}
+.hdr-sep{color:var(--brd2);font-size:12px;}
+.hdr-section{font-size:12px;font-weight:600;color:var(--txt2);}
+.hdr-bc{font-size:11px;color:var(--txt3);cursor:pointer;transition:color .12s;}
+.hdr-bc:hover{color:var(--txt2);}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.hdr-xp{font-size:11px;color:var(--acc);font-weight:700;font-family:var(--mono);}
+
+/* XP / FLASH */
+#xpp{position:fixed;top:50px;left:50%;transform:translateX(-50%) translateY(-8px);background:#120e00;border:1px solid var(--acc);border-radius:4px;padding:5px 16px;font-size:11px;color:var(--acc);opacity:0;transition:all .35s;z-index:500;pointer-events:none;}
+#xpp.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:400;opacity:0;transition:opacity .28s;background:rgba(232,160,48,.05);}
+.flash.on{opacity:1;}
+#fb{position:fixed;top:46px;left:50%;transform:translateX(-50%);padding:7px 18px;border-radius:5px;font-size:11px;opacity:0;transition:all .3s;z-index:600;pointer-events:none;text-align:center;max-width:85vw;border:1px solid;}
+#fb.show{opacity:1;}
+#fb.ok{background:#081a10;border-color:var(--grn);color:#88ee99;}
+#fb.err{background:#1a0808;border-color:var(--red);color:#ff9988;}
+#fb.tip{background:#12100a;border-color:var(--acc);color:#e0c080;}
+
+/* ── HUB VIEW ── */
+#view-hub{padding:20px 16px 40px;}
+.hub-hero{text-align:center;padding:24px 0 28px;}
+.hub-title{font-size:26px;font-weight:800;color:var(--txt);letter-spacing:-0.5px;margin-bottom:6px;}
+.hub-title span{color:var(--acc);}
+.hub-sub{font-size:13px;color:var(--txt3);max-width:500px;margin:0 auto;}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:860px;margin:0 auto;}
+.cat-card{background:var(--sur);border:1px solid var(--brd);border-radius:8px;padding:20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.cat-card:hover{border-color:var(--brd2);background:var(--sur2);transform:translateY(-2px);}
+.cat-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;border-radius:8px;}
+.cat-card:hover::before{opacity:1;}
+.cat-card[data-cat="plomeria"]{border-color:rgba(68,136,204,.3);}
+.cat-card[data-cat="plomeria"]:hover{border-color:rgba(68,136,204,.6);}
+.cat-card[data-cat="electricidad"]{border-color:rgba(255,204,0,.3);}
+.cat-card[data-cat="electricidad"]:hover{border-color:rgba(255,204,0,.6);}
+.cat-card[data-cat="carpinteria"]{border-color:rgba(180,120,60,.3);}
+.cat-card[data-cat="carpinteria"]:hover{border-color:rgba(180,120,60,.6);}
+.cat-icon{font-size:36px;margin-bottom:10px;display:block;}
+.cat-name{font-size:18px;font-weight:700;margin-bottom:6px;}
+.cat-desc{font-size:11px;color:var(--txt3);line-height:1.6;margin-bottom:12px;}
+.cat-count{display:flex;gap:6px;flex-wrap:wrap;}
+.cat-chip{font-size:8px;padding:2px 7px;border-radius:10px;border:1px solid;letter-spacing:.3px;}
+.cat-arrow{position:absolute;bottom:16px;right:16px;font-size:18px;opacity:.3;transition:all .2s;}
+.cat-card:hover .cat-arrow{opacity:.8;transform:translateX(3px);}
+
+/* ── SCENARIO LIST VIEW ── */
+#view-list{padding:16px;display:none;}
+.list-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.list-icon{font-size:22px;}
+.list-title{font-size:18px;font-weight:700;}
+.list-sub{font-size:11px;color:var(--txt3);margin-top:1px;}
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+.sc-card{background:var(--sur);border:1px solid var(--brd);border-radius:6px;padding:14px;cursor:pointer;transition:all .18s;}
+.sc-card:hover{border-color:var(--brd2);background:var(--sur2);}
+.sc-card-icon{font-size:22px;margin-bottom:8px;}
+.sc-card-title{font-size:12px;font-weight:700;margin-bottom:4px;}
+.sc-card-desc{font-size:9px;color:var(--txt3);line-height:1.5;margin-bottom:8px;}
+.sc-card-meta{display:flex;align-items:center;justify-content:space-between;}
+.sc-diff{font-size:8px;color:var(--txt3);}
+.sc-type{font-size:8px;padding:2px 6px;border-radius:3px;border:1px solid;}
+.sc-type.interactive{border-color:rgba(68,187,102,.4);color:#44bb66;}
+.sc-type.guided{border-color:rgba(68,136,204,.4);color:#4488cc;}
+
+/* ── SIMULATOR VIEW ── */
+#view-sim{display:none;padding-bottom:250px;}
+.scene-wrap{position:relative;overflow:hidden;background:#1a1714;border-bottom:2px solid var(--brd2);}
+#scene-svg{display:block;width:100%;max-height:300px;}
+#tool-cursor{position:fixed;top:0;left:0;pointer-events:none;z-index:700;font-size:22px;transform:translate(8px,8px);display:none;}
+
+/* BOTTOM */
+#bottom{position:fixed;bottom:0;left:0;right:0;background:#141210;border-top:2px solid var(--brd2);z-index:200;display:flex;flex-direction:column;max-height:255px;transition:max-height .3s;}
+#bottom.min{max-height:62px;}
+.inv{display:flex;align-items:center;gap:3px;padding:5px 8px;border-bottom:1px solid var(--brd);overflow-x:auto;flex-shrink:0;min-height:56px;}
+.inv-lbl{font-size:8px;color:var(--txt3);letter-spacing:1px;white-space:nowrap;margin-right:6px;text-transform:uppercase;}
+.inv-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 7px;border-radius:4px;cursor:pointer;border:1px solid var(--brd);background:transparent;transition:all .15s;min-width:50px;flex-shrink:0;}
+.inv-item:hover{border-color:var(--brd2);background:var(--sur3);}
+.inv-item.sel{border-color:var(--acc);background:rgba(232,160,48,.13);box-shadow:0 0 0 1px var(--acc);}
+.inv-icon{font-size:20px;line-height:1;}
+.inv-name{font-size:7px;color:var(--txt3);text-align:center;line-height:1.2;}
+.inv-item.sel .inv-name{color:var(--acc);}
+.inv-deselect{padding:4px 8px;font-size:9px;color:var(--txt3);border:1px solid var(--brd);border-radius:3px;cursor:pointer;flex-shrink:0;transition:all .12s;}
+.inv-deselect:hover{color:var(--txt2);}
+
+/* MISSION PANEL */
+.mp{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.mp-head{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--sur2);border-bottom:1px solid var(--brd);cursor:pointer;flex-shrink:0;}
+.mp-ico{font-size:13px;}
+.mp-title{font-size:11px;font-weight:700;color:#fff;flex:1;}
+.mp-xp{font-size:10px;color:var(--acc);font-weight:700;}
+.mp-tog{font-size:10px;color:var(--txt3);}
+.mp-tabs{display:flex;border-bottom:1px solid var(--brd);flex-shrink:0;}
+.mp-tab{flex:1;padding:4px;text-align:center;cursor:pointer;font-size:9px;letter-spacing:.5px;color:var(--txt3);border-bottom:2px solid transparent;transition:all .15s;}
+.mp-tab.on{color:#fff;border-bottom-color:var(--acc);}
+.mp-body{flex:1;overflow-y:auto;padding:8px 12px;font-size:9px;line-height:1.5;}
+.mp-obj{color:var(--txt2);margin-bottom:6px;line-height:1.5;}
+.mp-steps{list-style:none;margin-bottom:8px;}
+.mp-step{display:flex;gap:6px;padding:3px 0;color:var(--txt3);}
+.mp-step.cur{color:#fff;}
+.mp-step.done{color:var(--grn);text-decoration:line-through;}
+.mp-step-ic{flex-shrink:0;width:12px;}
+.mp-tip{font-size:8px;color:#7090a8;border-left:2px solid #3a5060;padding:4px 8px;margin-bottom:6px;line-height:1.5;font-style:italic;}
+.mp-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.mp-btn{padding:4px 10px;border-radius:3px;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid;transition:all .15s;text-transform:uppercase;}
+.mp-btn.ok{border-color:var(--grn);color:var(--grn);background:rgba(68,187,102,.08);}
+.mp-btn.ok:hover{background:var(--grn);color:#000;}
+.mp-btn.skip{border-color:#333;color:var(--txt3);}
+.mp-btn.hint{border-color:#554400;color:#aa9900;background:rgba(160,130,0,.07);animation:hintBlink 1.4s ease-in-out infinite;}
+.mp-prog{border-top:1px solid var(--brd);padding:3px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.mp-bar{flex:1;height:2px;background:#201c18;border-radius:2px;overflow:hidden;}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--acc),#ffcc66);transition:width .5s;}
+.mp-pt{font-size:8px;color:var(--txt3);}
+
+.crisis-item{background:var(--sur2);border:1px solid var(--brd);border-radius:3px;padding:8px;margin-bottom:6px;}
+.crisis-q{font-size:9px;font-weight:700;color:#cc8833;margin-bottom:3px;}
+.crisis-a{font-size:8px;color:var(--txt2);line-height:1.5;margin-bottom:3px;}
+.crisis-steps{list-style:none;padding-left:6px;}
+.crisis-steps li{font-size:8px;color:var(--txt3);padding:1px 0;}
+.crisis-steps li::before{content:'→ ';}
+.tip-item{border-left:2px solid var(--acc);padding:5px 8px;margin-bottom:5px;}
+.tip-tag{font-size:8px;font-weight:700;letter-spacing:1px;margin-bottom:2px;}
+.tip-txt{font-size:8px;color:var(--txt2);line-height:1.5;}
+
+/* GUIDED STEP VIEW */
+.guided-wrap{padding:8px 12px;}
+.g-step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd);}
+.g-step:last-child{border-bottom:none;}
+.g-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;border:1px solid;}
+.g-num.done{background:rgba(68,187,102,.2);border-color:var(--grn);color:var(--grn);}
+.g-num.cur{background:rgba(232,160,48,.2);border-color:var(--acc);color:var(--acc);}
+.g-num.todo{background:transparent;border-color:var(--brd2);color:var(--txt3);}
+.g-content{flex:1;}
+.g-title{font-size:10px;font-weight:600;color:var(--txt);margin-bottom:3px;}
+.g-title.done{color:var(--grn);}
+.g-title.todo{color:var(--txt3);}
+.g-desc{font-size:8px;color:var(--txt3);line-height:1.5;}
+.g-desc.cur{color:var(--txt2);}
+.g-warn{font-size:8px;color:var(--red);margin-top:3px;font-weight:600;}
+.g-action{margin-top:6px;}
+.g-btn{padding:4px 12px;border-radius:3px;cursor:pointer;font-size:9px;border:1px solid var(--acc);color:var(--acc);background:rgba(232,160,48,.08);transition:all .15s;font-family:var(--mono);}
+.g-btn:hover{background:rgba(232,160,48,.18);}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:145px;}
+.chat-chips{display:flex;flex-wrap:wrap;gap:3px;padding:4px 8px;}
+.chat-chip{padding:2px 7px;border-radius:10px;font-size:8px;cursor:pointer;border:1px solid var(--brd);color:var(--txt3);transition:all .12s;}
+.chat-chip:hover{border-color:var(--acc);color:var(--acc);}
+.chat-msgs{flex:1;overflow-y:auto;padding:4px 8px;display:flex;flex-direction:column;gap:3px;}
+.chat-msg{max-width:90%;padding:4px 7px;border-radius:4px;font-size:9px;line-height:1.5;word-break:break-word;}
+.chat-msg.bot{background:#1a1e28;color:#a0b8d0;align-self:flex-start;border:1px solid #253040;}
+.chat-msg.user{background:#1e1a10;color:#c0a860;align-self:flex-end;border:1px solid #352808;}
+.chat-msg.typing{color:#5a7888;font-style:italic;}
+.chat-row{display:flex;gap:4px;padding:4px 8px;border-top:1px solid var(--brd);}
+.chat-input{flex:1;background:#111;border:1px solid var(--brd);border-radius:3px;color:var(--txt);font-size:9px;padding:3px 6px;font-family:var(--ui);outline:none;}
+.chat-input:focus{border-color:var(--acc);}
+.chat-send{padding:3px 9px;border-radius:3px;cursor:pointer;font-size:9px;font-weight:700;background:rgba(232,160,48,.12);border:1px solid #4a3010;color:var(--acc);transition:all .15s;}
+.chat-send:hover{background:rgba(232,160,48,.22);}
+
+@keyframes drip{0%{transform:translateY(0) scaleY(.5);opacity:0;}15%{opacity:1;transform:translateY(2px) scaleY(1);}80%{opacity:.9;}100%{transform:translateY(40px) scaleY(1.4);opacity:0;}}
+@keyframes drip2{0%,40%{opacity:0;}55%{opacity:1;}100%{transform:translateY(34px);opacity:0;}}
+@keyframes spark{0%{opacity:0;transform:scale(.5);}50%{opacity:1;transform:scale(1.2);}100%{opacity:0;transform:scale(.8) translateY(-12px);}}
+@keyframes hintBlink{0%,100%{box-shadow:0 0 0 0 rgba(255,200,0,.9);}50%{box-shadow:0 0 0 8px rgba(255,200,0,0);}}
+.drip-1{animation:drip 1.6s ease-in infinite;}
+.drip-2{animation:drip2 1.6s ease-in infinite;}
+.clickzone{cursor:pointer;fill:transparent;}
+.clickzone:hover{fill:rgba(232,160,48,.10);}
+.hint-pulse{animation:hintBlink .8s ease-in-out 5 !important;outline:2px solid rgba(255,200,0,.8) !important;z-index:10;position:relative;}
+</style>
+</head>
+<body>
+
+<div id="xpp"></div>
+<div class="flash" id="fl"></div>
+<div id="fb"></div>
+<div id="tool-cursor"></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <a href="index.html" class="hdr-back">← NWLx</a>
+  <span class="hdr-logo">NWL<span>x</span></span>
+  <span class="hdr-sep">/</span>
+  <span class="hdr-section" id="hdr-section">Hogar</span>
+  <span class="hdr-sep" id="hdr-sep2" style="display:none">/</span>
+  <span class="hdr-bc" id="hdr-cat-bc" style="display:none" onclick="showList()"></span>
+  <div class="hdr-r">
+    <span class="hdr-xp" id="hdr-xp">0 XP</span>
+  </div>
+</div>
+
+<!-- ══ HUB VIEW ══ -->
+<div id="view-hub">
+  <div class="hub-hero">
+    <div class="hub-title">SkillForge <span>Hogar</span></div>
+    <div class="hub-sub">Aprendé a resolver los problemas más comunes del hogar. Simulaciones interactivas — elegís herramientas, tomás decisiones, aprendés haciendo.</div>
+  </div>
+  <div class="cat-grid">
+    <div class="cat-card" data-cat="plomeria" onclick="showList('plomeria')">
+      <span class="cat-icon">🚰</span>
+      <div class="cat-name" style="color:#4488cc">Plomería</div>
+      <div class="cat-desc">Canillas, inodoros, desagües, pérdidas de agua y emergencias. El 70% de los problemas de plomería los podés resolver sin llamar a nadie.</div>
+      <div class="cat-count">
+        <span class="cat-chip" style="color:#4488cc;border-color:rgba(68,136,204,.4)">5 escenarios</span>
+        <span class="cat-chip" style="color:#4488cc;border-color:rgba(68,136,204,.3)">Interactivo</span>
+      </div>
+      <span class="cat-arrow">→</span>
+    </div>
+    <div class="cat-card" data-cat="electricidad" onclick="showList('electricidad')">
+      <span class="cat-icon">⚡</span>
+      <div class="cat-name" style="color:#ddcc00">Electricidad</div>
+      <div class="cat-desc">Tablero de llaves, tomacorrientes, interruptores y lámparas. Sabés cuándo podés tocarlo y cuándo no — esa diferencia vale mucho.</div>
+      <div class="cat-count">
+        <span class="cat-chip" style="color:#ddcc00;border-color:rgba(221,204,0,.4)">4 escenarios</span>
+        <span class="cat-chip" style="color:#ddcc00;border-color:rgba(221,204,0,.3)">Seguridad</span>
+      </div>
+      <span class="cat-arrow">→</span>
+    </div>
+    <div class="cat-card" data-cat="carpinteria" onclick="showList('carpinteria')">
+      <span class="cat-icon">🔨</span>
+      <div class="cat-name" style="color:#cc8844">Carpintería</div>
+      <div class="cat-desc">Estantes, agujeros en la pared, puertas y muebles. Pequeñas reparaciones que hacen la diferencia en cualquier espacio.</div>
+      <div class="cat-count">
+        <span class="cat-chip" style="color:#cc8844;border-color:rgba(204,136,68,.4)">3 escenarios</span>
+        <span class="cat-chip" style="color:#cc8844;border-color:rgba(204,136,68,.3)">Paso a paso</span>
+      </div>
+      <span class="cat-arrow">→</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LIST VIEW ══ -->
+<div id="view-list">
+  <div class="list-header">
+    <span class="list-icon" id="list-icon">🚰</span>
+    <div>
+      <div class="list-title" id="list-title">Plomería</div>
+      <div class="list-sub">Elegí un escenario para empezar</div>
+    </div>
+  </div>
+  <div class="sc-grid" id="sc-grid"></div>
+</div>
+
+<!-- ══ SIM VIEW ══ -->
+<div id="view-sim">
+  <div class="scene-wrap">
+    <svg id="scene-svg" viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+</div>
+
+<!-- BOTTOM PANEL (shown only in sim view) -->
+<div id="bottom" style="display:none">
+  <div class="inv" id="inv-bar"><span class="inv-lbl">🧰 Herramientas</span></div>
+  <div class="mp">
+    <div class="mp-head" onclick="toggleMP()">
+      <span class="mp-ico" id="mp-ico">🔧</span>
+      <span class="mp-title" id="mp-t">—</span>
+      <span class="mp-xp" id="mp-xp2">0 XP</span>
+      <span class="mp-tog" id="mp-tog">▼</span>
+    </div>
+    <div class="mp-tabs">
+      <div class="mp-tab on" id="tab-mis" onclick="setTab('mis')">MISIÓN</div>
+      <div class="mp-tab" id="tab-cri" onclick="setTab('cri')">🚨 CRISIS</div>
+      <div class="mp-tab" id="tab-tip" onclick="setTab('tip')">💡 TIPS</div>
+      <div class="mp-tab" id="tab-ast" onclick="setTab('ast')">🤖 CHAT</div>
+    </div>
+    <div class="mp-body" id="mp-body"></div>
+    <div class="mp-prog">
+      <div class="mp-bar"><div class="mp-fill" id="mp-fill" style="width:0%"></div></div>
+      <div class="mp-pt" id="mp-pt">0/0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+// CATEGORIES & SCENARIOS
+// ══════════════════════════════════
+const CATS = {
+  plomeria:{name:'Plomería',icon:'🚰',color:'#4488cc'},
+  electricidad:{name:'Electricidad',icon:'⚡',color:'#ddcc00'},
+  carpinteria:{name:'Carpintería',icon:'🔨',color:'#cc8844'},
+};
+
+const SCENARIOS = {
+  plomeria:[
+    {id:'canilla',icon:'💧',title:'Canilla que gotea',diff:'⭐',type:'interactive',
+     desc:'La más común. Reemplazá la arandela interna y terminá con el goteo para siempre.',
+     tools:[{id:'llave',icon:'🔧',name:'Llave inglesa'},{id:'dest',icon:'🪛',name:'Destornillador'},{id:'destPlano',icon:'🪛',name:'Dest. plano'},{id:'arandela',icon:'⭕',name:'Arandela nueva'}],
+     steps:[
+       {txt:'Cerrá la llave de paso',tool:'llave',target:'valve',tip:'Siempre cortá el agua antes de trabajar. La llave de paso está bajo el mueble en la cañería. Horario = cerrar.',wrongTool:'Necesitás la llave inglesa para girar la llave de paso.',wrongTarget:'La llave de paso está abajo del lavabo, en la cañería.'},
+       {txt:'Abrí la canilla para liberar presión',tool:null,target:'handle',tip:'Al abrir la canilla después de cortar el agua, la presión residual en la cañería se libera y el agua que quedaba sale. Así trabajás sin salpicaduras.',wrongTarget:'Abrí la canilla para eliminar la presión residual.'},
+       {txt:'Desmontá el mango',tool:'dest',target:'handle',tip:'La mayoría tiene una tapa plástica que esconde el tornillo. Levantala con el destornillador, después desatornillá el tornillo interno.',wrongTool:'Necesitás un destornillador para quitar el tornillo del mango.',wrongTarget:'Hacé clic en el mango de la canilla.'},
+       {txt:'Extraé el cartucho/vástago',tool:null,target:'stem',tip:'El cartucho controla el flujo. En canillas viejas es un vástago con arandela de goma. En modernas, un cartucho cerámico.',wrongTarget:'Hacé clic en el cartucho expuesto para extraerlo.'},
+       {txt:'Sacá la arandela vieja',tool:'destPlano',target:'washer',tip:'La arandela de goma sella el asiento. Con el tiempo se endurece y agrieta — eso genera el goteo. Llevá la vieja a la ferretería como muestra.',wrongTool:'Usá el destornillador plano para sacar la arandela.',wrongTarget:'Hacé clic en la arandela vieja del cartucho.'},
+       {txt:'Colocá la arandela nueva',tool:'arandela',target:'stem',tip:'Tiene que ser del mismo diámetro. Las arandelas salen menos de $500 en cualquier ferretería.',wrongTool:'Seleccioná la arandela nueva e instalala en el cartucho.',wrongTarget:'Hacé clic en el cartucho para instalar la arandela.'},
+       {txt:'Armá todo y abrí el agua',tool:'llave',target:'valve',tip:'Orden: cartucho → tuerca → mango → tornillo → tapa. Abrí lentamente y verificá que no haya goteo ni pérdida alrededor del cuerpo.',wrongTool:'Usá la llave inglesa para abrir la llave de paso.',wrongTarget:'Abrí la llave de paso para probar.'},
+     ]},
+    {id:'inodoro',icon:'🚽',title:'Inodoro que no para',diff:'⭐⭐',type:'interactive',
+     desc:'La mochila sigue llenando o el agua corre sin parar. El flotante o la válvula de descarga están gastados.',
+     tools:[{id:'llave',icon:'🔧',name:'Llave inglesa'},{id:'mano',icon:'✋',name:'Ajuste a mano'},{id:'flotante',icon:'🔵',name:'Flotante nuevo'},{id:'valvula',icon:'⚙️',name:'Válvula nueva'}],
+     steps:[
+       {txt:'Levantá la tapa de la mochila',tool:'mano',target:'lid',tip:'La tapa de cerámica es pesada pero frágil. Apoyala en el piso sobre una tela para no romperla.',wrongTool:'Levantá la tapa de la mochila a mano.',wrongTarget:'Hacé clic en la tapa de la mochila para abrirla.'},
+       {txt:'Identificá el problema',tool:'mano',target:'interior',tip:'Si el nivel de agua está muy alto y rebosa hacia el sifón → el flotante está alto. Si el agua cae a la taza aunque el nivel sea normal → la válvula de descarga tiene sarro o está gastada.',wrongTool:'Mirá el interior de la mochila para diagnosticar.',wrongTarget:'Hacé clic en el interior de la mochila para inspeccionarlo.'},
+       {txt:'Cerrá la llave de paso del inodoro',tool:'llave',target:'wc-valve',tip:'La llave de paso del inodoro está generalmente a la izquierda, en la pared o en el piso cerca del inodoro. Si no tiene, cerrá la llave general.',wrongTool:'Usá la llave inglesa para cerrar la llave de paso.',wrongTarget:'La llave de paso está cerca del pie del inodoro.'},
+       {txt:'Descargá para vaciar la mochila',tool:'mano',target:'button',tip:'Tirá la cadena o apretá el botón para vaciar el agua de la mochila. Así podés trabajar en seco.',wrongTool:'Accioná el mecanismo de descarga a mano.',wrongTarget:'Apretá el botón o tirá la cadena para vaciar.'},
+       {txt:'Reemplazá la válvula/flotante',tool:sel==='flotante'?'flotante':'valvula',target:'mechanism',tip:'Flotante de boya: regulá la altura con la varilla (baja = menos agua). Flotante de válvula: reemplazá la unidad completa si está desgastada. Válvula de descarga: limpiala de sarro o reemplazala.',wrongTool:'Seleccioná la pieza correcta del inventario para reemplazar.',wrongTarget:'Hacé clic en el mecanismo interno para reemplazarlo.'},
+       {txt:'Abrí el agua y verificá',tool:'llave',target:'wc-valve',tip:'El nivel debe quedar 2-3 cm por debajo del tubo de rebose (el caño largo interno). Si sube más: ajustá el flotante hacia abajo.',wrongTool:'Usá la llave inglesa para abrir el agua.',wrongTarget:'Abrí la llave de paso del inodoro.'},
+     ]},
+    {id:'desague',icon:'🪠',title:'Desagüe tapado',diff:'⭐',type:'interactive',
+     desc:'El agua del lavabo o la ducha no baja. Solución sin químicos agresivos.',
+     tools:[{id:'ventosa',icon:'🪠',name:'Destapador'},{id:'llave_s',icon:'🔧',name:'Llave sifón'},{id:'caliente',icon:'♨️',name:'Agua caliente'},{id:'trapo',icon:'🧻',name:'Trapo'}],
+     steps:[
+       {txt:'Probá con agua muy caliente primero',tool:'caliente',target:'basin',tip:'40% de tapones son grasa. Agua hirviendo + detergente la disuelve. Siempre empezá por lo más simple.',wrongTool:'Vertí agua muy caliente en el desagüe.',wrongTarget:'Aplicá el agua caliente en el desagüe del lavabo.'},
+       {txt:'Usá el destapador con movimientos firmes',tool:'ventosa',target:'drain',tip:'El destapador crea presión/vacío alternado. Tapá el rebosadero con el trapo para maximizar la presión sobre el tapón.',wrongTool:'Usá el destapador ventosa en el desagüe.',wrongTarget:'Usá el destapador en el orificio del desagüe.'},
+       {txt:'Poné el trapo bajo el sifón (balde)',tool:'trapo',target:'underbucket',tip:'El sifón siempre tiene agua — es el sello hidráulico que bloquea los gases de la cañería. Al abrirlo, cae.',wrongTool:'Colocá el trapo o balde bajo el sifón.',wrongTarget:'Poné el trapo bajo el sifón para recoger el agua.'},
+       {txt:'Abrí el sifón',tool:'llave_s',target:'sifon',tip:'En PVC podés abrirlo a mano. En metal usás la llave. Antihorario para abrir.',wrongTool:'Usá la llave para abrir el sifón.',wrongTarget:'Hacé clic en el sifón para abrirlo.'},
+       {txt:'Limpiá y volvé a armarlo',tool:null,target:'sifon',tip:'Limpiá bien. Al armar: mano + cuarto de vuelta de llave. No más — el PVC se puede craquear.',wrongTarget:'Hacé clic para armar y probar el desagüe.'},
+     ]},
+    {id:'perdida',icon:'💦',title:'Pérdida bajo el lavabo',diff:'⭐',type:'guided',
+     desc:'Agua en el piso del mueble. Generalmente es la manguera flexible o una unión del sifón.',
+     steps:[
+       {txt:'Secá todo y buscá exactamente de dónde sale',warn:null,desc:'Poné papel de cocina en todos los puntos y abrí el agua. El papel mojado te dice el origen exacto. Los tres lugares más comunes: manguera flexible, rosca del sifón, empalme con la pared.'},
+       {txt:'Cerrá el agua antes de tocar algo',warn:'⚠ Nunca toques uniones con agua a presión',desc:'Llave de paso bajo el mueble (horario = cerrar). Verificá que no sale agua de ninguna unión antes de trabajar.'},
+       {txt:'Manguera flexible (la más común)',warn:null,desc:'La manguera trenzada que va de la llave de paso a la canilla. Si está hinchada, oxidada o tiene humedad: reemplazala completa. Vale $3000 y se cambia en 5 min. Siempre llevá la vieja de muestra al ferretería.'},
+       {txt:'Rosca del sifón',warn:null,desc:'Destornillá, limpiá la rosca, enrollá cinta teflon (3 vueltas en sentido de la rosca) y volvé a armar. Si el sello de goma está aplastado: reemplazalo.'},
+       {txt:'Probá con agua lenta, después con presión normal',warn:null,desc:'Abrí el agua muy despacio primero. Mirá cada unión durante 30 segundos. Después abrí a presión normal. Si no hay pérdida en 5 min: listo.'},
+     ]},
+    {id:'emergencia_agua',icon:'🆘',title:'Cortar el agua: emergencia',diff:'⭐',type:'guided',
+     steps:[
+       {txt:'Llave de paso individual',warn:null,desc:'Cada canilla/inodoro tiene su propia llave de paso. Está en la cañería, debajo del mueble o detrás del inodoro. Girá en sentido horario hasta que no gire más.'},
+       {txt:'Llave general de la casa/depto',warn:null,desc:'Corta el agua de toda la unidad. Generalmente en el baño, lavadero o entrada. Puede ser palanca (90° = cerrado) o esfera (varias vueltas horario).'},
+       {txt:'Medidor en la vereda / sala de medidores',warn:null,desc:'Para emergencias mayores o si las llaves internas no funcionan. En casas: tapa en la vereda con llave especial (o llave inglesa grande). En edificios: sala de medidores en planta baja.'},
+       {txt:'Con el agua cortada, identificá la causa',warn:'⚠ No abras el agua hasta saber de dónde venía la pérdida',desc:'Revisá tuberías visibles, uniones, electrodomésticos conectados al agua (lavarropas, termotanque, lavavajillas). Si no lo encontrás: llamá a un plomero con el agua cortada.'},
+       {txt:'Llamá si necesitás',warn:null,desc:'Plomero de emergencia 24h para: pérdidas en paredes, caños rotos, inundación. Tenés tiempo para elegir bien — el agua ya está cortada.'},
+     ]},
+  ],
+  electricidad:[
+    {id:'tablero',icon:'⚡',title:'Cortocircuito: resetear el tablero',diff:'⭐',type:'interactive',
+     desc:'Se fue la luz en parte de la casa. Identificá la llave disparada y restablecé el circuito correctamente.',
+     tools:[{id:'linterna',icon:'🔦',name:'Linterna'},{id:'tester',icon:'🖊️',name:'Tester/probador'}],
+     steps:[
+       {txt:'Identificá qué zona quedó sin luz',tool:'linterna',target:'house',tip:'Antes de ir al tablero: verificá si la zona afectada tiene luz o no. Esto te dice qué circuito buscar. El tablero tiene etiquetas por zona (cocina, baño, dormitorio).',wrongTool:'Usá la linterna para ver qué zonas tienen luz.',wrongTarget:'Identificá las zonas sin luz con la linterna.'},
+       {txt:'Encontrá la llave disparada en el tablero',tool:'linterna',target:'panel',tip:'Una llave disparada queda en posición intermedia (ni ON ni OFF) o visiblemente diferente. En tableros modernos tiene un indicador naranja/rojo.',wrongTool:'Iluminá el tablero para encontrar la llave disparada.',wrongTarget:'Hacé clic en el tablero para inspeccionarlo.'},
+       {txt:'Desenchufá los equipos de ese circuito',tool:null,target:'unplug',tip:'Antes de resetear: desenchufá todo en esa zona (especialmente el equipo que pudo haber causado el disparo). Nunca resetees con cargas enchufadas — volvería a disparar o podría haber un cortocircuito activo.',wrongTarget:'Desenchufá los equipos de la zona sin luz.'},
+       {txt:'Llevá la llave a OFF y después a ON',tool:null,target:'breaker',tip:'NUNCA vayas directo de la posición intermedia a ON. Primero llevala a OFF completamente, después a ON. Si vuelve a disparar inmediatamente: hay un problema en el circuito, llamá a un electricista.',wrongTarget:'Hacé clic en la llave disparada para resetearla.'},
+       {txt:'Verificá con el tester si volvió la tensión',tool:'tester',target:'outlet',tip:'Un tester de continuidad o el indicador de una lámpara te confirman que el circuito está energizado. Si la llave aguanta pero no hay tensión en los tomacorrientes: puede haber un cable suelto.',wrongTool:'Usá el tester para verificar que volvió la tensión.',wrongTarget:'Verificá la tensión en un tomacorriente del circuito.'},
+     ]},
+    {id:'tomacorriente',icon:'🔌',title:'Cambiar un tomacorriente',diff:'⭐⭐',type:'interactive',
+     desc:'Un tomacorriente flojo, quemado o roto. La regla de oro: PRIMERO cortás la luz, DESPUÉS lo tocás.',
+     tools:[{id:'tester',icon:'🖊️',name:'Tester/probador'},{id:'dest',icon:'🪛',name:'Destornillador'},{id:'destPlano',icon:'🪛',name:'Dest. plano'},{id:'tomacte',icon:'🔌',name:'Tomacorriente nuevo'}],
+     steps:[
+       {txt:'CORTÁ LA LUZ EN EL TABLERO',tool:null,target:'main_off',tip:'Esto no es negociable. Bajá la llave del circuito correspondiente (o la general si no sabés cuál es). Trabajar con 220V puede matarte.',wrongTarget:'Cortá la llave del circuito en el tablero ANTES de hacer cualquier otra cosa.'},
+       {txt:'Verificá con el tester que no hay tensión',tool:'tester',target:'outlet_test',tip:'Aunque hayas bajado la llave, verificá siempre. El tester de tensión hace contacto con el tomacorriente y te indica si hay corriente. Verde = sin tensión = seguro.',wrongTool:'Usá el tester para confirmar que no hay tensión.',wrongTarget:'Apoyá el tester en el tomacorriente para verificar.'},
+       {txt:'Sacá la tapa y destornillá el tomacorriente',tool:'dest',target:'plate',tip:'La tapa va con 1-2 tornillos Phillips. El tomacorriente va con 2 tornillos en la caja de carga.',wrongTool:'Usá el destornillador Phillips para sacar la tapa.',wrongTarget:'Hacé clic en la tapa del tomacorriente para quitarla.'},
+       {txt:'Anotá o fotografiá cómo están los cables',tool:null,target:'cables_photo',tip:'Antes de desconectar: fotografiá el cableado. En Argentina: marrón/negro = fase (L), celeste/azul = neutro (N), verde-amarillo = tierra (T). Nunca mezcles fase y neutro.',wrongTarget:'Fotografiá el cableado antes de desconectar.'},
+       {txt:'Conectá los cables al nuevo tomacorriente',tool:'destPlano',target:'new_connect',tip:'Fase (L) al terminal L, neutro (N) al terminal N, tierra al terminal de tierra (si hay). Apretá bien los tornillos de los terminales — una conexión floja genera calor y puede incendiarse.',wrongTool:'Usá el destornillador plano para apretar los terminales.',wrongTarget:'Conectá los cables al tomacorriente nuevo.'},
+       {txt:'Armá, restablecé la llave y probá',tool:'tester',target:'test_final',tip:'Atornillá el tomacorriente a la caja, poné la tapa. Después volvé al tablero y subí la llave. Verificá con el tester o enchufando una lámpara.',wrongTool:'Usá el tester para confirmar que funciona.',wrongTarget:'Verificá el funcionamiento del tomacorriente nuevo.'},
+     ]},
+    {id:'interruptor',icon:'💡',title:'Cambiar una llave de luz',diff:'⭐⭐',type:'guided',
+     steps:[
+       {txt:'CORTÁ LA LUZ DEL CIRCUITO EN EL TABLERO',warn:'⚠ 220V puede matarte. Sin excepciones.',desc:'Bajá la llave del circuito de iluminación. Verificá que la luz no enciende. Después verificá con tester que no hay tensión en el interruptor.'},
+       {txt:'Verificá ausencia de tensión',warn:'⚠ Aunque bajaste la llave: verificá siempre',desc:'El tester de tensión no hace contacto — sólo se acerca al cable y beeps/prende si hay corriente. Una inversión de $3000 que puede salvar tu vida.'},
+       {txt:'Sacá la tapa y el interruptor',warn:null,desc:'1-2 tornillos en la tapa. Después 2 tornillos en la caja de carga. El interruptor sale con los cables conectados. Fotografiá antes de desconectar.'},
+       {txt:'Conectá el nuevo interruptor',warn:null,desc:'Los interruptores simples tienen dos cables: fase y neutro (o fase en entrada y fase en salida). El orden no importa en un interruptor simple de dos cables — pero siempre los dos al mismo color si tenés opciones.'},
+       {txt:'Restablecé y probá',warn:null,desc:'Armá la caja, poné la tapa, volvé al tablero y subí la llave. Probá el interruptor. Si la luz no enciende con luz nueva: revisá la conexión o el cable de la lámpara.'},
+     ]},
+    {id:'lampara',icon:'💡',title:'Lámpara que no enciende',diff:'⭐',type:'guided',
+     steps:[
+       {txt:'Diagnóstico rápido primero',warn:null,desc:'Antes de tocar nada: probá la lámpara en otro enchufe/portalámparas. Si enciende: el problema es el circuito. Si no enciende: la lámpara está quemada. El 80% de los casos son lámparas quemadas.'},
+       {txt:'Verificar el fusible/llave del circuito',warn:null,desc:'Si otras lámparas del mismo circuito no encienden: revisá el tablero. Si hay una llave disparada: resetear siguiendo el escenario de cortocircuito.'},
+       {txt:'Verificar el portalámpara',warn:'⚠ Siempre cortá la luz antes de tocar el portalámpara',desc:'Con la luz cortada: revisá si hay carbonización, cables sueltos o el contacto central aplastado. El contacto aplastado se levanta con un destornillador plano (con la luz cortada, siempre).'},
+       {txt:'Revisar la conexión del interruptor',warn:'⚠ Cortá la luz en el tablero',desc:'Un interruptor con conexión floja puede encender a veces y otras no. Apretá los tornillos de los terminales. Si hay quemadura visible: reemplazá el interruptor.'},
+       {txt:'Si nada funciona: revisar el cable',warn:'⚠ Para esto necesitás un electricista',desc:'Cables en pared requieren conocimiento del recorrido, multímetro y experiencia. Si el problema es el cable y no el interruptor ni la lámpara: llamá a un electricista. No vale la pena el riesgo.'},
+     ]},
+  ],
+  carpinteria:[
+    {id:'estantes',icon:'📦',title:'Poner estantes',diff:'⭐',type:'guided',
+     steps:[
+       {txt:'Medí y marcá la posición de los agujeros',warn:null,desc:'Usá un nivel de burbuja para que quede horizontal. Para estantes: mínimo 2 tacos por soporte. Distancia entre soportes según peso esperado: hasta 5kg → 60cm, hasta 15kg → 40cm, más de 15kg → no más de 30cm.'},
+       {txt:'Identificá el material de la pared',warn:null,desc:'Pared de ladrillo/mampostería: taco de plástico + tornillo para piedra. Pared de yeso/durlock: taco mariposa o taco molly. Pared de hormigón: taladro con broca SDS + taco pesado.'},
+       {txt:'Perforá con la broca correcta',warn:'⚠ Antes de perforar: verificá que no hay cables o caños en esa pared',desc:'Mampostería: broca de percusión (punta de carburo). Durlock: broca de madera normal. Hormigón: broca SDS (martillo eléctrico). Profundidad del agujero = largo del taco + 5mm.'},
+       {txt:'Golpeá el taco y atornillá',warn:null,desc:'El taco debe entrar ajustado — si entra suelto, el agujero quedó grande: usá el taco del tamaño siguiente. Al atornillar: no ajustes completamente hasta que todos los tornillos estén colocados y el soporte esté nivelado.'},
+       {txt:'Verificá la nivelación y cargá con peso gradual',warn:null,desc:'Poné el nivel otra vez con el estante. Si los dos extremos no están iguales: aflojá el tornillo del lado que baja y ajustá con cuñas. Empezá con la mitad del peso máximo y verificá que no se mueva antes de cargar más.'},
+     ]},
+    {id:'agujero',icon:'🕳️',title:'Tapar agujero en la pared',diff:'⭐',type:'guided',
+     steps:[
+       {txt:'Identificá el tipo y tamaño del agujero',warn:null,desc:'Agujero de taco (< 1cm): masilla de relleno. Agujero de 1-4cm: enlucido o yeso París. Agujero grande (> 4cm): malla de refuerzo + yeso. Golpe de puerta o daño de mueble: requiere parche de durlock si la pared es de yeso.'},
+       {txt:'Limpiá el agujero',warn:null,desc:'Sacá todo el material suelto con una espátula o el mismo destornillador. El agujero tiene que estar limpio, sin polvo ni partes que se desprendan. En mampostería: mojá un poco antes de aplicar el relleno.'},
+       {txt:'Aplicá el relleno en capas',warn:null,desc:'No apliques todo de una vez. Primera capa: rellená hasta 3mm debajo de la superficie. Dejá secar (30-60 min). Segunda capa: hasta la superficie. Para agujeros profundos: tres capas. Cada capa necesita secar antes de la siguiente.'},
+       {txt:'Lijá cuando esté completamente seco',warn:null,desc:'Lija fina (grano 120-180). Movimientos circulares primero, después en línea recta. El objetivo es que la reparación quede al mismo nivel que el resto de la pared. Pasá la mano para sentir si hay escalón.'},
+       {txt:'Imprimá y pintá',warn:null,desc:'Siempre imprimá antes de pintar sobre el relleno (el relleno absorbe diferente a la pared y el color queda distinto). Una mano de imprimación, una mano de pintura al tono. Si el color no coincide: pintá toda la pared.'},
+     ]},
+    {id:'puerta',icon:'🚪',title:'Puerta que no cierra',diff:'⭐⭐',type:'guided',
+     steps:[
+       {txt:'Identificá por dónde roza o por qué no cierra',warn:null,desc:'Marcá con lápiz dónde roza la puerta. Tres causas comunes: 1) madera se hinchó por humedad, 2) bisagras flojas o torcidas, 3) marco desnivelado. Cada causa tiene solución diferente.'},
+       {txt:'Bisagras flojas (causa más común)',warn:null,desc:'Apretá los tornillos de todas las bisagras. Si los tornillos no agarran (el agujero quedó grande): sacalos, metá palillos de madera con pegamento en el agujero, dejá secar 2h, volvé a atornillar.'},
+       {txt:'Madera hinchada por humedad',warn:null,desc:'Si la puerta roza en verano/lluvia: es madera. Solución temporal: cepillo de carpintero o lija gruesa en la zona que roza. Solución definitiva: control de humedad + sellado con barniz o pintura en todo el marco.'},
+       {txt:'Bisagras torcidas',warn:null,desc:'Una bisagra torcida se ve cuando la puerta no queda paralela al marco. Aflojá los tornillos, corregí la posición de la bisagra con calzas de cartón (shims) y volvé a atornillar. Verificá nivelación con nivel de burbuja.'},
+       {txt:'El picaporte no engrana',warn:null,desc:'La lengüeta del picaporte no llega al agujero del marco: ajustá la chapa receptora (los 2-4 tornillos del metal en el marco). Si la diferencia es mucha: reacomodá la posición de la chapa limando el agujero del marco.'},
+     ]},
+  ],
+};
+
+const CRISIS = {
+  plomeria:[
+    {q:'Inundación: agua que no para',a:'Cortá la llave general inmediatamente.',steps:['Llave general en el baño/lavadero/entrada','Si no la encontrás: medidor en la vereda','Cortá antes de buscar la causa','Con el agua cortada: llamá al plomero']},
+    {q:'Olor a gas + humedad: puede ser pérdida de agua en cañería de gas',a:'Son sistemas distintos pero la urgencia es máxima.',steps:['Olor a gas: no toques interruptores, abrí ventanas, salí','Si es agua y humedecés una pared: llamá a un plomero','Pérdida en cañería embutida requiere un profesional siempre']},
+  ],
+  electricidad:[
+    {q:'Se disparó la llave y no aguanta',a:'Hay un cortocircuito activo o sobrecarga en el circuito.',steps:['No resetees más de 3 veces','Desenchufá todo de ese circuito','Si sigue disparando: hay un problema real, llamá electricista','Nunca "bloquees" una llave para que no se dispare']},
+    {q:'Olor a quemado desde un enchufe',a:'Conexión floja o sobrecarga generando calor.',steps:['Desenchufá inmediatamente todo de ese tomacorriente','Cortá la llave del circuito','No uses ese tomacorriente hasta revisarlo','Un electricista debe revisar: puede ser incendio en gestación']},
+  ],
+  carpinteria:[
+    {q:'El taco no agarra en la pared',a:'Agujero demasiado grande o material incorrecto.',steps:['Probá con el taco de tamaño siguiente','En mampostería blanda: usá taco de plástico + adhesivo de montaje','En durlock: taco mariposa o taco molly','Último recurso: cambiá la posición del agujero 5cm']},
+  ],
+};
+
+const TIPS = {
+  plomeria:[
+    {tag:'FERRETERÍA',txt:'Para cualquier pieza: llevá la vieja de muestra. Arandelas, O-rings, flotantes y sifones tienen decenas de medidas. El ferretero necesita ver la pieza para darte la correcta.',acc:'#4488cc'},
+    {tag:'CINTA TEFLON',txt:'Se enrolla en el sentido de la rosca (para que no se desenrolle al atornillar). 3-4 vueltas son suficientes. En uniones de agua fría: blanca. En gas (nunca hagas instalaciones de gas): amarilla.',acc:'#e8a030'},
+    {tag:'MANTENIMIENTO PREVENTIVO',txt:'Cada 6 meses: revisá que todas las llaves de paso giren libremente. Una llave que lleva años sin moverse se puede partir cuando más la necesitás. Un poco de vaselina en las roscas alarga su vida.',acc:'#44bb66'},
+  ],
+  electricidad:[
+    {tag:'REGLA DE ORO',txt:'Nunca trabajes con tensión. Siempre cortá la llave, siempre verificás con tester. Los accidentes eléctricos pasan en el "solo un segundo" y "esto no tiene tensión".',acc:'#ddcc00'},
+    {tag:'TESTER DE TENSIÓN',txt:'El tester sin contacto (de bolígrafo) es la herramienta más importante. No hace contacto — sólo se acerca. Indica si hay tensión con luz y sonido. Sale menos de $5000 y puede salvar tu vida.',acc:'#e8a030'},
+    {tag:'CABLES EN ARGENTINA',txt:'Marrón/Negro = fase (L) = peligroso. Celeste/Azul = neutro (N). Verde-Amarillo = tierra (T). En instalaciones viejas los colores pueden no ser estándar: siempre verificá con tester.',acc:'#cc4433'},
+  ],
+  carpinteria:[
+    {tag:'ENCONTRAR VIGAS',txt:'Para colgar objetos pesados: golpeá la pared con los nudillos. Sonido hueco = entre vigas. Sonido sólido = viga. Las vigas en casas van cada 40-60cm. Para certeza: usá un detector de vigas ($5000).',acc:'#cc8844'},
+    {tag:'DURLOCK VS MAMPOSTERÍA',txt:'Durlock (yeso cartón): suena hueco, se perfora fácil, no aguanta peso sin taco correcto. Mampostería (ladrillo): sólida, acepta tacos estándar, aguanta más peso. La diferencia cambia todo el proceso.',acc:'#e8a030'},
+  ],
+};
+
+const FAQ=[
+  {q:'arandela',a:'Disco de goma que sella el asiento de la canilla. Se deteriora con tiempo. Llevá la vieja a la ferretería para comprar la del mismo diámetro.'},
+  {q:'teflon',a:'Cinta blanca para roscas de agua. 3-4 vueltas en el sentido de la rosca evitan pérdidas en uniones roscadas.'},
+  {q:'taco',a:'Hay 3 tipos principales: plástico/fisher para mampostería, mariposa para durlock en cargas medianas, molly para durlock en cargas pesadas. El diámetro del agujero debe coincidir exactamente con el taco.'},
+  {q:'tablero',a:'El tablero tiene llaves termomagnéticas (TermiQ) que se disparan cuando hay sobrecarga o cortocircuito. Para resetear: primero a OFF completo, después a ON. Si vuelve a disparar: hay un problema activo.'},
+  {q:'sifón',a:'La curva en U bajo el lavabo. Retiene agua para hacer un sello hidráulico contra los gases. Se puede abrir a mano o con llave para limpiar tapones.'},
+  {q:'tester',a:'El tester sin contacto (bolígrafo) detecta tensión sin tocar el cable. Imprescindible para electricidad. El multímetro mide voltaje, corriente y continuidad. Para trabajos básicos alcanza el tester.'},
+  {q:'llave de paso',a:'Corta el agua en un tramo específico. Horario = cerrar, antihorario = abrir. Si no tiene, usá la llave general.'},
+  {q:'durlock',a:'Pared de yeso-cartón (placa de roca de yeso). No aguanta peso con tornillos directos — siempre usá tacos mariposa o molly. Para peso serio: anclá en la viga de metal del bastidor.'},
+];
+
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+let currentCat=null, currentSim=null, simStep=0, sel=null;
+let xpTotal=0, mpTab='mis', chatMsgs=[], mpMinimized=false;
+
+// ══════════════════════════════════
+// NAV
+// ══════════════════════════════════
+function showHub(){
+  currentCat=null; currentSim=null;
+  document.getElementById('view-hub').style.display='block';
+  document.getElementById('view-list').style.display='none';
+  document.getElementById('view-sim').style.display='none';
+  document.getElementById('bottom').style.display='none';
+  document.getElementById('hdr-sep2').style.display='none';
+  document.getElementById('hdr-cat-bc').style.display='none';
+  document.getElementById('hdr-section').textContent='Hogar';
+}
+
+function showList(cat){
+  currentCat=cat;
+  const c=CATS[cat];
+  document.getElementById('view-hub').style.display='none';
+  document.getElementById('view-list').style.display='block';
+  document.getElementById('view-sim').style.display='none';
+  document.getElementById('bottom').style.display='none';
+  document.getElementById('hdr-section').textContent='Hogar';
+  document.getElementById('hdr-sep2').style.display='inline';
+  document.getElementById('hdr-cat-bc').style.display='inline';
+  document.getElementById('hdr-cat-bc').textContent=c.name;
+  document.getElementById('list-icon').textContent=c.icon;
+  document.getElementById('list-title').textContent=c.name;
+  renderScenarioGrid();
+}
+
+function renderScenarioGrid(){
+  const grid=document.getElementById('sc-grid');
+  const scns=SCENARIOS[currentCat];
+  grid.innerHTML=scns.map((s,i)=>`
+    <div class="sc-card" onclick="startSim('${currentCat}',${i})">
+      <div class="sc-card-icon">${s.icon}</div>
+      <div class="sc-card-title">${s.title}</div>
+      <div class="sc-card-desc">${s.desc||''}</div>
+      <div class="sc-card-meta">
+        <span class="sc-diff">${s.diff} dificultad</span>
+        <span class="sc-type ${s.type}">${s.type==='interactive'?'Interactivo':'Guiado'}</span>
+      </div>
+    </div>`).join('');
+}
+
+function startSim(cat,idx){
+  currentCat=cat; currentSim=idx; simStep=0; sel=null; chatMsgs=[];
+  const sc=SCENARIOS[cat][idx];
+  document.getElementById('view-hub').style.display='none';
+  document.getElementById('view-list').style.display='none';
+  document.getElementById('view-sim').style.display='block';
+  document.getElementById('bottom').style.display='flex';
+  const c=CATS[cat];
+  document.getElementById('hdr-section').textContent='Hogar';
+  document.getElementById('hdr-sep2').style.display='inline';
+  document.getElementById('hdr-cat-bc').textContent=c.name;
+  document.getElementById('hdr-cat-bc').style.display='inline';
+  document.getElementById('hdr-cat-bc').onclick=()=>showList(cat);
+  mpTab='mis'; mpMinimized=false;
+  document.getElementById('bottom').style.maxHeight='255px';
+  renderScene(); renderInventory(); renderMP();
+}
+
+// ══════════════════════════════════
+// SCENES
+// ══════════════════════════════════
+function tiles(x,y,w,h,sz,c1,c2){
+  let s='';
+  for(let r=0;r*sz<h;r++)for(let c=0;c*sz<w;c++)
+    s+=`<rect x="${x+c*sz}" y="${y+r*sz}" width="${sz-1}" height="${sz-1}" fill="${(r+c)%2===0?c1:c2}" rx="1"/>`;
+  return s;
+}
+
+function renderScene(){
+  const svg=document.getElementById('scene-svg');
+  const sc=SCENARIOS[currentCat][currentSim];
+  if(sc.type==='guided'){svg.innerHTML=buildGuidedScene(sc);return;}
+  const fn={
+    canilla:sceneFaucet,inodoro:sceneToilet,desague:sceneDrain,
+    tablero:scenePanel,tomacorriente:sceneOutlet,
+  }[sc.id];
+  svg.innerHTML=fn?fn(simStep):'<text x="450" y="140" text-anchor="middle" fill="#606060" font-size="14">Escena en construcción</text>';
+}
+
+function buildGuidedScene(sc){
+  const step=sc.steps[simStep];
+  const warn=step&&step.warn?`<text x="450" y="200" text-anchor="middle" fill="#cc4433" font-size="12" font-weight="bold">${step.warn}</text>`:'';
+  const label=`<text x="450" y="140" text-anchor="middle" fill="#707060" font-size="13">${sc.icon} ${sc.title}</text>`;
+  const steplabel=step?`<text x="450" y="168" text-anchor="middle" fill="#a09080" font-size="11">Paso ${simStep+1}/${sc.steps.length}: ${step.txt}</text>`:'';
+  return `<rect x="0" y="0" width="900" height="280" fill="#181614"/>${tiles(0,0,900,280,60,'#1a1816','#1d1b17')}${label}${steplabel}${warn}
+    <rect class="clickzone" x="350" y="200" width="200" height="40" rx="5" onclick="guidedAdvance()" fill="rgba(232,160,48,.08)" style="cursor:pointer"/>
+    <text x="450" y="225" text-anchor="middle" fill="${simStep<sc.steps.length?'#e8a030':'#44bb66'}" font-size="11" pointer-events="none" font-weight="bold">${simStep<sc.steps.length?'▶ SIGUIENTE PASO':'✓ COMPLETADO'}</text>`;
+}
+
+function guidedAdvance(){
+  const sc=SCENARIOS[currentCat][currentSim];
+  if(simStep<sc.steps.length){
+    simStep++;
+    if(simStep===sc.steps.length){xpPop(sc.steps.length*20,'¡Escenario completado!');flash();}
+    else xpPop(15,'Paso completado');
+    renderScene(); renderMP();
+  }
+}
+
+// ── CANILLA ──
+function sceneFaucet(st){
+  const cx=420;
+  const wall=`<rect x="0" y="0" width="900" height="185" fill="#1e2228"/>${tiles(0,0,900,185,58,'#1e2228','#22262e')}`;
+  const counter=`<rect x="0" y="182" width="900" height="4" fill="#38322c"/><rect x="0" y="186" width="900" height="94" fill="#2a2520"/>`;
+  const basin=`<rect x="180" y="175" width="340" height="12" rx="3" fill="#242018"/><rect x="190" y="187" width="320" height="35" fill="#141210" rx="2"/><ellipse cx="350" cy="222" rx="12" ry="4" fill="#0d0c0a"/>`;
+  const underCab=`<rect x="180" y="236" width="340" height="42" fill="#181412"/>`;
+  const pipes=`<rect x="305" y="228" width="10" height="50" fill="#6a7870" rx="2"/><rect x="395" y="228" width="10" height="38" fill="#78706a" rx="2"/>
+    <path d="M305 268 Q305 280 318 280 L392 280 Q400 280 400 268" fill="none" stroke="#6a7870" stroke-width="10" stroke-linecap="round"/>`;
+  const valve=st>=1&&st<=5?
+    `<rect x="398" y="242" width="10" height="16" fill="#8a9090" rx="2"/><rect x="391" y="255" width="26" height="5" rx="2" fill="#aababa" transform="rotate(-90,404,257)"/>`:
+    `<rect x="398" y="242" width="10" height="16" fill="#8a9090" rx="2"/><rect x="391" y="247" width="26" height="5" rx="2" fill="#aababa"/>`;
+  const faucetBody=`<rect x="${cx-28}" y="175" width="56" height="12" rx="3" fill="#8a9090"/>
+    <rect x="${cx-8}" y="115" width="16" height="62" fill="#9aacb0" rx="2"/>
+    <path d="M${cx-8} 130 Q${cx-30} 128 ${cx-45} 145 Q${cx-50} 150 ${cx-50} 158" fill="none" stroke="#9aacb0" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="${cx-50}" cy="160" r="6" fill="#8a9090"/>`;
+  const handle=st<2||st>=6?`<rect x="${cx-16}" y="108" width="32" height="8" rx="3" fill="#b0c0c4"/>
+    <rect x="${cx-4}" y="99" width="8" height="26" rx="3" fill="#b0c0c4"/>
+    <circle cx="${cx}" cy="107" r="5" fill="#9aacb0"/>`:
+    `<rect x="${cx-6}" y="114" width="12" height="10" rx="2" fill="#7a8888"/>`;
+  const drip=st===0?`<circle class="drip-1" cx="${cx-50}" cy="162" r="4" fill="#5599ee" opacity=".9"/>
+    <circle class="drip-2" cx="${cx-50}" cy="162" r="3.5" fill="#4488dd" opacity=".8"/>`:
+    st===6?`<circle cx="${cx-50}" cy="162" r="3" fill="#44bb66"/><text x="${cx-64}" y="158" fill="#44bb66" font-size="10">✓</text>`:'';
+  const stemOut=st>=3&&st<=5?`<g transform="translate(570,190)">
+    <text x="-18" y="-6" fill="#a09080" font-size="8">Cartucho extraído</text>
+    <rect x="-5" y="0" width="10" height="50" rx="3" fill="#8a9090"/>
+    <rect x="-8" y="5" width="16" height="8" rx="2" fill="#9aacb0"/>
+    ${st===3?`<circle cx="0" cy="48" r="7" fill="#c08030"/>
+      <text x="-16" y="64" fill="#cc8833" font-size="7">arandela vieja</text>`:
+    st===4?`<circle cx="0" cy="48" r="7" fill="#3a3028" stroke="#cc8833" stroke-width="1.5" stroke-dasharray="3"/>
+      <text x="-14" y="64" fill="#44bb66" font-size="7">sin arandela</text>`:
+    `<circle cx="0" cy="48" r="7" fill="#44bb66"/>
+      <text x="-16" y="64" fill="#44bb66" font-size="7">arandela nueva ✓</text>`}
+    </g>`:'';
+  const zones=`
+    <rect class="clickzone" id="zone-valve" x="385" y="236" width="36" height="28" rx="3" onclick="clickZone('valve')"/>
+    <rect class="clickzone" id="zone-handle" x="${cx-22}" y="97" width="44" height="38" rx="3" onclick="clickZone('handle')"/>
+    <rect class="clickzone" id="zone-stem" x="${cx-14}" y="110" width="28" height="30" rx="3" onclick="clickZone('stem')" style="display:${st>=2&&st<=5?'block':'none'}"/>
+    <rect class="clickzone" id="zone-washer" x="555" y="225" width="30" height="30" rx="15" onclick="clickZone('washer')" style="display:${st===3?'block':'none'}"/>`;
+  const stLbl=`<text x="10" y="274" fill="#4a5060" font-size="9" font-family="monospace">${
+    ['💧 goteando','✓ agua cortada','presión liberada','mango quitado','arandela vieja extraída','arandela nueva instalada','canilla armada ✓'][st]||''}</text>`;
+  return wall+counter+basin+underCab+pipes+valve+faucetBody+handle+drip+stemOut+zones+stLbl;
+}
+
+// ── INODORO ──
+function sceneToilet(st){
+  const wall=`<rect x="0" y="0" width="900" height="280" fill="#1e2228"/>${tiles(0,0,900,280,55,'#1e2228','#21252d')}`;
+  const floor=`<rect x="0" y="220" width="900" height="60" fill="#222018"/>`;
+  // toilet body
+  const bowl=`<ellipse cx="300" cy="230" rx="80" ry="35" fill="#2a2a28" stroke="#3a3a36" stroke-width="1"/>
+    <ellipse cx="300" cy="225" rx="75" ry="30" fill="#1e1e1c"/>`;
+  const tank=`<rect x="235" y="140" width="130" height="80" rx="4" fill="#2a2a28" stroke="#3a3a36" stroke-width="1"/>
+    <rect x="238" y="143" width="124" height="74" rx="3" fill="${st>=0?'#1a2230':'#1e1e1c'}"/>`;
+  const lid=st===0?`<rect x="233" y="136" width="134" height="10" rx="3" fill="#3a3a36"/>`:
+    `<g transform="translate(280,60) rotate(-60)"><rect x="0" y="0" width="134" height="10" rx="3" fill="#3a3a36"/><text x="10" y="8" fill="#606060" font-size="7">tapa</text></g>`;
+  // interior mechanism
+  const interior=st>=1?`
+    <rect x="250" y="150" width="6" height="55" fill="#6a7870" rx="2"/>
+    <circle cx="${st>=4?280:253}" cy="${st>=4?165:155}" r="${st>=4?14:10}" fill="${st>=4?'#44bb66':'#4488cc'}" opacity=".7"/>
+    <text x="253" y="${st>=4?188:172}" fill="${st>=4?'#44bb66':'#4488cc'}" font-size="7">${st>=4?'flotante nuevo ✓':'flotante'}</text>
+    <rect x="270" y="155" width="8" height="40" fill="#8a9090" rx="2"/>
+    <text x="252" y="215" fill="#606060" font-size="7">mecanismo</text>`:
+    `<text x="253" y="195" fill="#3a3a3a" font-size="8">mochila cerrada</text>`;
+  // water level indicator
+  const water=st>=1&&st<5?`<rect x="242" y="${180}" width="116" height="${20-st*2}" fill="rgba(68,136,204,.3)" rx="1"/>`:
+    st>=5?`<rect x="242" y="182" width="116" height="8" fill="rgba(68,187,102,.2)" rx="1"/>
+    <text x="253" y="202" fill="#44bb66" font-size="7">nivel correcto ✓</text>`:'';
+  // supply pipe and valve
+  const supply=`<line x1="235" y1="230" x2="235" y2="280" stroke="#6a7870" stroke-width="8"/>
+    <rect x="228" y="252" width="14" height="20" rx="3" fill="${st>=2&&st<=4?'#cc4433':'#8a9090'}"/>
+    <text x="215" y="288" fill="#606060" font-size="8">llave de paso</text>`;
+  // button
+  const button=st>=3?`<circle cx="300" cy="152" r="10" fill="${st>=3?'#3a4040':'#2a3038'}" stroke="#4a5050" stroke-width="1"/>
+    <text x="285" y="156" fill="#606060" font-size="8">▶</text>`:
+    `<rect x="290" y="144" width="20" height="8" rx="2" fill="#3a4040"/>`;
+  const zones=`
+    <rect class="clickzone" id="zone-lid" x="230" y="132" width="140" height="18" onclick="clickZone('lid')" style="display:${st===0?'block':'none'}"/>
+    <rect class="clickzone" id="zone-interior" x="238" y="143" width="124" height="74" onclick="clickZone('interior')" style="display:${st===1?'block':'none'}"/>
+    <rect class="clickzone" id="zone-wc-valve" x="220" y="248" width="30" height="28" onclick="clickZone('wc-valve')" style="display:${st===2||st===5?'block':'none'}"/>
+    <rect class="clickzone" id="zone-button" x="284" y="140" width="32" height="20" onclick="clickZone('button')" style="display:${st===3?'block':'none'}"/>
+    <rect class="clickzone" id="zone-mechanism" x="245" y="148" width="110" height="60" onclick="clickZone('mechanism')" style="display:${st===4?'block':'none'}"/>`;
+  const stLbl=`<text x="10" y="274" fill="#4a5060" font-size="9" font-family="monospace">${
+    ['inodoro corriendo','tapa abierta — diagnosticando','agua cortada','descargado','mecanismo reemplazado ✓','✓ verificado — sin pérdida'][st]||''}</text>`;
+  return wall+floor+bowl+tank+lid+interior+water+supply+button+zones+stLbl;
+}
+
+// ── DESAGUE ──
+function sceneDrain(st){
+  const wall=`<rect x="0" y="0" width="900" height="185" fill="#1e2228"/>${tiles(0,0,900,185,58,'#1e2228','#22262e')}`;
+  const counter=`<rect x="0" y="182" width="900" height="4" fill="#38322c"/><rect x="0" y="186" width="900" height="94" fill="#2a2520"/>`;
+  const basin=`<rect x="150" y="175" width="400" height="12" rx="3" fill="#242018"/>
+    <rect x="160" y="187" width="380" height="40" fill="${st===0?'#1a1a2a':'#141210'}" rx="2"/>
+    ${st===0?`<ellipse cx="350" cy="218" rx="110" ry="12" fill="#1e1a2a" opacity=".7"/>
+      <text x="285" y="222" fill="#4466aa" font-size="9">agua estancada</text>`:''}`;
+  const underSink=`<rect x="150" y="236" width="400" height="42" fill="#181412"/>
+    <rect x="338" y="228" width="12" height="12" fill="#6a7870" rx="1"/>`;
+  const sifon=st>=4?
+    `<path d="M344 240 L344 258 Q344 274 358 274 L386 274 Q400 274 400 258 L400 240" fill="none" stroke="#6a9070" stroke-width="10" stroke-linecap="round"/>
+     <text x="338" y="285" fill="#44bb66" font-size="8">limpio ✓</text>`:
+    st>=2?
+    `<path d="M344 240 L344 254" fill="none" stroke="#6a7870" stroke-width="10" stroke-linecap="round"/>
+     <circle cx="344" cy="263" r="8" fill="#3a4840" stroke="#6a7870" stroke-width="2"/>
+     <text x="338" y="285" fill="#a08060" font-size="8">abierto</text>`:
+    `<path d="M344 240 L344 258 Q344 274 358 274 L386 274 Q400 274 400 258 L400 240" fill="none" stroke="#6a7870" stroke-width="10" stroke-linecap="round"/>`;
+  const bucket=st>=2?`<rect x="260" y="252" width="28" height="22" rx="3" fill="#2a3848" stroke="#3a5060" stroke-width="1"/>
+    <text x="262" y="268" fill="#4a7090" font-size="8">balde ✓</text>`:'';
+  const zones=`
+    <rect class="clickzone" id="zone-basin" x="160" y="187" width="380" height="40" onclick="clickZone('basin')" style="display:${st===0?'block':'none'}"/>
+    <rect class="clickzone" id="zone-drain" x="328" y="215" width="40" height="20" onclick="clickZone('drain')" style="display:${st===1?'block':'none'}"/>
+    <rect class="clickzone" id="zone-underbucket" x="240" y="236" width="80" height="42" onclick="clickZone('underbucket')" style="display:${st===2?'block':'none'}"/>
+    <rect class="clickzone" id="zone-sifon" x="330" y="236" width="82" height="50" onclick="clickZone('sifon')" style="display:${st>=3?'block':'none'}"/>`;
+  const stLbl=`<text x="10" y="274" fill="#4a5060" font-size="9" font-family="monospace">${
+    ['desagüe tapado','agua caliente aplicada','destapador usado','balde colocado','sifón abierto','✓ sifón limpio y armado'][st]||''}</text>`;
+  return wall+counter+basin+underSink+sifon+bucket+zones+stLbl;
+}
+
+// ── TABLERO ELÉCTRICO ──
+function scenePanel(st){
+  const bg=`<rect x="0" y="0" width="900" height="280" fill="#181614"/>
+    ${tiles(0,0,900,280,60,'#1a1816','#1e1c18')}`;
+  // panel box
+  const box=`<rect x="120" y="40" width="200" height="200" rx="4" fill="#1e1c18" stroke="#3a3628" stroke-width="2"/>
+    <rect x="130" y="50" width="180" height="180" rx="2" fill="#141210" stroke="#2a2820" stroke-width="1"/>
+    <text x="175" y="66" fill="#3a3828" font-size="9" font-family="monospace">TABLERO PRINCIPAL</text>`;
+  // breakers
+  const breakers=Array.from({length:8},(_, i)=>{
+    const x=145+(i%2)*80, y=75+Math.floor(i/2)*35;
+    const tripped=st<=1&&i===3; // breaker 3 is tripped
+    const off=st===2&&i===3;
+    const on=st>=3&&i===3;
+    return `<rect x="${x}" y="${y}" width="55" height="25" rx="3" fill="${tripped?'#3a2010':on?'#1a3a20':'#1e2028'}" stroke="${tripped?'#e8a030':on?'#44bb66':'#3a3830'}" stroke-width="1"/>
+      <rect x="${x+4}" y="${y+4}" width="30" height="17" rx="2" fill="${tripped?'#e85010':off?'#333':on?'#44bb66':'#4488cc'}" opacity=".8"/>
+      <text x="${x+38}" y="${y+15}" fill="${tripped?'#e8a030':on?'#44bb66':'#606060'}" font-size="7" font-family="monospace">${tripped?'!':on?'ON':off?'OFF':['COC','BAÑ','DOR','!','HAB','EXT','LUZ','TOM'][i]}</text>`;
+  }).join('');
+  const arrow=st<=1?`<text x="212" y="142" fill="#e8a030" font-size="12" font-weight="bold">↑ DISPARADA</text>`:'';
+  // house area (right side)
+  const houseArea=`<rect x="380" y="60" width="160" height="120" rx="4" fill="#1a1814" stroke="#2a2820" stroke-width="1"/>
+    <text x="430" y="80" fill="#3a3828" font-size="9">ZONA AFECTADA</text>
+    <text x="395" y="108" fill="${st===0?'#cc4433':'#44bb66'}" font-size="12">${st===0?'⚠ SIN LUZ':'✓ CON LUZ'}</text>
+    ${st>=2?`<text x="395" y="130" fill="#a09080" font-size="8">Equipos desenchufados</text>`:''}`;
+  // outlet test
+  const outletArea=`<rect x="600" y="80" width="120" height="100" rx="4" fill="#1a1814" stroke="#2a2820" stroke-width="1"/>
+    <text x="620" y="100" fill="#3a3828" font-size="9">TOMACORRIENTE</text>
+    <rect x="628" y="110" width="30" height="20" rx="2" fill="#202020" stroke="#3a3830" stroke-width="1"/>
+    <rect x="628" y="130" width="30" height="20" rx="2" fill="#202020" stroke="#3a3830" stroke-width="1"/>
+    <text x="620" y="165" fill="${st>=4?'#44bb66':'#606060'}" font-size="9">${st>=4?'✓ tensión OK':'sin tensión'}</text>`;
+  const zones=`
+    <rect class="clickzone" id="zone-house" x="378" y="58" width="164" height="124" onclick="clickZone('house')" style="display:${st===0?'block':'none'}"/>
+    <rect class="clickzone" id="zone-panel" x="118" y="38" width="204" height="204" onclick="clickZone('panel')" style="display:${st===1?'block':'none'}"/>
+    <rect class="clickzone" id="zone-unplug" x="378" y="58" width="164" height="124" onclick="clickZone('unplug')" style="display:${st===2?'block':'none'}"/>
+    <rect class="clickzone" id="zone-breaker" x="200" y="100" width="80" height="40" onclick="clickZone('breaker')" style="display:${st===3?'block':'none'}"/>
+    <rect class="clickzone" id="zone-outlet" x="598" y="78" width="124" height="104" onclick="clickZone('outlet')" style="display:${st===4?'block':'none'}"/>`;
+  const stLbl=`<text x="10" y="274" fill="#4a5060" font-size="9" font-family="monospace">${
+    ['⚡ cortocircuito','zona identificada','tablero encontrado','equipos desenchufados','llave reseteada','✓ circuito restablecido'][st]||''}</text>`;
+  return bg+box+breakers+arrow+houseArea+outletArea+zones+stLbl;
+}
+
+// ── TOMACORRIENTE ──
+function sceneOutlet(st){
+  const bg=`<rect x="0" y="0" width="900" height="280" fill="#181614"/>
+    ${tiles(100,40,500,200,55,'#1a1816','#1e1c18')}`;
+  // wall with outlet
+  const wallRect=`<rect x="100" y="40" width="500" height="200" rx="4" fill="#1e1c18" stroke="#2a2820" stroke-width="1"/>`;
+  // outlet face
+  const facePlate=st<2?
+    `<rect x="290" y="100" width="80" height="100" rx="4" fill="#252525" stroke="#3a3830" stroke-width="1.5"/>
+     <rect x="302" y="112" width="20" height="28" rx="2" fill="#1a1a1a" stroke="#3a3830" stroke-width="1"/>
+     <rect x="302" y="150" width="20" height="28" rx="2" fill="#1a1a1a" stroke="#3a3830" stroke-width="1"/>
+     ${st===0?'<text x="278" y="97" fill="#cc4433" font-size="8">⚠ quemado</text>':''}`:
+    st===2||st===3?
+    `<rect x="285" y="95" width="90" height="110" rx="3" fill="#1a1614" stroke="#3a3028" stroke-width="1" stroke-dasharray="4"/>
+     <text x="295" y="140" fill="#a09080" font-size="8">caja expuesta</text>
+     ${st>=3?`<line x1="290" y1="160" x2="310" y2="180" stroke="#cc4433" stroke-width="3" stroke-linecap="round"/>
+     <line x1="295" y1="160" x2="340" y2="180" stroke="#4488cc" stroke-width="3" stroke-linecap="round"/>
+     <line x1="300" y1="160" x2="370" y2="180" stroke="#44bb66" stroke-width="3" stroke-linecap="round"/>
+     <text x="295" y="198" fill="#888" font-size="8">L   N   T</text>`:''}`:'';
+  const newOutlet=st>=4&&st<5?`<rect x="290" y="100" width="80" height="100" rx="4" fill="#1e2020" stroke="#44bb66" stroke-width="1.5"/>
+    <text x="296" y="155" fill="#44bb66" font-size="8">nuevo ✓</text>`:
+    st===5?`<rect x="290" y="100" width="80" height="100" rx="4" fill="#252525" stroke="#44bb66" stroke-width="1.5"/>
+    <rect x="302" y="112" width="20" height="28" rx="2" fill="#1a1a1a" stroke="#3a3830" stroke-width="1"/>
+    <rect x="302" y="150" width="20" height="28" rx="2" fill="#1a1a1a" stroke="#3a3830" stroke-width="1"/>
+    <text x="296" y="214" fill="#44bb66" font-size="8">✓ instalado</text>`:'';
+  // tablero indicator
+  const tablero=`<rect x="640" y="80" width="120" height="80" rx="4" fill="${st===0?'#1a1a1a':st>=1?'#0a1a0a':'#1a1a1a'}" stroke="${st>=1?'#44bb66':'#cc4433'}" stroke-width="1"/>
+    <text x="660" y="100" fill="${st>=1?'#44bb66':'#cc4433'}" font-size="9" font-family="monospace">${st===0?'TABLERO ON':'TABLERO OFF'}</text>
+    <text x="660" y="118" fill="#606060" font-size="8">${st===0?'tensión activa':st>=5?'restablecido ✓':'sin tensión ✓'}</text>`;
+  // tester indicator
+  const tester=st===1?`<text x="620" y="200" fill="#44bb66" font-size="12">🖊️ Sin tensión ✓</text>`:
+    st===5?`<text x="620" y="200" fill="#44bb66" font-size="12">🖊️ Tensión OK ✓</text>`:'';
+  const zones=`
+    <rect class="clickzone" id="zone-main_off" x="635" y="75" width="130" height="90" onclick="clickZone('main_off')" style="display:${st===0?'block':'none'}"/>
+    <rect class="clickzone" id="zone-outlet_test" x="280" y="90" width="110" height="120" onclick="clickZone('outlet_test')" style="display:${st===1?'block':'none'}"/>
+    <rect class="clickzone" id="zone-plate" x="280" y="90" width="110" height="120" onclick="clickZone('plate')" style="display:${st===2?'block':'none'}"/>
+    <rect class="clickzone" id="zone-cables_photo" x="280" y="90" width="220" height="130" onclick="clickZone('cables_photo')" style="display:${st===3?'block':'none'}"/>
+    <rect class="clickzone" id="zone-new_connect" x="280" y="90" width="110" height="120" onclick="clickZone('new_connect')" style="display:${st===4?'block':'none'}"/>
+    <rect class="clickzone" id="zone-test_final" x="280" y="90" width="460" height="130" onclick="clickZone('test_final')" style="display:${st===5?'block':'none'}"/>`;
+  const stLbl=`<text x="10" y="274" fill="#4a5060" font-size="9" font-family="monospace">${
+    ['tomacorriente a reemplazar','tablero apagado','tensión verificada: seguro','tapa quitada','cables fotografiados','tomacorriente nuevo conectado','✓ instalación completa'][st]||''}</text>`;
+  return bg+wallRect+facePlate+newOutlet+tablero+tester+zones+stLbl;
+}
+
+// ══════════════════════════════════
+// INTERACTION
+// ══════════════════════════════════
+function clickZone(zone){
+  const sc=SCENARIOS[currentCat][currentSim];
+  if(simStep>=sc.steps.length)return;
+  const step=sc.steps[simStep];
+  if(zone!==step.target){toast(step.wrongTarget||'Revisá el paso actual.','err');return;}
+  if(step.tool&&sel!==step.tool){toast(step.wrongTool||'Necesitás usar la herramienta correcta.','err');return;}
+  // advance
+  simStep++; sel=null;
+  flash(); xpPop(20,'Paso completado');
+  if(simStep>=sc.steps.length){
+    toast(`¡Completaste "${sc.title}"! +${sc.steps.length*20} XP total`,'ok');
+    setTimeout(()=>{renderScene();renderMP();},300);
+  } else {
+    toast(step.tip,'tip');
+    renderScene(); renderInventory(); renderMP();
+  }
+}
+
+// ══════════════════════════════════
+// INVENTORY
+// ══════════════════════════════════
+function renderInventory(){
+  const sc=SCENARIOS[currentCat][currentSim];
+  if(!sc.tools){document.getElementById('inv-bar').innerHTML='<span class="inv-lbl">Guiado — seguí los pasos del panel</span>';return;}
+  const bar=document.getElementById('inv-bar');
+  bar.innerHTML='<span class="inv-lbl">🧰 Herramientas</span>';
+  sc.tools.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='inv-item'+(sel===it.id?' sel':'');
+    d.id='inv-'+it.id;
+    d.innerHTML=`<span class="inv-icon">${it.icon}</span><span class="inv-name">${it.name}</span>`;
+    d.onclick=()=>{sel=sel===it.id?null:it.id;renderInventory();sel&&toast(`Seleccionado: ${it.icon} ${it.name}`,0);};
+    bar.appendChild(d);
+  });
+  if(sel){
+    const btn=document.createElement('div');
+    btn.className='inv-deselect';btn.textContent='✕ Soltar';
+    btn.onclick=()=>{sel=null;renderInventory();};
+    bar.appendChild(btn);
+  }
+  const cur=document.getElementById('tool-cursor');
+  if(sel){
+    const it=sc.tools.find(i=>i.id===sel);
+    cur.textContent=it?it.icon:'';cur.style.display='block';
+    document.onmousemove=e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';};
+  }else{cur.style.display='none';document.onmousemove=null;}
+}
+
+// ══════════════════════════════════
+// MISSION PANEL
+// ══════════════════════════════════
+function renderMP(){
+  const sc=SCENARIOS[currentCat][currentSim];
+  const done=simStep>=sc.steps.length;
+  document.getElementById('mp-ico').textContent=done?'✅':sc.icon;
+  document.getElementById('mp-t').textContent=sc.title+(done?' — COMPLETADO':'');
+  document.getElementById('mp-xp2').textContent=xpTotal+' XP';
+  document.getElementById('mp-fill').style.width=(Math.min(simStep,sc.steps.length)/sc.steps.length*100)+'%';
+  document.getElementById('mp-pt').textContent=Math.min(simStep,sc.steps.length)+'/'+sc.steps.length;
+  if(mpTab==='mis')renderMisTab();
+  else if(mpTab==='cri')renderCriTab();
+  else if(mpTab==='tip')renderTipTab();
+  else renderChatTab();
+}
+
+function renderMisTab(){
+  const sc=SCENARIOS[currentCat][currentSim];
+  const body=document.getElementById('mp-body');
+  if(simStep>=sc.steps.length){
+    body.innerHTML=`<div style="text-align:center;padding:14px 8px">
+      <div style="font-size:26px;margin-bottom:6px">🏆</div>
+      <div style="font-size:14px;color:var(--acc);letter-spacing:2px;font-weight:700">COMPLETADO</div>
+      <div style="font-size:8px;color:var(--txt3);margin-top:5px">XP: <span style="color:var(--acc)">${xpTotal}</span></div>
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:12px">
+        <button class="mp-btn skip" onclick="showList('${currentCat}')">← Volver</button>
+        <button class="mp-btn ok" onclick="showList('${currentCat}')">Otro escenario</button>
+      </div>
+    </div>`;return;
+  }
+  if(sc.type==='guided'){renderGuidedTab(sc);return;}
+  const step=sc.steps[simStep];
+  const stepsHtml=sc.steps.map((s,i)=>{
+    const d=i<simStep,c=i===simStep;
+    return `<li class="mp-step ${d?'done':c?'cur':''}"><span class="mp-step-ic">${d?'✓':'·'}</span><span>${s.txt}</span></li>`;
+  }).join('');
+  const toolInfo=step.tool?` <span style="color:var(--acc)">${sc.tools?.find(t=>t.id===step.tool)?.icon||''} ${sc.tools?.find(t=>t.id===step.tool)?.name||''}</span>`:'';
+  body.innerHTML=`
+    <div class="mp-obj">${step.txt}${toolInfo}</div>
+    <ul class="mp-steps">${stepsHtml}</ul>
+    <div class="mp-actions">
+      ${simStep>0?`<button class="mp-btn skip" onclick="prevStep()">← Ant.</button>`:''}
+      <button class="mp-btn hint" onclick="doHint()">💡 Hint</button>
+      <button class="mp-btn skip" onclick="skipStep()">Saltar →</button>
+    </div>`;
+}
+
+function renderGuidedTab(sc){
+  const steps=sc.steps;
+  const body=document.getElementById('mp-body');
+  body.innerHTML=`<div class="guided-wrap">${steps.map((s,i)=>{
+    const state=i<simStep?'done':i===simStep?'cur':'todo';
+    return `<div class="g-step">
+      <div class="g-num ${state}">${i<simStep?'✓':i+1}</div>
+      <div class="g-content">
+        <div class="g-title ${state}">${s.txt}</div>
+        ${state==='cur'?`<div class="g-desc cur">${s.desc||''}</div>
+          ${s.warn?`<div class="g-warn">${s.warn}</div>`:''}
+          <div class="g-action"><button class="g-btn" onclick="guidedAdvance()">✓ Entendido, siguiente →</button></div>`:''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderCriTab(){
+  const items=(CRISIS[currentCat]||[]);
+  document.getElementById('mp-body').innerHTML=items.length?`<div>${items.map(c=>`
+    <div class="crisis-item">
+      <div class="crisis-q">⚠ ${c.q}</div>
+      <div class="crisis-a">${c.a}</div>
+      <ul class="crisis-steps">${c.steps.map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>`).join('')}</div>`:'<div style="color:var(--txt3);font-size:9px;padding:8px">No hay crisis registradas para esta categoría.</div>';
+}
+
+function renderTipTab(){
+  const items=(TIPS[currentCat]||[]);
+  document.getElementById('mp-body').innerHTML=`<div>${items.map(t=>`
+    <div class="tip-item" style="border-left-color:${t.acc}">
+      <div class="tip-tag" style="color:${t.acc}">${t.tag}</div>
+      <div class="tip-txt">${t.txt}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderChatTab(){
+  if(!chatMsgs.length)chatMsgs=[{r:'bot',t:'Hola. Soy tu asistente de hogar. Preguntame sobre plomería, electricidad, carpintería o cualquier reparación doméstica.'}];
+  const chips=['¿Para qué sirve el teflon?','¿Cómo encuentro el tablero?','Tipos de tacos para pared','¿Cuándo llamar al plomero?'];
+  document.getElementById('mp-body').innerHTML=`
+    <div class="chat-wrap">
+      <div class="chat-chips">${chips.map(c=>`<span class="chat-chip" onclick="chatQ(this)">${c}</span>`).join('')}</div>
+      <div class="chat-msgs" id="chat-msgs">${chatMsgs.map(m=>`<div class="chat-msg ${m.r}">${m.t}</div>`).join('')}</div>
+      <div class="chat-row">
+        <input class="chat-input" id="chat-inp" placeholder="Preguntá sobre el hogar..." onkeydown="if(event.key==='Enter')chatSend()">
+        <button class="chat-send" onclick="chatSend()">▶</button>
+      </div>
+    </div>`;
+  const el=document.getElementById('chat-msgs');if(el)el.scrollTop=el.scrollHeight;
+}
+function chatQ(el){const i=document.getElementById('chat-inp');if(i){i.value=el.textContent;chatSend();}}
+async function chatSend(){
+  const inp=document.getElementById('chat-inp');if(!inp)return;
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';
+  chatMsgs.push({r:'user',t:txt});chatMsgs.push({r:'bot typing',t:'...'});renderChatTab();
+  const lower=txt.toLowerCase();
+  const hit=FAQ.find(f=>lower.includes(f.q));
+  if(hit){chatMsgs.pop();chatMsgs.push({r:'bot',t:hit.a});renderChatTab();return;}
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,program:'hogar'})});
+    const data=await res.json();
+    chatMsgs.pop();chatMsgs.push({r:'bot',t:data.reply||'No pude responder.'});
+  }catch(e){chatMsgs.pop();chatMsgs.push({r:'bot',t:'Sin conexión. Probá las sugerencias rápidas.'});}
+  renderChatTab();
+}
+
+// ══════════════════════════════════
+// HELPERS
+// ══════════════════════════════════
+function setTab(t){
+  mpTab=t;['mis','cri','tip','ast'].forEach(id=>document.getElementById('tab-'+id)?.classList.toggle('on',id===t));
+  renderMP();
+}
+function toggleMP(){
+  mpMinimized=!mpMinimized;
+  document.getElementById('bottom').style.maxHeight=mpMinimized?'62px':'255px';
+  document.getElementById('mp-tog').textContent=mpMinimized?'▲':'▼';
+}
+function prevStep(){if(simStep>0){simStep--;renderScene();renderInventory();renderMP();}}
+function skipStep(){
+  const sc=SCENARIOS[currentCat][currentSim];
+  if(simStep<sc.steps.length){simStep++;renderScene();renderInventory();renderMP();}
+}
+function doHint(){
+  const sc=SCENARIOS[currentCat][currentSim];
+  if(!sc.steps||simStep>=sc.steps.length)return;
+  const step=sc.steps[simStep];
+  if(step.hintEl||step.target){
+    const el=document.getElementById('zone-'+step.target)||document.getElementById(step.hintEl||'');
+    if(el){el.classList.remove('hint-pulse');void el.offsetWidth;el.classList.add('hint-pulse');setTimeout(()=>el.classList.remove('hint-pulse'),4000);}
+  }
+  if(step.tool){
+    const it=document.getElementById('inv-'+step.tool);
+    if(it){it.classList.remove('hint-pulse');void it.offsetWidth;it.classList.add('hint-pulse');setTimeout(()=>it.classList.remove('hint-pulse'),4000);}
+  }
+  if(step.tip)toast(step.tip,'tip');
+}
+
+let fbT=null;
+function toast(msg,type='tip'){
+  if(!msg)return;
+  const el=document.getElementById('fb');
+  el.textContent=msg;el.className='show '+(type==='err'?'err':type==='ok'?'ok':'tip');
+  clearTimeout(fbT);fbT=setTimeout(()=>{el.className='';},3800);
+}
+function xpPop(n,r){
+  if(!n)return;xpTotal+=n;
+  const el=document.getElementById('xpp');
+  el.textContent=`+${n} XP — ${r}`;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+  document.getElementById('hdr-xp').textContent=xpTotal+' XP';
+  if(document.getElementById('mp-xp2'))document.getElementById('mp-xp2').textContent=xpTotal+' XP';
+}
+function flash(){const f=document.getElementById('fl');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),280);}
+</script>
+</body>
+</html>
