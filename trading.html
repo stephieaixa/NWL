@@ -224,6 +224,9 @@ body{background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:13px;
 .hint-panel.show{display:block;}
 .hint-panel-title{font-size:10px;font-weight:700;color:var(--acc);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
 .hint-panel-close{margin-left:auto;cursor:pointer;color:var(--txt3);font-size:12px;}
+.hint-glow{outline:2px solid var(--acc) !important;outline-offset:3px;animation:hintGlow 1.2s ease-in-out infinite;position:relative;z-index:181;}
+@keyframes hintGlow{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.6);}50%{box-shadow:0 0 0 10px rgba(124,108,255,0);}}
+@keyframes hintArrowBlink{0%,100%{opacity:1;transform:translateY(0);}50%{opacity:.5;transform:translateY(-3px);}}
 
 @keyframes hintBlink{0%,100%{box-shadow:0 0 0 0 rgba(124,108,255,.9);}50%{box-shadow:0 0 0 8px rgba(124,108,255,0);}}
 @keyframes flashUp{0%{background:rgba(38,166,154,.08);}100%{background:transparent;}}
@@ -591,15 +594,43 @@ function renderTutorial(){
 // HINT (consejo contextual)
 // ══════════════════════════════════════════════
 let hintVisible = false;
+function clearHintHighlight(){
+  document.querySelectorAll('.hint-glow').forEach(el=>{
+    el.classList.remove('hint-glow');
+    const lbl = document.getElementById('hint-arrow-'+el.id);
+    if(lbl) lbl.remove();
+  });
+}
+function applyHintHighlight(targetId){
+  clearHintHighlight();
+  if(!targetId) return;
+  const el = document.getElementById(targetId);
+  if(!el) return;
+  el.classList.add('hint-glow');
+  // floating "← tocá acá" label
+  const r = el.getBoundingClientRect();
+  const lbl = document.createElement('div');
+  lbl.id = 'hint-arrow-'+targetId;
+  lbl.style.cssText = `position:fixed;z-index:182;pointer-events:none;font-size:9px;font-weight:700;color:var(--acc);font-family:monospace;white-space:nowrap;animation:hintArrowBlink .9s ease-in-out infinite;`;
+  // position label above the element, centred
+  lbl.style.left = Math.min(Math.max(4, r.left + r.width/2 - 36), window.innerWidth-100)+'px';
+  lbl.style.top = Math.max(44, r.top - 18)+'px';
+  lbl.textContent = '▼ tocá acá';
+  document.body.appendChild(lbl);
+}
 function toggleHint(){
   hintVisible = !hintVisible;
   const panel = document.getElementById('hint-panel');
   if(hintVisible){
     const h = getHint();
-    document.getElementById('hint-text').innerHTML = '<b style="display:block;color:var(--txt);margin-bottom:5px">'+h.title+'</b>'+h.text.replace(/\n/g,'<br>');
+    document.getElementById('hint-text').innerHTML =
+      '<b style="display:block;color:var(--txt);margin-bottom:5px">'+h.title+'</b>'+
+      h.text.replace(/\n/g,'<br>');
     panel.classList.add('show');
+    applyHintHighlight(h.target);
   } else {
     panel.classList.remove('show');
+    clearHintHighlight();
   }
 }
 function getHint(){
@@ -608,39 +639,46 @@ function getHint(){
   const pos = getPosition(currentAsset);
   const tv = getTotalPortfolioValue();
   const pnlPct = (tv/10000-1)*100;
-  const candles = assetData[currentAsset].candles;
-  const closes = candles.map(c=>c.close);
-  const sma50 = calcSMA(closes,50);
-  const lastSMA50 = sma50.filter(v=>v!==null).pop();
+  const closes = assetData[currentAsset].candles.map(c=>c.close);
+  const lastSMA50 = calcSMA(closes,50).filter(v=>v!==null).pop();
   const price = getCurrentPrice(currentAsset);
   const aboveSMA50 = lastSMA50 && price > lastSMA50;
 
   const posWithoutSL = portfolio.positions.find(p=>!p.stopLoss);
   if(posWithoutSL){
-    return {title:`⚠️ Posición sin Stop-Loss: ${posWithoutSL.sym}`,text:`Tu posición en ${posWithoutSL.sym} no tiene stop-loss. Si el mercado cae fuerte podés perder mucho más de lo aceptable.\n\nCerrá y volvé a abrir con SL configurado (precio de entrada − 3% como mínimo). Un SL no es opcional.`};
+    return {target:'sl-inp',title:`⚠️ Posición sin Stop-Loss: ${posWithoutSL.sym}`,
+      text:`Tu posición en ${posWithoutSL.sym} no tiene stop-loss. Si el mercado cae fuerte podés perder mucho más de lo aceptable.\n\nIngresá un precio de Stop-Loss (precio de entrada − 3% como mínimo) en el campo que se resalta y ejecutá una orden de ajuste.`};
   }
   if(portfolio.positions.length === 0){
     if(rsi && rsi < 32){
-      return {title:`RSI de ${currentAsset}: ${rsi.toFixed(1)} — Zona sobrevendida`,text:`RSI por debajo de 32 indica posible agotamiento bajista. Históricamente es zona de rebote.\n\nSi la tendencia general es alcista (precio encima de SMA50), considerá una entrada pequeña:\n• Stop-Loss: precio − 3%\n• Take-Profit: precio + 6%\n• Monto: no más del 10% del capital`};
+      return {target:'submit-btn',title:`RSI ${currentAsset}: ${rsi.toFixed(1)} — Zona sobrevendida`,
+        text:`RSI < 32 indica posible agotamiento bajista — zona de rebote histórica.\n\nSi el precio está encima de la SMA50, podés entrar:\n• Stop-Loss: ${fmtP(price*0.97,currentAsset)} (−3%)\n• Take-Profit: ${fmtP(price*1.06,currentAsset)} (+6%)\n• Monto: no más del 10% del capital\n\nPresioná COMPRAR (resaltado).`};
     }
     if(!aboveSMA50){
-      return {title:`${currentAsset} está debajo de la SMA50`,text:`El precio de ${currentAsset} está por debajo de su media de 50 períodos. Eso indica tendencia bajista.\n\nMirá otros activos — buscá uno que esté por encima de la SMA50 y con RSI entre 35-55. Esa es la zona ideal para buscar entradas.`};
+      return {target:'asset-bar',title:`${currentAsset} debajo de la SMA50 — tendencia bajista`,
+        text:`Precio por debajo de la SMA50 indica tendencia bajista. No es buen momento para entrar en este activo.\n\nMirá los otros tabs (resaltados) y buscá uno que esté por encima de la SMA50 y con RSI entre 35-55.`};
     }
-    return {title:`Sin posiciones — ¿Cómo entrar?`,text:`Para buscar una buena entrada:\n1. Buscá un activo con RSI entre 35-50\n2. Verificá que el precio esté encima de la SMA50\n3. Configurá SL (−3%) y TP (+6%) antes de comprar\n4. Poné no más del 10-15% del capital en una sola operación\n\nNo entrés solo porque "parece que va a subir". Necesitás un motivo técnico.`};
+    return {target:'amt-inp',title:`Sin posiciones — empezá por el monto`,
+      text:`Para abrir tu primera operación:\n1. Ingresá el monto en el campo resaltado\n2. Configurá Stop-Loss (precio − 3%)\n3. Configurá Take-Profit (precio + 6%)\n4. Presioná COMPRAR\n\nEmpezá con no más del 10-15% del capital.`};
   }
   if(rsi && rsi > 76 && pos){
-    return {title:`RSI de ${currentAsset}: ${rsi.toFixed(1)} — Sobrecomprado`,text:`El RSI en zona de sobrecompra extrema. Si tenés posición con ganancia, considerá:\n• Subir el SL al precio de entrada (riesgo cero para las ganancias existentes)\n• Tomar ganancias parciales ahora\n• No agregar más a esta posición hasta que el RSI corrija`};
+    return {target:'port-body',title:`RSI ${currentAsset}: ${rsi.toFixed(1)} — Sobrecomprado`,
+      text:`RSI > 76 indica sobrecompra. Si tenés ganancia, considerá:\n• Cerrar la posición (botón en el panel resaltado)\n• O subir el SL al precio de entrada para asegurar sin riesgo\n\nNo agregues más a esta posición hasta que el RSI corrija por debajo de 65.`};
   }
   if(pnlPct > 5){
-    return {title:`Portfolio +${pnlPct.toFixed(1)}% — Protegé las ganancias`,text:`Buen trabajo. Cuando ganás, el objetivo es no perder lo ganado.\n\nEstrategia "trailing stop":\nSubí el stop-loss de tus posiciones ganadoras al precio de entrada o más arriba. Así, aunque el mercado revierta, no perdés el capital inicial.\n\nSi alguna posición está +8% o más, considerá tomar la mitad de la ganancia.`};
+    return {target:'port-body',title:`Portfolio +${pnlPct.toFixed(1)}% — Protegé las ganancias`,
+      text:`Buen trabajo. Para proteger lo ganado:\n→ Subí el Stop-Loss de cada posición al precio de entrada o más arriba\n→ Así si el mercado revierte, salís sin pérdida\n\nVé al panel de posiciones (resaltado) y revisá los niveles de SL de cada una.`};
   }
   if(pnlPct < -5){
-    return {title:`Portfolio −${Math.abs(pnlPct).toFixed(1)}% — Revisá la estrategia`,text:`Tu portfolio está en pérdida. Preguntas importantes:\n• ¿Tus posiciones tienen stop-loss?\n• ¿Compraste contra la tendencia (precio debajo de SMA50)?\n• ¿Estás diversificado o todo en un activo?\n\nEn pérdida es más importante proteger el capital restante que recuperar rápido. Si no tenés SL configurado, considerá salir.`};
+    return {target:'sl-inp',title:`Portfolio −${Math.abs(pnlPct).toFixed(1)}% — Revisá tus Stop-Loss`,
+      text:`Tu portfolio está en pérdida. Causas más comunes:\n• Posiciones sin stop-loss\n• Entradas contra la tendencia (precio debajo SMA50)\n• Sobreconcentración en un activo\n\nPoné un Stop-Loss en el campo resaltado antes de agregar más operaciones.`};
   }
   if(getUniqueAssets() < 2 && portfolio.positions.length > 0){
-    return {title:`Todo concentrado en ${portfolio.positions[0]?.sym}`,text:`Tenés todo el capital en un solo activo. Si cae, todo cae.\n\nConsiderá diversificar: si tenés solo cripto, agregá un ETF o acción. Si tenés solo una acción, agregá BTC o ETH. La baja correlación entre activos reduce el riesgo total del portfolio.`};
+    return {target:'asset-bar',title:`Todo concentrado — diversificá`,
+      text:`Tenés todo en un solo activo. Si cae, todo cae.\n\nSeleccioná otro activo en la barra resaltada y abrí una posición pequeña. Mezclar cripto + acciones reduce el riesgo total del portfolio.`};
   }
-  return {title:`Revisá el mercado`,text:`Mirá los 8 activos y buscá oportunidades:\n• RSI < 40 + precio encima SMA50 = zona de entrada potencial\n• RSI > 75 con posición abierta = zona de salida parcial\n• Cruces de SMA20 sobre SMA50 = señal de tendencia\n\nRecordá: ratio 1:2, stop-loss siempre, máximo 2% por operación.`};
+  return {target:'asset-bar',title:`Analizá el mercado`,
+    text:`Recorrés los 8 activos (barra resaltada) y buscás:\n• RSI < 40 + precio encima SMA50 = entrada potencial\n• RSI > 75 con posición abierta = salida parcial\n\nRatio 1:2, stop-loss siempre, máximo 2% por operación.`};
 }
 
 // ══════════════════════════════════════════════
@@ -1185,6 +1223,8 @@ function togglePortTab(){
 
 function selectAsset(sym){
   currentAsset=sym;
+  // refresh hint if open so target and advice update for new asset
+  if(hintVisible){ clearHintHighlight(); const h=getHint(); document.getElementById('hint-text').innerHTML='<b style="display:block;color:var(--txt);margin-bottom:5px">'+h.title+'</b>'+h.text.replace(/\n/g,'<br>'); applyHintHighlight(h.target); }
   renderAll();
   drawChart();
 }
